@@ -7,6 +7,7 @@ import {
 import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { randomInt } from 'crypto';
 import { CartService } from '../cart/cart.service';
+import { PaymentsService } from '../payments/payments.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 export interface ShippingAddress {
@@ -30,6 +31,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cart: CartService,
+    private readonly payments: PaymentsService,
   ) {}
 
   private newOrderNumber(): string {
@@ -38,12 +40,15 @@ export class OrdersService {
     return `RV-${stamp}-${randomInt(100, 1000)}`;
   }
 
-  /** COD checkout: everything stock-critical happens inside one transaction. */
+  /** Checkout: everything stock-critical happens inside one transaction.
+   *  COD confirms immediately; RAZORPAY creates a PENDING order plus a
+   *  gateway order for the modal, confirmed later by signature verification. */
   async checkout(opts: {
     cartToken: string;
     userId?: string;
     email: string;
     address: ShippingAddress;
+    paymentMethod: PaymentMethod;
   }) {
     const raw = await this.cart.findRaw(opts.cartToken);
     if (!raw || raw.items.length === 0) {
@@ -51,6 +56,14 @@ export class OrdersService {
     }
     const view = await this.cart.view(raw);
     const { summary } = view;
+
+    const isCod = opts.paymentMethod === PaymentMethod.COD;
+    const orderNumber = this.newOrderNumber();
+    // Gateway order first: if Razorpay is down we fail before touching stock.
+    // An orphaned (never-paid) gateway order is harmless.
+    const razorpayOrderId = isCod
+      ? null
+      : await this.payments.createGatewayOrder(summary.total, orderNumber);
 
     const order = await this.prisma.$transaction(
       async (tx) => {
@@ -89,13 +102,14 @@ export class OrdersService {
       // 3. Create the order with full snapshots.
       const created = await tx.order.create({
         data: {
-          orderNumber: this.newOrderNumber(),
+          orderNumber,
           userId: opts.userId ?? null,
           email: opts.email.toLowerCase(),
           phone: opts.address.phone,
-          status: OrderStatus.CONFIRMED, // COD confirms immediately
-          paymentMethod: PaymentMethod.COD,
-          paymentStatus: PaymentStatus.PENDING, // collected on delivery
+          // COD confirms immediately; online payment confirms on verify.
+          status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
+          paymentMethod: opts.paymentMethod,
+          paymentStatus: PaymentStatus.PENDING,
           subtotal: summary.subtotal,
           discount: summary.couponDiscount,
           shippingFee: summary.shippingFee,
@@ -116,16 +130,22 @@ export class OrdersService {
           },
           payment: {
             create: {
-              method: PaymentMethod.COD,
+              method: opts.paymentMethod,
               status: PaymentStatus.PENDING,
               amount: summary.total,
+              razorpayOrderId,
             },
           },
           events: {
-            create: {
-              status: OrderStatus.CONFIRMED,
-              note: 'Order placed — Cash on Delivery',
-            },
+            create: isCod
+              ? {
+                  status: OrderStatus.CONFIRMED,
+                  note: 'Order placed — Cash on Delivery',
+                }
+              : {
+                  status: OrderStatus.PENDING,
+                  note: 'Order placed — awaiting online payment',
+                },
           },
         },
         include: ORDER_INCLUDE,
@@ -142,7 +162,18 @@ export class OrdersService {
       { timeout: 20_000, maxWait: 5_000 },
     );
 
-    return order;
+    return {
+      ...order,
+      // Frontend opens the Razorpay modal with this (null for COD).
+      razorpay: razorpayOrderId
+        ? {
+            keyId: this.payments.keyId,
+            razorpayOrderId,
+            amount: summary.total,
+            currency: 'INR' as const,
+          }
+        : null,
+    };
   }
 
   async listForUser(userId: string) {

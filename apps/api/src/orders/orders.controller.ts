@@ -29,8 +29,8 @@ import { AddressDto } from './addresses.controller';
 import { OrdersService } from './orders.service';
 
 class CheckoutDto {
-  @IsIn(['COD'])
-  paymentMethod!: 'COD';
+  @IsIn(['COD', 'RAZORPAY'])
+  paymentMethod!: 'COD' | 'RAZORPAY';
 
   /** Required for guests; ignored for logged-in users. */
   @IsOptional()
@@ -106,6 +106,7 @@ export class OrdersController {
       userId: user?.sub,
       email,
       address,
+      paymentMethod: dto.paymentMethod,
     });
     return order;
   }

@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
 import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { ProductsModule } from './products/products.module';
     AuthModule,
     CartModule,
     OrdersModule,
+    PaymentsModule,
     HealthModule,
     ProductsModule,
   ],
