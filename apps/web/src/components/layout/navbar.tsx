@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
+import { useAuth } from "@/lib/auth-store";
 
 const NAV_LINKS = [
   { label: "New Drops", href: "/collections/new-arrivals" },
@@ -18,6 +19,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const authed = useAuth((s) => s.status === "authed");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -67,8 +69,15 @@ export function Navbar() {
           <button aria-label="Search" className="transition-colors hover:text-volt">
             <Search size={20} />
           </button>
-          <Link href="/account" aria-label="Account" className="hidden transition-colors hover:text-volt sm:block">
+          <Link
+            href={authed ? "/account" : "/login"}
+            aria-label={authed ? "Account" : "Login"}
+            className="relative hidden transition-colors hover:text-volt sm:block"
+          >
             <User size={20} />
+            {authed && (
+              <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-volt" />
+            )}
           </Link>
           <Link href="/wishlist" aria-label="Wishlist" className="hidden transition-colors hover:text-volt sm:block">
             <Heart size={20} />
