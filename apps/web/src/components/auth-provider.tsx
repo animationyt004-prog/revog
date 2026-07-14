@@ -2,14 +2,17 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-store";
+import { useCart } from "@/lib/cart-store";
 
-/** Resumes the session (via refresh cookie) once per app load. */
+/** Resumes the session (refresh cookie) and loads the cart once per app load.
+ *  Cart loads after auth settles so a login-merged cart shows correctly. */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const bootstrap = useAuth((s) => s.bootstrap);
+  const fetchCart = useCart((s) => s.fetchCart);
 
   useEffect(() => {
-    void bootstrap();
-  }, [bootstrap]);
+    void bootstrap().then(fetchCart);
+  }, [bootstrap, fetchCart]);
 
   return children;
 }

@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, RotateCcw, Star, Truck } from "lucide-react";
+import { ChevronRight, Loader2, RotateCcw, Star, Truck } from "lucide-react";
 import { cn, formatPrice } from "@/lib/format";
+import { useCart } from "@/lib/cart-store";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
 import { SizeGuideModal } from "./size-guide";
@@ -31,7 +32,10 @@ export function ProductView({ product }: { product: ProductDetail }) {
   });
   const [size, setSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const addItem = useCart((s) => s.addItem);
 
   const galleryImages = useMemo(() => {
     const forColor = product.images.filter((i) => i.color === color);
@@ -207,19 +211,37 @@ export function ProductView({ product }: { product: ProductDetail }) {
           )}
         </div>
 
-        {/* Add to cart — stub until Phase 3 wiring */}
         <button
-          onClick={() => size && setAdded(true)}
-          disabled={!size}
+          onClick={() => {
+            if (!selectedVariant) return;
+            setAdding(true);
+            setCartError(null);
+            addItem(selectedVariant.id)
+              .then(() => setAdded(true))
+              .catch((e) =>
+                setCartError(e instanceof Error ? e.message : "Could not add to cart."),
+              )
+              .finally(() => setAdding(false));
+          }}
+          disabled={!size || adding}
           className={cn(
-            "display mt-8 w-full py-4 text-xl transition-all",
+            "display mt-8 flex w-full items-center justify-center gap-2 py-4 text-xl transition-all",
             size
               ? "bg-volt text-ink hover:-translate-y-0.5"
               : "cursor-not-allowed bg-ink-3 text-paper-dim",
           )}
         >
-          {added ? "✓ Added (cart coming soon)" : size ? "Add To Cart" : "Select A Size"}
+          {adding ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : added ? (
+            "✓ Added — Add Again?"
+          ) : size ? (
+            "Add To Cart"
+          ) : (
+            "Select A Size"
+          )}
         </button>
+        {cartError && <p className="mt-2 text-sm text-blood">{cartError}</p>}
 
         {/* Delivery strip */}
         <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-paper-dim">

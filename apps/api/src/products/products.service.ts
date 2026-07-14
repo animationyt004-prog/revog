@@ -228,7 +228,7 @@ export class ProductsService {
     soldCount: number;
     category: { name: string; slug: string } | null;
     images: { url: string; alt: string | null; color: string | null; isPrimary: boolean; sortOrder: number }[];
-    variants: { size: string; color: string; colorHex: string; stock: number }[];
+    variants: { id: string; size: string; color: string; colorHex: string; stock: number }[];
   }) {
     const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
     const hover =
@@ -256,6 +256,13 @@ export class ProductsService {
       image: primary ? { url: primary.url, alt: primary.alt ?? p.name } : null,
       hoverImage: hover ? { url: hover.url, alt: hover.alt ?? p.name } : null,
       colors: [...colorMap].map(([name, hex]) => ({ name, hex })),
+      // Minimal variant list so cards can offer size-picking Quick Add.
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        size: v.size,
+        color: v.color,
+        stock: v.stock,
+      })),
       totalStock,
       stockLabel:
         totalStock === 0 ? 'SOLD_OUT' : totalStock < 12 ? 'LOW_STOCK' : 'IN_STOCK',

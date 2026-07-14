@@ -211,7 +211,8 @@ export class CartService {
 
   couponDiscount(coupon: Coupon, subtotal: number): number {
     if (coupon.type === CouponType.PERCENT) {
-      const raw = Math.round((subtotal * coupon.value) / 100);
+      // Round to whole rupees so COD totals stay cash-friendly.
+      const raw = Math.round((subtotal * coupon.value) / 100 / 100) * 100;
       return coupon.maxDiscount != null ? Math.min(raw, coupon.maxDiscount) : raw;
     }
     return Math.min(coupon.value, subtotal);

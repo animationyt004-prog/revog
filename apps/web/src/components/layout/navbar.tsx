@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
 import { useAuth } from "@/lib/auth-store";
+import { useCart } from "@/lib/cart-store";
 import { MegaMenu } from "./mega-menu";
 
 const NAV_LINKS = [
@@ -20,6 +21,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const authed = useAuth((s) => s.status === "authed");
+  const itemCount = useCart((s) => s.cart?.summary.itemCount ?? 0);
+  const openDrawer = useCart((s) => s.openDrawer);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -83,11 +86,17 @@ export function Navbar() {
           <Link href="/wishlist" aria-label="Wishlist" className="hidden transition-colors hover:text-volt sm:block">
             <Heart size={20} />
           </Link>
-          <button aria-label="Cart" className="relative transition-colors hover:text-volt">
+          <button
+            aria-label={`Cart, ${itemCount} items`}
+            onClick={openDrawer}
+            className="relative transition-colors hover:text-volt"
+          >
             <ShoppingBag size={20} />
-            <span className="absolute -right-2 -top-1.5 grid h-4 w-4 place-items-center rounded-full bg-volt text-[10px] font-bold text-ink">
-              0
-            </span>
+            {itemCount > 0 && (
+              <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-volt px-0.5 text-[10px] font-bold text-ink">
+                {itemCount}
+              </span>
+            )}
           </button>
         </div>
       </nav>

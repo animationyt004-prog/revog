@@ -52,7 +52,8 @@ export class OrdersService {
     const view = await this.cart.view(raw);
     const { summary } = view;
 
-    const order = await this.prisma.$transaction(async (tx) => {
+    const order = await this.prisma.$transaction(
+      async (tx) => {
       // 1. Atomically decrement stock; a 0-count update means someone beat us.
       for (const item of view.items) {
         const updated = await tx.productVariant.updateMany({
@@ -135,7 +136,11 @@ export class OrdersService {
       await tx.cart.update({ where: { id: raw.id }, data: { couponCode: null } });
 
       return created;
-    });
+      },
+      // Checkout spans several round-trips; from a dev machine far from the DB
+      // region the default 5s expires. Production (same-region) runs in <1s.
+      { timeout: 20_000, maxWait: 5_000 },
+    );
 
     return order;
   }

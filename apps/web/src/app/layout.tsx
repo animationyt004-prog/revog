@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import "./globals.css";
 
 const anton = Anton({
@@ -46,7 +47,12 @@ export default function RootLayout({
       className={`${anton.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          {/* Rendered at the root: inside the blurred sticky header,
+              position:fixed would resolve against the header box. */}
+          <CartDrawer />
+        </AuthProvider>
       </body>
     </html>
   );

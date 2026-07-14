@@ -2,9 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Plus, Star } from "lucide-react";
+import { useState } from "react";
+import { Heart, Loader2, Plus, Star } from "lucide-react";
 import { cn, formatPrice } from "@/lib/format";
+import { useCart } from "@/lib/cart-store";
 import type { BadgeType, ProductCardData } from "@/lib/types";
+
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
 const BADGE_STYLES: Record<BadgeType, string> = {
   SALE: "bg-blood text-paper",
@@ -21,6 +25,29 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const shownBadges = product.badges
     .filter((b) => (b === "SALE" ? product.discountPercent > 0 : true))
     .slice(0, 2);
+
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const addItem = useCart((s) => s.addItem);
+
+  // Quick Add offers sizes for the first colour that has stock.
+  const quickColor =
+    product.colors.find((c) =>
+      product.variants.some((v) => v.color === c.name && v.stock > 0),
+    )?.name ?? product.colors[0]?.name;
+  const quickSizes = product.variants
+    .filter((v) => v.color === quickColor)
+    .sort((a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size));
+
+  function quickAdd(variantId: string) {
+    setAddingId(variantId);
+    addItem(variantId)
+      .catch(() => undefined)
+      .finally(() => {
+        setAddingId(null);
+        setQuickOpen(false);
+      });
+  }
 
   return (
     <Link
@@ -90,14 +117,41 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         )}
 
-        {/* Quick add — slides up on hover (desktop) */}
-        {!soldOut && (
-          <button
-            onClick={(e) => e.preventDefault()}
-            className="display absolute inset-x-0 bottom-0 hidden translate-y-full items-center justify-center gap-1.5 bg-volt py-2.5 text-sm text-ink transition-transform duration-300 group-hover:translate-y-0 md:flex"
+        {/* Quick add — slides up on hover (desktop); tap sizes to add */}
+        {!soldOut && quickSizes.length > 0 && (
+          <div
+            onMouseLeave={() => setQuickOpen(false)}
+            className="absolute inset-x-0 bottom-0 hidden translate-y-full transition-transform duration-300 group-hover:translate-y-0 md:block"
           >
-            <Plus size={16} /> Quick Add
-          </button>
+            {quickOpen ? (
+              <div className="flex items-stretch justify-center bg-volt">
+                {quickSizes.map((v) => (
+                  <button
+                    key={v.id}
+                    disabled={v.stock === 0 || addingId !== null}
+                    onClick={(e) => { e.preventDefault(); quickAdd(v.id); }}
+                    className={cn(
+                      "display flex-1 py-2.5 text-sm text-ink transition-colors hover:bg-paper hover:text-ink",
+                      v.stock === 0 && "cursor-not-allowed text-ink/30 line-through hover:bg-transparent",
+                    )}
+                  >
+                    {addingId === v.id ? (
+                      <Loader2 size={14} className="mx-auto animate-spin" />
+                    ) : (
+                      v.size
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.preventDefault(); setQuickOpen(true); }}
+                className="display flex w-full items-center justify-center gap-1.5 bg-volt py-2.5 text-sm text-ink"
+              >
+                <Plus size={16} /> Quick Add
+              </button>
+            )}
+          </div>
         )}
       </div>
 
