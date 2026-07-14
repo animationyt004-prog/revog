@@ -12,6 +12,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { IsEmail, IsString, Length } from 'class-validator';
 import type { Request, Response } from 'express';
+import { CartService } from '../cart/cart.service';
+import { CART_COOKIE } from '../cart/cart.controller';
 import { AuthService } from './auth.service';
 import { CurrentUser, JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 
@@ -37,6 +39,7 @@ export class AuthController {
 
   constructor(
     private readonly auth: AuthService,
+    private readonly cart: CartService,
     config: ConfigService,
   ) {
     this.isProd = config.get('NODE_ENV') === 'production';
@@ -72,6 +75,9 @@ export class AuthController {
       ip,
       userAgent: req.headers['user-agent'],
     });
+    // Fold any guest cart into the account so nothing is lost at login.
+    const guestCartToken = (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE];
+    await this.cart.mergeGuestIntoUser(guestCartToken, tokens.user.id);
     this.setRefreshCookie(res, tokens.refreshToken);
     return { accessToken: tokens.accessToken, user: tokens.user };
   }
