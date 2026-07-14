@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Loader2,
   Package,
+  RotateCcw,
   Shirt,
   Tag,
   Users,
@@ -19,6 +20,7 @@ const NAV = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Orders", href: "/admin/orders", icon: Package },
   { label: "Products", href: "/admin/products", icon: Shirt },
+  { label: "Returns", href: "/admin/returns", icon: RotateCcw },
   { label: "Coupons", href: "/admin/coupons", icon: Tag },
   { label: "Customers", href: "/admin/customers", icon: Users },
 ];

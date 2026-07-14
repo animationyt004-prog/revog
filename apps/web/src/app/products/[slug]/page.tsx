@@ -6,6 +6,7 @@ import { PromoTicker } from "@/components/layout/promo-ticker";
 import { ProductSection } from "@/components/home/product-section";
 import { ProductView } from "@/components/product/product-view";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
+import { ReviewsSection } from "@/components/product/reviews-section";
 import { getProduct, getRelated } from "@/lib/api";
 
 interface Props {
@@ -73,6 +74,7 @@ export default async function ProductPage({ params }: Props) {
       <Navbar />
       <main>
         <ProductView product={product} />
+        <ReviewsSection slug={product.slug} />
         <ProductSection
           title="Pairs"
           accent="Well With"

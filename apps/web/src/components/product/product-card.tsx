@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Heart, Loader2, Plus, Star } from "lucide-react";
 import { cn, formatPrice } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
+import { useWishlist } from "@/lib/wishlist-store";
 import type { BadgeType, ProductCardData } from "@/lib/types";
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
@@ -29,6 +30,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const [quickOpen, setQuickOpen] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   const addItem = useCart((s) => s.addItem);
+  const wished = useWishlist((s) => s.hydrated && s.slugs.includes(product.slug));
+  const toggleWish = useWishlist((s) => s.toggle);
+  const hydrateWish = useWishlist((s) => s.hydrate);
 
   // Quick Add offers sizes for the first colour that has stock.
   const quickColor =
@@ -101,11 +105,16 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
         {/* Wishlist */}
         <button
-          aria-label="Add to wishlist"
-          onClick={(e) => e.preventDefault()}
-          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-ink/60 backdrop-blur-sm transition-colors hover:bg-blood"
+          aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={wished}
+          onMouseEnter={hydrateWish}
+          onClick={(e) => { e.preventDefault(); toggleWish(product.slug); }}
+          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-ink/70 backdrop-blur-sm transition-colors hover:bg-ink"
         >
-          <Heart size={15} />
+          <Heart
+            size={15}
+            className={cn("transition-colors", wished && "fill-blood text-blood")}
+          />
         </button>
 
         {/* Sold-out overlay */}

@@ -11,6 +11,8 @@ import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
+import { ReturnsModule } from './returns/returns.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { ProductsModule } from './products/products.module';
     PaymentsModule,
     HealthModule,
     ProductsModule,
+    ReturnsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

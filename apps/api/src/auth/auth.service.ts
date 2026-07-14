@@ -112,6 +112,16 @@ export class AuthService {
       }),
     ]);
 
+    // Claim past guest orders placed with this (now verified) email so they
+    // appear in the account and unlock reviews/returns.
+    const claimed = await this.prisma.order.updateMany({
+      where: { email, userId: null },
+      data: { userId: user.id },
+    });
+    if (claimed.count > 0) {
+      this.logger.log(`Claimed ${claimed.count} guest order(s) for ${email}`);
+    }
+
     // New login = new token family.
     const family = randomBytes(16).toString('hex');
     return this.issueTokens(user, family, meta);

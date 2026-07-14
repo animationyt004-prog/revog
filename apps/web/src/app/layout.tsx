@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { WhatsAppButton } from "@/components/layout/whatsapp-button";
 import "./globals.css";
 
 const anton = Anton({
@@ -52,6 +53,7 @@ export default function RootLayout({
           {/* Rendered at the root: inside the blurred sticky header,
               position:fixed would resolve against the header box. */}
           <CartDrawer />
+          <WhatsAppButton />
         </AuthProvider>
       </body>
     </html>

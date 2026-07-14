@@ -6,6 +6,7 @@ import { Banknote, CheckCircle2, MapPin, Package } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
+import { ReturnRequest } from "@/components/order/return-request";
 import { formatPrice } from "@/lib/format";
 import type { OrderData } from "@/lib/types";
 
@@ -121,6 +122,12 @@ export default async function OrderPage({ params, searchParams }: Props) {
             {addr.line2 ? `, ${addr.line2}` : ""}, {addr.city}, {addr.state} — {addr.pincode}
           </p>
         </section>
+
+        <ReturnRequest
+          orderNumber={order.orderNumber}
+          orderEmail={order.email}
+          orderStatus={order.status}
+        />
 
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Link href="/" className="display bg-volt px-6 py-3 text-lg text-ink transition-transform hover:-translate-y-0.5">

@@ -22,8 +22,10 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { ReturnStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles, RolesGuard } from '../auth/roles.guard';
+import { ReturnsService } from '../returns/returns.service';
 import { AdminService } from './admin.service';
 
 class ListOrdersQuery {
@@ -85,6 +87,11 @@ class UpdateStockDto {
   stock!: number;
 }
 
+class ResolveReturnDto {
+  @IsEnum(ReturnStatus)
+  status!: ReturnStatus;
+}
+
 class CreateCouponDto {
   @IsString()
   @Length(3, 24)
@@ -116,7 +123,10 @@ class CreateCouponDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly returns: ReturnsService,
+  ) {}
 
   @Get('dashboard')
   dashboard() {
@@ -176,5 +186,16 @@ export class AdminController {
   @Get('customers')
   customers() {
     return this.admin.listCustomers();
+  }
+
+  // Returns
+  @Get('returns')
+  listReturns() {
+    return this.returns.listAll();
+  }
+
+  @Patch('returns/:id')
+  resolveReturn(@Param('id') id: string, @Body() dto: ResolveReturnDto) {
+    return this.returns.resolve(id, dto.status);
   }
 }
