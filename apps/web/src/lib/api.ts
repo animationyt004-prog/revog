@@ -1,4 +1,4 @@
-import type { CategoryData, ProductCardData } from "./types";
+import type { CategoryData, ProductCardData, ProductDetail } from "./types";
 
 // Server components use API_URL (reachable from the Node process);
 // the browser uses NEXT_PUBLIC_API_URL.
@@ -39,4 +39,8 @@ export function getProducts(opts: {
 
 export function getCategories(): Promise<CategoryData[]> {
   return get<CategoryData[]>("/categories", []);
+}
+
+export function getProduct(slug: string): Promise<ProductDetail | null> {
+  return get<ProductDetail | null>(`/products/${slug}`, null);
 }
