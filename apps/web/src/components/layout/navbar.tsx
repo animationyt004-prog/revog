@@ -5,14 +5,14 @@ import { useEffect, useState } from "react";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
 import { useAuth } from "@/lib/auth-store";
+import { MegaMenu } from "./mega-menu";
 
 const NAV_LINKS = [
   { label: "New Drops", href: "/collections/new-arrivals" },
   { label: "Tees", href: "/category/oversized-tees" },
   { label: "Hoodies", href: "/category/hoodies" },
   { label: "Cargos", href: "/category/cargos" },
-  { label: "Joggers", href: "/category/joggers" },
-  { label: "Shirts", href: "/category/shirts" },
+  { label: "Best Sellers", href: "/collections/bestsellers" },
 ];
 
 /** Sticky navbar. Full mega menu lands in Phase 2 — this is the frame. */
@@ -52,6 +52,7 @@ export function Navbar() {
 
         {/* Desktop links */}
         <ul className="ml-8 hidden items-center gap-6 md:flex">
+          <MegaMenu />
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
               <Link

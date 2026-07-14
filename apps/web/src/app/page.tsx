@@ -6,6 +6,17 @@ import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { getCategories, getProducts } from "@/lib/api";
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+const ORG_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "REVOG",
+  url: SITE,
+  description:
+    "REVOG — Indian streetwear. Oversized tees, heavyweight hoodies, cargos and joggers.",
+};
+
 export default async function HomePage() {
   const [newDrops, bestSellers, trending, categories] = await Promise.all([
     getProducts({ collection: "new", take: 8 }),
@@ -16,6 +27,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}
+      />
       <PromoTicker />
       <Navbar />
       <main>

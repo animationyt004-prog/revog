@@ -7,8 +7,11 @@ import { motion } from "framer-motion";
 import { ChevronRight, RotateCcw, Star, Truck } from "lucide-react";
 import { cn, formatPrice } from "@/lib/format";
 import type { ProductDetail } from "@/lib/types";
+import { PincodeChecker } from "./pincode-checker";
+import { SizeGuideModal } from "./size-guide";
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+const BOTTOM_CATEGORIES = new Set(["cargos", "joggers"]);
 
 export function ProductView({ product }: { product: ProductDetail }) {
   const colors = useMemo(() => {
@@ -28,6 +31,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
   });
   const [size, setSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const galleryImages = useMemo(() => {
     const forColor = product.images.filter((i) => i.color === color);
@@ -170,7 +174,10 @@ export function ProductView({ product }: { product: ProductDetail }) {
         <div className="mt-6">
           <div className="mb-2.5 flex items-center justify-between">
             <p className="text-sm font-semibold">Size</p>
-            <button className="text-xs text-paper-dim underline hover:text-volt">
+            <button
+              onClick={() => setGuideOpen(true)}
+              className="text-xs text-paper-dim underline hover:text-volt"
+            >
               Size Guide
             </button>
           </div>
@@ -225,6 +232,14 @@ export function ProductView({ product }: { product: ProductDetail }) {
             Easy 7-day returns & exchanges
           </div>
         </div>
+
+        <PincodeChecker />
+
+        <SizeGuideModal
+          open={guideOpen}
+          onClose={() => setGuideOpen(false)}
+          kind={BOTTOM_CATEGORIES.has(product.category?.slug ?? "") ? "bottom" : "top"}
+        />
 
         {/* Details */}
         <div className="mt-8 space-y-5 border-t border-paper/10 pt-6 text-sm leading-relaxed text-paper-dim">

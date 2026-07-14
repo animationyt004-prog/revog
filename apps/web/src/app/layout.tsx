@@ -7,6 +7,10 @@ const anton = Anton({
   variable: "--font-anton",
   weight: "400",
   subsets: ["latin"],
+  // Display font drives the (huge) LCP text: "optional" means first paint
+  // uses the size-matched fallback with no late swap repaint — Anton kicks
+  // in from cache on subsequent loads. Keeps mobile LCP fast.
+  display: "optional",
 });
 
 const inter = Inter({
