@@ -33,3 +33,6 @@ coverage/
 # misc
 *.tsbuildinfo
 next-env.d.ts
+
+# curl test artifacts
+*cookies*.txt
