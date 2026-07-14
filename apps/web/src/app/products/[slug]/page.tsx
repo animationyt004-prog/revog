@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: product.name,
     description: product.description.slice(0, 155),
     openGraph: {
-      title: `${product.name} | NO CURFEW`,
+      title: `${product.name} | REVOG`,
       description: product.description.slice(0, 155),
       images: product.images[0] ? [{ url: product.images[0].url }] : [],
     },

@@ -10,7 +10,7 @@ export class HealthController {
   live() {
     return {
       status: 'ok',
-      service: 'nocurfew-api',
+      service: 'revog-api',
       time: new Date().toISOString(),
       uptime: Math.round(process.uptime()),
     };

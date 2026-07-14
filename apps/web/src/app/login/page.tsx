@@ -91,7 +91,7 @@ export default function LoginPage() {
 
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
           <Link href="/" className="display mb-10 text-center text-3xl">
-            NO&nbsp;CURFEW<span className="text-volt">.</span>
+            REVOG<span className="text-volt">.</span>
           </Link>
 
           <AnimatePresence mode="wait">

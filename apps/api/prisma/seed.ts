@@ -1,5 +1,5 @@
 /**
- * NO CURFEW — development seed.
+ * REVOG — development seed.
  * 16 products across 5 categories, each with 2-3 colorways × S-XXL variants,
  * sale pricing (paise), badges, plus a launch coupon and pincode data.
  *
@@ -215,7 +215,7 @@ function stockFor(productIdx: number, colorIdx: number, sizeIdx: number): number
 const toPaise = (rupees: number) => Math.round(rupees * 100);
 
 async function main() {
-  console.log('Seeding NO CURFEW catalog...');
+  console.log('Seeding REVOG catalog...');
 
   // Wipe catalog (order matters for FKs).
   await prisma.cartItem.deleteMany();
@@ -260,7 +260,7 @@ async function main() {
         ratingAvg: p.rating?.avg ?? 0,
         ratingCount: p.rating?.count ?? 0,
         soldCount: p.sold ?? 0,
-        metaTitle: `${p.name} | NO CURFEW`,
+        metaTitle: `${p.name} | REVOG`,
         metaDescription: p.description.slice(0, 155),
         images: {
           create: p.colors.flatMap((color, ci) => [
@@ -299,7 +299,7 @@ async function main() {
 
   await prisma.coupon.create({
     data: {
-      code: 'NOCURFEW10',
+      code: 'REVOG10',
       description: 'Launch offer — 10% off on orders above ₹999',
       type: CouponType.PERCENT,
       value: 10,

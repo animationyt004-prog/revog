@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   getInfo() {
     return {
-      name: 'NO CURFEW API',
+      name: 'REVOG API',
       version: '0.1.0',
       health: '/api/health',
     };

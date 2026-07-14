@@ -1,4 +1,4 @@
-// Shapes returned by the NO CURFEW API (apps/api). Prices are in PAISE.
+// Shapes returned by the REVOG API (apps/api). Prices are in PAISE.
 
 export type StockLabel = "IN_STOCK" | "LOW_STOCK" | "SOLD_OUT";
 

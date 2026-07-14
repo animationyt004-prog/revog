@@ -1,9 +1,11 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Monorepo root — silences multi-lockfile inference warning.
+  // Monorepo root (absolute, per docs) — stops Next inferring the wrong
+  // workspace root from stray lockfiles higher up the tree.
   turbopack: {
-    root: "../..",
+    root: path.join(__dirname, "../.."),
   },
   images: {
     remotePatterns: [

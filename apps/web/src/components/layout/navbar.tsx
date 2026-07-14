@@ -32,7 +32,7 @@ export function Navbar() {
     <header
       className={cn(
         "sticky top-0 z-50 border-b border-paper/10 bg-ink/80 backdrop-blur-md transition-shadow",
-        scrolled && "shadow-[0_4px_24px_rgba(0,0,0,0.5)]",
+        scrolled && "shadow-[0_4px_20px_rgba(0,0,0,0.08)]",
       )}
     >
       <nav className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:h-16 sm:px-6">
@@ -47,7 +47,7 @@ export function Navbar() {
 
         {/* Wordmark */}
         <Link href="/" className="display text-xl leading-none sm:text-2xl">
-          NO&nbsp;CURFEW<span className="text-volt">.</span>
+          REVOG<span className="text-volt">.</span>
         </Link>
 
         {/* Desktop links */}

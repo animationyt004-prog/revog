@@ -32,7 +32,7 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port, '0.0.0.0');
-  Logger.log(`NO CURFEW API listening on http://localhost:${port}/api`, 'Bootstrap');
+  Logger.log(`REVOG API listening on http://localhost:${port}/api`, 'Bootstrap');
 }
 
 void bootstrap();

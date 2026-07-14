@@ -16,8 +16,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "NO CURFEW — Streetwear Without Permission",
-    template: "%s | NO CURFEW",
+    default: "REVOG — Streetwear Without Permission",
+    template: "%s | REVOG",
   },
   description:
     "Oversized tees, heavyweight hoodies, cargos and joggers. Indian streetwear built for after hours. Free shipping over ₹999. COD available.",

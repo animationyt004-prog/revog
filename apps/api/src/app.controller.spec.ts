@@ -16,7 +16,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return service info', () => {
-      expect(appController.getInfo()).toHaveProperty('name', 'NO CURFEW API');
+      expect(appController.getInfo()).toHaveProperty('name', 'REVOG API');
     });
   });
 });
