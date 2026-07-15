@@ -3,8 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma, ProductStatus } from '@prisma/client';
+import { Badge, Fit, OrderStatus, Prisma, ProductStatus, Size } from '@prisma/client';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
+
+/** Default resell markup (paise) — cost + this = default selling price. */
+export const RESELL_MARKUP = 20000; // ₹200
 
 /** Forward-only pipeline; CANCELLED allowed from any pre-delivery state. */
 const NEXT_STATUSES: Record<string, OrderStatus[]> = {
@@ -172,6 +176,94 @@ export class AdminService {
   }
 
   // ------------------------------------------------------------- products
+
+  /** slugify + de-dupe against existing products. */
+  private async uniqueSlug(name: string): Promise<string> {
+    const base =
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'product';
+    let slug = base;
+    for (let i = 2; await this.prisma.product.findUnique({ where: { slug } }); i++) {
+      slug = `${base}-${i}`;
+    }
+    return slug;
+  }
+
+  /** Create a resell product. price/mrp arrive in paise (client applies the
+   *  +₹200 markup to the maxzone cost, but the final price is passed in so it
+   *  stays editable). One image URL, colour list × size list → variants. */
+  async createProduct(data: {
+    name: string;
+    categorySlug: string;
+    price: number;
+    mrp: number;
+    description?: string;
+    fit: Fit;
+    fabric?: string;
+    imageUrl: string;
+    colors: { name: string; hex: string }[];
+    sizes: Size[];
+    stock: number;
+    badges: Badge[];
+    publish: boolean;
+  }) {
+    if (data.price < 100) throw new BadRequestException('Price must be at least ₹1.');
+    if (data.mrp < data.price) throw new BadRequestException('MRP cannot be below selling price.');
+    if (data.colors.length === 0) throw new BadRequestException('Add at least one colour.');
+    if (data.sizes.length === 0) throw new BadRequestException('Pick at least one size.');
+
+    const category = await this.prisma.category.findUnique({
+      where: { slug: data.categorySlug },
+      select: { id: true },
+    });
+    if (!category) throw new BadRequestException('Category not found.');
+
+    const slug = await this.uniqueSlug(data.name);
+    const skuBase = `RS-${randomBytes(3).toString('hex').toUpperCase()}`;
+
+    return this.prisma.product.create({
+      data: {
+        name: data.name.trim(),
+        slug,
+        description: data.description?.trim() || `${data.name.trim()} — available at REVOG.`,
+        gender: 'MEN',
+        fit: data.fit,
+        fabric: data.fabric?.trim() || null,
+        status: data.publish ? ProductStatus.PUBLISHED : ProductStatus.DRAFT,
+        mrp: data.mrp,
+        price: data.price,
+        categoryId: category.id,
+        badges: data.badges,
+        isNewArrival: true,
+        metaTitle: `${data.name.trim()} | REVOG`,
+        metaDescription: (data.description?.trim() || data.name.trim()).slice(0, 155),
+        images: {
+          create: data.colors.map((c, ci) => ({
+            url: data.imageUrl.trim(),
+            alt: `${data.name.trim()} — ${c.name}`,
+            color: c.name,
+            sortOrder: ci,
+            isPrimary: ci === 0,
+          })),
+        },
+        variants: {
+          create: data.colors.flatMap((c) =>
+            data.sizes.map((size) => ({
+              sku: `${skuBase}-${c.name.replace(/\s+/g, '').toUpperCase().slice(0, 6)}-${size}`,
+              size,
+              color: c.name,
+              colorHex: c.hex,
+              stock: data.stock,
+            })),
+          ),
+        },
+      },
+      select: { id: true, slug: true, name: true, status: true },
+    });
+  }
 
   async listProducts() {
     return this.prisma.product.findMany({

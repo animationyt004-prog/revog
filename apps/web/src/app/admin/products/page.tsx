@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
+import { AddProductForm } from "@/components/admin/add-product-form";
 import { cn, formatPrice } from "@/lib/format";
 
 interface AdminVariant {
@@ -41,6 +42,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   const load = useCallback(async () => {
     const res = await authedFetch("/admin/products");
@@ -98,10 +100,27 @@ export default function AdminProductsPage() {
 
   return (
     <div>
-      <h1 className="display text-3xl sm:text-4xl">
-        Products<span className="text-volt">.</span>{" "}
-        <span className="text-base text-paper-dim">({products.length})</span>
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="display text-3xl sm:text-4xl">
+          Products<span className="text-volt">.</span>{" "}
+          <span className="text-base text-paper-dim">({products.length})</span>
+        </h1>
+        <button
+          onClick={() => setShowAdd((v) => !v)}
+          className="display flex items-center gap-1.5 bg-volt px-4 py-2.5 text-base text-ink"
+        >
+          <Plus size={16} /> Add Product
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="mt-5">
+          <AddProductForm
+            onClose={() => setShowAdd(false)}
+            onCreated={() => { setShowAdd(false); void load(); }}
+          />
+        </div>
+      )}
 
       <div className="mt-6 space-y-2">
         {products.map((p) => {
@@ -214,8 +233,9 @@ export default function AdminProductsPage() {
         })}
       </div>
       <p className="mt-4 text-xs text-paper-dim">
-        Tip: click a price to change it · stock saves when you click away from the box · new product
-        creation + photo upload arrives with the image-storage phase.
+        Tip: click a price to change it · stock saves when you click away from the box · use
+        &ldquo;Add Product&rdquo; for resell items (cost auto +₹200) · direct photo upload arrives
+        with the image-storage phase — for now paste an image URL you have rights to.
       </p>
     </div>
   );

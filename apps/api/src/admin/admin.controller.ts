@@ -9,20 +9,25 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { OrderStatus, ProductStatus } from '@prisma/client';
+import { Badge, Fit, OrderStatus, ProductStatus, ReturnStatus, Size } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsBoolean,
   IsEnum,
+  IsHexColor,
   IsIn,
   IsInt,
   IsISO8601,
   IsOptional,
   IsString,
+  IsUrl,
   Length,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
-import { ReturnStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles, RolesGuard } from '../auth/roles.guard';
 import { ReturnsService } from '../returns/returns.service';
@@ -85,6 +90,72 @@ class UpdateStockDto {
   @Min(0)
   @Max(100000)
   stock!: number;
+}
+
+class ColorDto {
+  @IsString()
+  @Length(2, 40)
+  name!: string;
+
+  @IsHexColor()
+  hex!: string;
+}
+
+class CreateProductDto {
+  @IsString()
+  @Length(2, 100)
+  name!: string;
+
+  @IsString()
+  categorySlug!: string;
+
+  @IsInt()
+  @Min(100)
+  price!: number; // paise (cost + markup, editable)
+
+  @IsInt()
+  @Min(100)
+  mrp!: number; // paise (for the strike-through)
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  description?: string;
+
+  @IsEnum(Fit)
+  fit!: Fit;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 120)
+  fabric?: string;
+
+  @IsUrl({ require_protocol: true })
+  imageUrl!: string;
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => ColorDto)
+  colors!: ColorDto[];
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(Size, { each: true })
+  sizes!: Size[];
+
+  @IsInt()
+  @Min(0)
+  @Max(100000)
+  stock!: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(Badge, { each: true })
+  badges?: Badge[];
+
+  @IsBoolean()
+  publish!: boolean;
 }
 
 class ResolveReturnDto {
@@ -153,6 +224,17 @@ export class AdminController {
   @Get('products')
   products() {
     return this.admin.listProducts();
+  }
+
+  @Post('products')
+  @HttpCode(201)
+  createProduct(@Body() dto: CreateProductDto) {
+    return this.admin.createProduct({
+      ...dto,
+      description: dto.description,
+      fabric: dto.fabric,
+      badges: dto.badges ?? [],
+    });
   }
 
   @Patch('products/:id')
