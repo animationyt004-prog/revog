@@ -3,7 +3,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Monorepo root (absolute, per docs) — stops Next inferring the wrong
-  // workspace root from stray lockfiles higher up the tree.
+  // workspace root from stray lockfiles higher up the tree. Must point at
+  // the real workspace root (not this app's own dir): npm workspaces hoist
+  // shared deps like zustand to the root node_modules, and Turbopack won't
+  // resolve past whatever directory is declared here.
   turbopack: {
     root: path.join(__dirname, "../.."),
   },
