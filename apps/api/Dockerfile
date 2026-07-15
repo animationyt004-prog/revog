@@ -13,7 +13,11 @@ RUN npm ci --workspace apps/api --include-workspace-root=false
 COPY apps/api apps/api
 RUN cd apps/api \
   && npx prisma generate \
-  && npx nest build
+  && npx nest build \
+  # npm workspaces hoist all deps to /repo/node_modules, so apps/api may have
+  # no node_modules of its own. Guarantee the dir exists for the COPY below;
+  # Node resolves up to the root node_modules at runtime anyway.
+  && mkdir -p node_modules
 
 # ---------------------------------------------------------------- runtime
 FROM node:22-alpine
