@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { MailerModule } from './common/mailer/mailer.module';
 import { RedisModule } from './common/redis/redis.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +20,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     RedisModule,
+    MailerModule,
     AdminModule,
     AuthModule,
     CartModule,

@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto';
+import { MailerService } from '../common/mailer/mailer.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { RedisService } from '../common/redis/redis.service';
 
@@ -34,6 +35,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly mailer: MailerService,
   ) {
     this.isProd = config.get('NODE_ENV') === 'production';
     this.refreshTtlDays = Number(config.get('JWT_REFRESH_TTL', '30d').replace(/\D/g, '') || 30);
@@ -69,11 +71,18 @@ export class AuthService {
       },
     });
 
-    if (this.isProd) {
-      // Phase 1 follow-up: send via Resend once the account exists.
-      this.logger.warn(`OTP email delivery not configured — OTP for ${email} not sent`);
+    // Always log in dev (and as a fallback when email isn't configured yet),
+    // so the flow is testable without an inbox. Send a real email whenever
+    // RESEND_API_KEY is present.
+    if (this.mailer.configured) {
+      try {
+        await this.mailer.sendOtp(email, code);
+      } catch {
+        this.logger.error(`Failed to email OTP to ${email}`);
+        // Don't leak whether the address exists; surface a generic 500.
+        throw new Error('Could not send the login code. Please try again.');
+      }
     } else {
-      // Dev mode: OTP goes to the server console instead of an inbox.
       this.logger.log(`DEV OTP for ${email}: ${code}`);
     }
   }
