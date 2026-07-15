@@ -49,7 +49,9 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
       secure: this.isProd,
-      sameSite: 'lax',
+      // Storefront and API live on different domains in prod, so the cookie
+      // must be SameSite=None (requires Secure) to ride cross-site fetches.
+      sameSite: this.isProd ? 'none' : 'lax',
       // Sent only to auth endpoints — never rides along on product requests.
       path: '/api/auth',
       maxAge: 30 * 86_400_000,
@@ -103,7 +105,12 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE];
     await this.auth.logout(raw);
-    res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
+    res.clearCookie(REFRESH_COOKIE, {
+      path: '/api/auth',
+      httpOnly: true,
+      secure: this.isProd,
+      sameSite: this.isProd ? 'none' : 'lax',
+    });
     return { ok: true };
   }
 

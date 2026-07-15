@@ -77,7 +77,8 @@ export class CartController {
     res.cookie(CART_COOKIE, token, {
       httpOnly: true,
       secure: this.isProd,
-      sameSite: 'lax',
+      // Cross-domain storefront/API in prod needs SameSite=None (+Secure).
+      sameSite: this.isProd ? 'none' : 'lax',
       path: '/',
       maxAge: 30 * 86_400_000,
     });
