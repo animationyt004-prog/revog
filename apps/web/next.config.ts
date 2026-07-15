@@ -12,7 +12,9 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      // Placeholder product shots (dev only) — replaced by R2 CDN in Phase 5.
+      // Real product photos live in Cloudflare R2 (public bucket).
+      { protocol: "https", hostname: "pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev" },
+      // Legacy placeholder shots (kept so old demo data still renders in dev).
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
     ],
