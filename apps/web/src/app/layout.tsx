@@ -3,6 +3,7 @@ import { Anton, Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { MetaPixel } from "@/components/meta-pixel";
 import "./globals.css";
 
 const anton = Anton({
@@ -55,6 +56,7 @@ export default function RootLayout({
           <CartDrawer />
           <WhatsAppButton />
         </AuthProvider>
+        <MetaPixel />
       </body>
     </html>
   );

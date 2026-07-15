@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, Loader2, RotateCcw, Star, Truck } from "lucide-react";
 import { cn, formatPrice } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
+import { pixelTrack } from "@/lib/pixel";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
 import { SizeGuideModal } from "./size-guide";
@@ -36,6 +37,17 @@ export function ProductView({ product }: { product: ProductDetail }) {
   const [cartError, setCartError] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
   const addItem = useCart((s) => s.addItem);
+
+  // Meta Pixel: product view (for ad retargeting + optimization).
+  useEffect(() => {
+    pixelTrack("ViewContent", {
+      content_ids: [product.slug],
+      content_name: product.name,
+      content_type: "product",
+      value: product.price / 100,
+      currency: "INR",
+    });
+  }, [product.slug, product.name, product.price]);
 
   const galleryImages = useMemo(() => {
     const forColor = product.images.filter((i) => i.color === color);

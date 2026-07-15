@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { useAuth } from "./auth-store";
+import { pixelTrack } from "./pixel";
 import type { CartView } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
@@ -79,6 +80,12 @@ export const useCart = create<CartState>((set, get) => {
         { method: "POST", body: JSON.stringify({ variantId, quantity }) },
         "Could not add to cart.",
       );
+      pixelTrack("AddToCart", {
+        content_ids: [variantId],
+        content_type: "product",
+        value: (get().cart?.summary.subtotal ?? 0) / 100,
+        currency: "INR",
+      });
       set({ drawerOpen: true });
     },
 

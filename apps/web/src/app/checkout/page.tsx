@@ -10,6 +10,7 @@ import { PromoTicker } from "@/components/layout/promo-ticker";
 import { authedFetch, useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
 import { cn, formatPrice } from "@/lib/format";
+import { pixelTrack } from "@/lib/pixel";
 import type { AddressData } from "@/lib/types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
@@ -58,6 +59,15 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (user?.email) setEmail(user.email);
   }, [user?.email]);
+
+  // Meta Pixel: checkout started (fires once when the cart is known).
+  const cartTotal = cart?.summary.total;
+  useEffect(() => {
+    if (cartTotal && cartTotal > 0) {
+      pixelTrack("InitiateCheckout", { value: cartTotal / 100, currency: "INR" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once on entry
+  }, []);
 
   // Logged-in users: offer saved addresses.
   useEffect(() => {

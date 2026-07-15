@@ -6,6 +6,7 @@ import { Banknote, CheckCircle2, MapPin, Package } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
+import { PixelPurchase } from "@/components/order/pixel-purchase";
 import { ReturnRequest } from "@/components/order/return-request";
 import { formatPrice } from "@/lib/format";
 import type { OrderData } from "@/lib/types";
@@ -39,6 +40,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
 
   return (
     <>
+      <PixelPurchase orderNumber={order.orderNumber} total={order.total} />
       <PromoTicker />
       <Navbar />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
