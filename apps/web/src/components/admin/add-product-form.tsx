@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
 import { cn } from "@/lib/format";
 import type { CategoryData } from "@/lib/types";
@@ -34,7 +34,10 @@ export function AddProductForm({ onCreated, onClose }: Props) {
   const [fit, setFit] = useState("OVERSIZED");
   const [fabric, setFabric] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [colors, setColors] = useState([{ name: "Jet Black", hex: "#111111" }]);
   const [sizes, setSizes] = useState<string[]>(["S", "M", "L", "XL", "XXL"]);
   const [stock, setStock] = useState("10");
@@ -63,12 +66,41 @@ export function AddProductForm({ onCreated, onClose }: Props) {
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   }
 
+  // Upload selected files to R2 via the admin API, collect their public URLs.
+  async function onFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setUploadError(null);
+    const folder = (name.trim() || "product").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+    try {
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await authedFetch(`/admin/upload?folder=${encodeURIComponent(folder)}`, {
+          method: "POST",
+          body: fd,
+        });
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { message?: string };
+          throw new Error(data.message ?? "Upload failed.");
+        }
+        const { url } = (await res.json()) as { url: string };
+        setImages((prev) => [...prev, url]);
+      }
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
   async function submit() {
     setError(null);
     const priceP = Math.round(Number(price) * 100);
     const mrpP = Math.round(Number(mrp || price) * 100);
     if (!name.trim()) return setError("Product name is required.");
-    if (!imageUrl.trim()) return setError("Paste an image URL you have the rights to use.");
+    if (images.length === 0) return setError("Upload at least one product photo.");
     if (priceP < 100) return setError("Enter a valid selling price.");
     if (mrpP < priceP) return setError("MRP cannot be below the selling price.");
     if (sizes.length === 0) return setError("Pick at least one size.");
@@ -86,7 +118,7 @@ export function AddProductForm({ onCreated, onClose }: Props) {
           description: description.trim() || undefined,
           fit,
           fabric: fabric.trim() || undefined,
-          imageUrl: imageUrl.trim(),
+          images,
           colors,
           sizes,
           stock: Number(stock) || 0,
@@ -174,15 +206,50 @@ export function AddProductForm({ onCreated, onClose }: Props) {
           )}
         </div>
 
-        {/* Image */}
-        <label className="text-xs sm:col-span-2">
-          <span className="mb-1 block font-semibold text-paper-dim">IMAGE URL * (a photo you have rights to)</span>
-          <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…/your-photo.jpg" className={inputCls} />
-        </label>
-        {imageUrl.trim() && (
-          // eslint-disable-next-line @next/next/no-img-element -- admin preview of an arbitrary URL, not a storefront asset
-          <img src={imageUrl} alt="preview" className="h-28 w-auto border border-paper/15 object-cover sm:col-span-2" />
-        )}
+        {/* Images — direct upload to R2 */}
+        <div className="text-xs sm:col-span-2">
+          <span className="mb-1 block font-semibold text-paper-dim">
+            PHOTOS * (upload your own — first one is the main image)
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {images.map((url, i) => (
+              <div key={url} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- admin preview */}
+                <img src={url} alt="" className="h-24 w-20 border border-paper/15 object-cover" />
+                {i === 0 && (
+                  <span className="absolute left-0 top-0 bg-volt px-1 text-[9px] font-bold text-ink">MAIN</span>
+                )}
+                <button
+                  onClick={() => setImages(images.filter((u) => u !== url))}
+                  className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-blood text-white"
+                  aria-label="Remove image"
+                >
+                  <X size={11} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="grid h-24 w-20 place-items-center border border-dashed border-paper/40 text-paper-dim hover:border-volt hover:text-volt disabled:opacity-50"
+            >
+              {uploading ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={20} />}
+            </button>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            multiple
+            hidden
+            onChange={(e) => void onFiles(e.target.files)}
+          />
+          {uploadError && <p className="mt-1 text-blood">{uploadError}</p>}
+          <p className="mt-1 text-[11px] text-paper-dim">
+            JPG/PNG/WebP, under 8 MB each. Use your own photos or images you have the rights to.
+          </p>
+        </div>
 
         {/* Colours */}
         <div className="text-xs sm:col-span-2">

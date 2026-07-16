@@ -203,7 +203,7 @@ export class AdminService {
     description?: string;
     fit: Fit;
     fabric?: string;
-    imageUrl: string;
+    images: string[];
     colors: { name: string; hex: string }[];
     sizes: Size[];
     stock: number;
@@ -214,6 +214,7 @@ export class AdminService {
     if (data.mrp < data.price) throw new BadRequestException('MRP cannot be below selling price.');
     if (data.colors.length === 0) throw new BadRequestException('Add at least one colour.');
     if (data.sizes.length === 0) throw new BadRequestException('Pick at least one size.');
+    if (data.images.length === 0) throw new BadRequestException('Add at least one image.');
 
     const category = await this.prisma.category.findUnique({
       where: { slug: data.categorySlug },
@@ -241,12 +242,14 @@ export class AdminService {
         metaTitle: `${data.name.trim()} | REVOG`,
         metaDescription: (data.description?.trim() || data.name.trim()).slice(0, 155),
         images: {
-          create: data.colors.map((c, ci) => ({
-            url: data.imageUrl.trim(),
-            alt: `${data.name.trim()} — ${c.name}`,
-            color: c.name,
-            sortOrder: ci,
-            isPrimary: ci === 0,
+          // Gallery of uploaded photos, tagged to the primary colour (the
+          // product view falls back to all images for other colours).
+          create: data.images.map((url, i) => ({
+            url: url.trim(),
+            alt: `${data.name.trim()} — ${data.colors[0].name}`,
+            color: data.colors[0].name,
+            sortOrder: i,
+            isPrimary: i === 0,
           })),
         },
         variants: {

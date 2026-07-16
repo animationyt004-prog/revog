@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { MailerModule } from './common/mailer/mailer.module';
+import { StorageModule } from './common/storage/storage.module';
 import { RedisModule } from './common/redis/redis.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,6 +22,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     PrismaModule,
     RedisModule,
     MailerModule,
+    StorageModule,
     AdminModule,
     AuthModule,
     CartModule,

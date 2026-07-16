@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,8 +8,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Badge, Fit, OrderStatus, ProductStatus, ReturnStatus, Size } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
@@ -30,6 +34,7 @@ import {
 } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles, RolesGuard } from '../auth/roles.guard';
+import { StorageService } from '../common/storage/storage.service';
 import { ReturnsService } from '../returns/returns.service';
 import { AdminService } from './admin.service';
 
@@ -130,8 +135,10 @@ class CreateProductDto {
   @Length(0, 120)
   fabric?: string;
 
-  @IsUrl({ require_protocol: true })
-  imageUrl!: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsUrl({ require_protocol: true }, { each: true })
+  images!: string[];
 
   @IsArray()
   @ArrayNotEmpty()
@@ -197,7 +204,21 @@ export class AdminController {
   constructor(
     private readonly admin: AdminService,
     private readonly returns: ReturnsService,
+    private readonly storage: StorageService,
   ) {}
+
+  // Image upload → R2 (admin only). Returns the public URL to store on the product.
+  @Post('upload')
+  @HttpCode(201)
+  @UseInterceptors(FileInterceptor('file'))
+  async upload(
+    @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number; originalname: string } | undefined,
+    @Query('folder') folder = 'misc',
+  ) {
+    if (!file) throw new BadRequestException('No file uploaded.');
+    const url = await this.storage.uploadImage(file, folder);
+    return { url };
+  }
 
   @Get('dashboard')
   dashboard() {
