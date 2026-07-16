@@ -5,16 +5,37 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { getCategories, getProducts } from "@/lib/api";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
-const ORG_JSON_LD = {
+// Organization + WebSite graph. WebSite's SearchAction enables Google's
+// sitelinks search box; Organization powers brand knowledge-panel data.
+const SITE_JSON_LD = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "REVOG",
-  url: SITE,
-  description:
-    "REVOG — Indian streetwear. Oversized tees, heavyweight hoodies, cargos and joggers.",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description:
+        "REVOG — premium Indian streetwear. Oversized tees, heavyweight hoodies, cargos and joggers.",
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ],
 };
 
 export default async function HomePage() {
@@ -29,7 +50,7 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
       />
       <PromoTicker />
       <Navbar />

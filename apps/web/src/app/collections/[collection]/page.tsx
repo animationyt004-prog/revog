@@ -48,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: meta ? `${meta.title} ${meta.accent}` : "Collection",
     description: meta?.blurb,
+    alternates: { canonical: `/collections/${collection}` },
   };
 }
 

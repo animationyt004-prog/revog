@@ -21,21 +21,52 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+// Absolute base for canonical + Open Graph URLs. Set NEXT_PUBLIC_SITE_URL to
+// the custom domain once live; falls back to the deployed Render URL (never
+// localhost in prod, which would poison Google's index).
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://revog-web.onrender.com";
+
+const DESCRIPTION =
+  "Oversized tees, heavyweight hoodies, cargos and joggers. Premium Indian streetwear built for after hours. Free shipping over ₹999. Cash on Delivery available.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "REVOG — Streetwear Without Permission",
+    default: "REVOG — Premium Indian Streetwear | Oversized Tees & Hoodies",
     template: "%s | REVOG",
   },
-  description:
-    "Oversized tees, heavyweight hoodies, cargos and joggers. Indian streetwear built for after hours. Free shipping over ₹999. COD available.",
+  description: DESCRIPTION,
+  applicationName: "REVOG",
   keywords: [
-    "streetwear",
+    "streetwear india",
     "oversized t-shirts",
-    "hoodies",
-    "cargo pants",
-    "indian streetwear",
-    "no curfew",
+    "oversized tshirt men",
+    "drop shoulder tee",
+    "hoodies for men",
+    "cargo pants men",
+    "joggers",
+    "premium streetwear",
+    "REVOG",
   ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "REVOG",
+    title: "REVOG — Premium Indian Streetwear",
+    description: DESCRIPTION,
+    url: SITE_URL,
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "REVOG — Premium Indian Streetwear",
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
 };
 
 export default function RootLayout({
