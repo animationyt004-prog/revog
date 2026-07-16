@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { cn } from "@/lib/format";
+import { cn, sizeLabel } from "@/lib/format";
 import type { Facets, SortKey } from "@/lib/api";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
@@ -184,7 +184,7 @@ export function CatalogControls({
                               : "border-paper/30 hover:border-paper",
                           )}
                         >
-                          {s}
+                          {sizeLabel(s)}
                         </button>
                       );
                     })}

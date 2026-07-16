@@ -144,7 +144,7 @@ export class ProductsService {
       }
     }
 
-    const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+    const SIZE_ORDER = ['FREE_SIZE', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     return {
       sizes: [...sizes].sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b)),
       colors: [...colors].map(([name, hex]) => ({ name, hex })),

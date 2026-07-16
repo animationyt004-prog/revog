@@ -27,6 +27,7 @@ enum Gender {
 }
 
 enum Size {
+  FREE_SIZE
   XS
   S
   M

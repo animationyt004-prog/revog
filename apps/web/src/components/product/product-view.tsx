@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, Loader2, RotateCcw, Star, Truck } from "lucide-react";
-import { cn, formatPrice } from "@/lib/format";
+import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { pixelTrack } from "@/lib/pixel";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
 import { SizeGuideModal } from "./size-guide";
 
-const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+const SIZE_ORDER = ["FREE_SIZE", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 const BOTTOM_CATEGORIES = new Set(["cargos", "joggers"]);
 
 export function ProductView({ product }: { product: ProductDetail }) {
@@ -67,6 +67,13 @@ export function ProductView({ product }: { product: ProductDetail }) {
   const price = selectedVariant?.priceOverride ?? product.price;
   const discount =
     product.mrp > price ? Math.round((1 - price / product.mrp) * 100) : 0;
+
+  // Single-size products (e.g. free-size sarees): pre-select automatically
+  // so the customer never has to "choose" a size that isn't a choice.
+  useEffect(() => {
+    const inStock = sizesForColor.filter((v) => v.stock > 0);
+    if (inStock.length === 1) setSize(inStock[0].size);
+  }, [sizesForColor]);
 
   function pickColor(name: string) {
     setColor(name);
@@ -212,13 +219,13 @@ export function ProductView({ product }: { product: ProductDetail }) {
                     "cursor-not-allowed border-paper/10 text-paper/25 line-through hover:border-paper/10",
                 )}
               >
-                {v.size}
+                {sizeLabel(v.size)}
               </button>
             ))}
           </div>
           {selectedVariant && selectedVariant.stock <= 5 && (
             <p className="mt-2 text-xs font-semibold text-blood">
-              Hurry — only {selectedVariant.stock} left in {color} / {size}
+              Hurry — only {selectedVariant.stock} left in {color} / {sizeLabel(size ?? "")}
             </p>
           )}
         </div>

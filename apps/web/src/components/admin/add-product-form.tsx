@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
-import { cn } from "@/lib/format";
+import { cn, sizeLabel } from "@/lib/format";
 import type { CategoryData } from "@/lib/types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
@@ -12,7 +12,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 const MARKUP = 200;
 
 const FITS = ["OVERSIZED", "REGULAR", "RELAXED", "SLIM", "BAGGY"];
-const SIZES = ["S", "M", "L", "XL", "XXL"];
+const SIZES = ["FREE_SIZE", "S", "M", "L", "XL", "XXL"];
 const BADGES = ["NEW", "TRENDING", "LIMITED", "BESTSELLER", "SALE"];
 
 interface Props {
@@ -291,7 +291,7 @@ export function AddProductForm({ onCreated, onClose }: Props) {
           <div className="flex flex-wrap gap-1.5">
             {SIZES.map((s) => (
               <button
-                key={s}
+                key={sizeLabel(s)}
                 onClick={() => toggle(sizes, s, setSizes)}
                 className={cn(
                   "display border px-2.5 py-1.5 text-sm",

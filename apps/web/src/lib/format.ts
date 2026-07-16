@@ -15,3 +15,8 @@ const inr = new Intl.NumberFormat("en-IN", {
 export function formatPrice(paise: number): string {
   return inr.format(paise / 100);
 }
+
+/** Human label for a size enum value ("FREE_SIZE" -> "Free Size"). */
+export function sizeLabel(size: string): string {
+  return size === "FREE_SIZE" ? "Free Size" : size;
+}

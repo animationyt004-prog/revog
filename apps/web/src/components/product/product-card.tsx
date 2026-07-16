@@ -4,12 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Heart, Loader2, Plus, Star } from "lucide-react";
-import { cn, formatPrice } from "@/lib/format";
+import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { useWishlist } from "@/lib/wishlist-store";
 import type { BadgeType, ProductCardData } from "@/lib/types";
 
-const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+const SIZE_ORDER = ["FREE_SIZE", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
 const BADGE_STYLES: Record<BadgeType, string> = {
   SALE: "bg-blood text-paper",
@@ -147,7 +147,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                     {addingId === v.id ? (
                       <Loader2 size={14} className="mx-auto animate-spin" />
                     ) : (
-                      v.size
+                      sizeLabel(v.size)
                     )}
                   </button>
                 ))}
