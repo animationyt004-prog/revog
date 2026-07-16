@@ -5,10 +5,15 @@
 FROM node:22-alpine AS builder
 WORKDIR /repo
 
-# Install with the workspace-aware lockfile.
+# Install the FULL monorepo from the lockfile. Copying every workspace's
+# package.json + a plain `npm ci` is bulletproof against workspace-filter
+# resolution quirks (a filtered `--workspace apps/api` install kept silently
+# dropping deps like @aws-sdk/client-s3). Web deps come along too — a slightly
+# bigger builder image, but a reliable one.
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
-RUN npm ci --workspace apps/api --include-workspace-root=false
+COPY apps/web/package.json apps/web/
+RUN npm ci
 
 COPY apps/api apps/api
 RUN cd apps/api \
