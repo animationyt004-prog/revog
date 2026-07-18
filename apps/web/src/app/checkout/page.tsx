@@ -54,6 +54,8 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
   const [saved, setSaved] = useState<AddressData[]>([]);
+  // Online payment stays hidden until it's been tested and switched on.
+  const onlinePaymentEnabled = process.env.NEXT_PUBLIC_ENABLE_ONLINE_PAYMENT === "true";
   const [method, setMethod] = useState<"COD" | "RAZORPAY">("COD");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -318,22 +320,24 @@ export default function CheckoutPage() {
             <section className="mt-8">
               <h2 className="display mb-3 text-2xl">3. Payment</h2>
               <div className="max-w-md space-y-2">
-                <label
-                  className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
-                    method === "RAZORPAY" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={method === "RAZORPAY"}
-                    onChange={() => setMethod("RAZORPAY")}
-                    className="accent-volt"
-                  />
-                  <CreditCard size={18} className={method === "RAZORPAY" ? "text-volt" : ""} />
-                  <span className="text-sm font-semibold">UPI / Cards / Wallets</span>
-                  <span className="ml-auto text-xs text-paper-dim">Pay now, securely</span>
-                </label>
+                {onlinePaymentEnabled && (
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
+                      method === "RAZORPAY" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={method === "RAZORPAY"}
+                      onChange={() => setMethod("RAZORPAY")}
+                      className="accent-volt"
+                    />
+                    <CreditCard size={18} className={method === "RAZORPAY" ? "text-volt" : ""} />
+                    <span className="text-sm font-semibold">UPI / Cards / Wallets</span>
+                    <span className="ml-auto text-xs text-paper-dim">Pay now, securely</span>
+                  </label>
+                )}
                 <label
                   className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
                     method === "COD" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
