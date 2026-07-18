@@ -21,7 +21,8 @@
     "db:seed": "prisma db seed",
     "db:import:apple-sarees": "ts-node prisma/import-apple-sarees.ts",
     "db:fix:apple-saree-images": "ts-node prisma/fix-apple-saree-images.ts",
-    "db:host:apple-saree-images": "ts-node prisma/host-apple-saree-images.ts"
+    "db:host:apple-saree-images": "ts-node prisma/host-apple-saree-images.ts",
+    "db:fix:apple-saree-colors": "ts-node prisma/fix-apple-saree-colors.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
