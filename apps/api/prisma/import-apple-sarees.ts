@@ -135,9 +135,11 @@ async function ensureSareeCategory(): Promise<string> {
 async function upsertProduct(item: AppleSaree, categoryId: string): Promise<void> {
   const price = retailPrice(item.sourcePrice);
   const mrp = price + 300;
+  // Customer-facing copy only — never expose source cost or markup. Rich,
+  // per-product descriptions are set by fix-apple-saree-descriptions.ts.
   const description =
-    `${item.name}. Fabric: ${item.fabric}. Source cost was Rs ${item.sourcePrice}; ` +
-    `REVOG selling price includes a Rs ${MARKUP_RUPEES} service margin.`;
+    `${item.name}. A ${item.fabric.toLowerCase()} saree with a soft, easy drape, ` +
+    `finished with a matching unstitched blouse piece. Ready for festive days and celebrations.`;
 
   await prisma.product.upsert({
     where: { slug: item.slug },
