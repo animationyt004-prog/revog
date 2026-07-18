@@ -1,9 +1,10 @@
 /**
  * Host Apple Saree catalog images on our own Cloudflare R2 bucket.
  *
- * Downloads each supplier image once, uploads it to R2 (so we never hot-link
- * the supplier's CDN — no bandwidth theft, links never break), then points the
- * product's primary image at the R2 URL.
+ * Each product gets its OWN distinct hero shot (sourced from the matching
+ * textileexport product page's og:image). We download once, upload to R2 —
+ * so we never hot-link the supplier CDN (no bandwidth theft, links never
+ * break) — then point the product's primary image at the R2 URL.
  *
  * Run once: `npm run db:host:apple-saree-images`
  */
@@ -13,29 +14,28 @@ import { randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
 
-// Supplier source photos, per product slug. Some collections legitimately share
-// a hero shot; we dedupe downloads by URL below.
+// Distinct supplier source photo per product slug (one image per saree).
 const imageBySlug: Record<string, string> = {
-  'apple-harmony-vol-2-organza-printed-designer-saree':
-    'https://imgbook.textileexport.in/imgbook/product/o/20260211/1770807231373973196.jpeg',
-  'apple-laila-vol-1-organza-digital-printed-saree-collection':
-    'https://textile-export.b-cdn.net/images/800/20251114/176310664064474350.jpeg',
-  'apple-womaniya-34-bhagalpuri-silk-printed-saree-collection':
-    'https://textile-export.b-cdn.net/images/800/20250616/17500513561908341979.jpeg',
-  'apple-womaniya-35-traditional-wear-bhagalpuri-silk-saree-collection':
-    'https://textile-export.b-cdn.net/images/800/20250616/17500659682123787303.jpeg',
-  'apple-womaniya-vol-28-bhagalpuri-printed-silk-saree-collection':
-    'https://data.bhawanitextile.com/images/product/sub_images/2023/10/apple-womaniya-vol-28-series-2801-2812-bhagalpuri-silk-saree-0-2023-10-05_18_27_47.jpeg',
-  'apple-womaniya-32-bhagalpuri-silk-printed-saree-collection':
-    'https://textile-export.b-cdn.net/images/800/20250616/17500513561908341979.jpeg',
-  'apple-nitya-silk-12-bhagalpuri-silk-printed-saree-collection':
-    'https://textile-export.b-cdn.net/images/800/20251114/176310664064474350.jpeg',
-  'apple-indigo-vol-2-printed-bhagalpuri-silk-saree-collection':
-    'https://data.bhawanitextile.com/images/product/sub_images/2023/10/apple-womaniya-vol-28-series-2801-2812-bhagalpuri-silk-saree-0-2023-10-05_18_27_47.jpeg',
   'apple-feelmax-vol-1-printed-japan-satin-saree':
-    'https://imgbook.textileexport.in/imgbook/product/o/20260211/1770807231373973196.jpeg',
+    'https://textile-export.b-cdn.net/images/800/168654583850485190-106.jpg',
+  'apple-harmony-vol-2-organza-printed-designer-saree':
+    'https://imgbook.textileexport.in/imgbook/product/o/20260211/1770807224177039552.jpeg',
+  'apple-laila-vol-1-organza-digital-printed-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/20251114/1763106634466551795.jpeg',
+  'apple-womaniya-34-bhagalpuri-silk-printed-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/20250613/17498183891775626129.jpeg',
+  'apple-womaniya-32-bhagalpuri-silk-printed-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/1720181761944575466-32WOM32908.jpg',
+  'apple-womaniya-35-traditional-wear-bhagalpuri-silk-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/20250616/17500659611667374900.jpeg',
+  'apple-nitya-silk-12-bhagalpuri-silk-printed-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/17175647241006238711-12NTYA1204.jpg',
+  'apple-womaniya-vol-28-bhagalpuri-printed-silk-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/16962249411397683025-28WOM28905jpg.jpg',
+  'apple-indigo-vol-2-printed-bhagalpuri-silk-saree-collection':
+    'https://textile-export.b-cdn.net/images/800/16849050921269459668-WhatsApp Image 2023-05-20 at 16.52.28.jpeg',
   'apple-3-gorgeous-party-wear-georgette-saree-collection':
-    'https://textile-export.b-cdn.net/images/800/20250616/17500659682123787303.jpeg',
+    'https://textile-export.b-cdn.net/images/800/20250108/17363376481731218659-WhatsApp Image 2024-12-27 at 17.36.04 (1).jpeg',
 };
 
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
@@ -57,13 +57,11 @@ function r2Client(): { client: S3Client; bucket: string; publicUrl: string } {
 }
 
 /** Download a supplier image and push it to R2, returning the public R2 URL. */
-async function mirrorToR2(
-  sourceUrl: string,
-  r2: ReturnType<typeof r2Client>,
-): Promise<string> {
-  const res = await fetch(sourceUrl, {
+async function mirrorToR2(sourceUrl: string, r2: ReturnType<typeof r2Client>): Promise<string> {
+  // Some source URLs contain spaces / parens — encode the path safely.
+  const safeUrl = encodeURI(sourceUrl);
+  const res = await fetch(safeUrl, {
     headers: {
-      // Some CDNs 403 requests without a browser-like UA / referer.
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
       Accept: 'image/avif,image/webp,image/*,*/*;q=0.8',
@@ -93,16 +91,11 @@ async function mirrorToR2(
 async function main(): Promise<void> {
   const r2 = r2Client();
 
-  // Dedupe: download+upload each distinct source URL only once.
-  const cache = new Map<string, string>();
-  const getR2Url = async (src: string): Promise<string> => {
-    const hit = cache.get(src);
-    if (hit) return hit;
-    const url = await mirrorToR2(src, r2);
-    cache.set(src, url);
-    console.log(`  mirrored ${src.slice(0, 55)}... -> R2`);
-    return url;
-  };
+  // Guard against silently re-introducing duplicates.
+  const uniqueSources = new Set(Object.values(imageBySlug));
+  if (uniqueSources.size !== Object.keys(imageBySlug).length) {
+    throw new Error(`Source list has duplicate image URLs (${uniqueSources.size} unique of ${Object.keys(imageBySlug).length}).`);
+  }
 
   let ok = 0;
   let failed = 0;
@@ -114,7 +107,7 @@ async function main(): Promise<void> {
       continue;
     }
     try {
-      const r2Url = await getR2Url(sourceUrl);
+      const r2Url = await mirrorToR2(sourceUrl, r2);
       await prisma.$transaction([
         prisma.productImage.deleteMany({ where: { productId: product.id } }),
         prisma.productImage.create({
@@ -136,7 +129,7 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`\nDone. hosted=${ok} failed=${failed}, unique images=${cache.size}`);
+  console.log(`\nDone. hosted=${ok} failed=${failed}, unique sources=${uniqueSources.size}`);
 }
 
 main()
