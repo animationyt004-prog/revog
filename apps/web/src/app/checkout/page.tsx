@@ -11,6 +11,7 @@ import { authedFetch, useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
 import { cn, formatPrice } from "@/lib/format";
 import { pixelTrack } from "@/lib/pixel";
+import { openRazorpay, type RazorpaySession } from "@/lib/razorpay";
 import type { AddressData } from "@/lib/types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
@@ -53,6 +54,7 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
   const [saved, setSaved] = useState<AddressData[]>([]);
+  const [method, setMethod] = useState<"COD" | "RAZORPAY">("COD");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,7 +119,7 @@ export default function CheckoutPage() {
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
-          paymentMethod: "COD",
+          paymentMethod: method,
           email,
           address: { ...address, line2: address.line2 || undefined },
         }),
@@ -128,9 +130,66 @@ export default function CheckoutPage() {
           Array.isArray(data.message) ? data.message[0] : (data.message ?? "Could not place order."),
         );
       }
-      const order = (await res.json()) as { orderNumber: string };
-      await fetchCart(); // now empty
-      router.replace(`/order/${order.orderNumber}?email=${encodeURIComponent(email)}`);
+      const order = (await res.json()) as {
+        orderNumber: string;
+        razorpay: RazorpaySession | null;
+      };
+
+      // COD confirms server-side already — straight to the receipt.
+      if (method === "COD" || !order.razorpay) {
+        await fetchCart();
+        router.replace(`/order/${order.orderNumber}?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
+      // Online: order is PENDING until Razorpay's signature is verified.
+      const outcome = await openRazorpay(order.razorpay, {
+        email,
+        contact: address.phone,
+        name: address.fullName,
+      });
+
+      if (outcome.kind === "success") {
+        const verify = await fetch(`${API}/payments/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderNumber: order.orderNumber,
+            razorpayOrderId: outcome.payload.razorpay_order_id,
+            razorpayPaymentId: outcome.payload.razorpay_payment_id,
+            razorpaySignature: outcome.payload.razorpay_signature,
+          }),
+        });
+        if (!verify.ok) {
+          throw new Error(
+            "Payment taken but verification failed. Don't retry — contact us with order " +
+              order.orderNumber,
+          );
+        }
+        await fetchCart();
+        router.replace(`/order/${order.orderNumber}?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
+      // Dismissed or failed: tell the API so the attempt is recorded, and let
+      // the customer retry from the pending order.
+      await fetch(`${API}/payments/failed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderNumber: order.orderNumber,
+          email,
+          reason: outcome.kind === "failed" ? outcome.reason : "Payment window closed",
+        }),
+      }).catch(() => undefined);
+
+      await fetchCart();
+      setError(
+        outcome.kind === "failed"
+          ? `${outcome.reason} — order ${order.orderNumber} is saved, you can retry payment.`
+          : `Payment cancelled. Order ${order.orderNumber} is saved — retry from My Orders, or pick Cash on Delivery.`,
+      );
+      setPlacing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not place order.");
       setPlacing(false);
@@ -259,18 +318,38 @@ export default function CheckoutPage() {
             <section className="mt-8">
               <h2 className="display mb-3 text-2xl">3. Payment</h2>
               <div className="max-w-md space-y-2">
-                <label className="flex cursor-pointer items-center gap-3 border border-volt bg-volt/10 p-3.5">
-                  <input type="radio" checked readOnly className="accent-volt" />
-                  <Banknote size={18} className="text-volt" />
+                <label
+                  className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
+                    method === "RAZORPAY" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={method === "RAZORPAY"}
+                    onChange={() => setMethod("RAZORPAY")}
+                    className="accent-volt"
+                  />
+                  <CreditCard size={18} className={method === "RAZORPAY" ? "text-volt" : ""} />
+                  <span className="text-sm font-semibold">UPI / Cards / Wallets</span>
+                  <span className="ml-auto text-xs text-paper-dim">Pay now, securely</span>
+                </label>
+                <label
+                  className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
+                    method === "COD" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={method === "COD"}
+                    onChange={() => setMethod("COD")}
+                    className="accent-volt"
+                  />
+                  <Banknote size={18} className={method === "COD" ? "text-volt" : ""} />
                   <span className="text-sm font-semibold">Cash on Delivery</span>
                   <span className="ml-auto text-xs text-paper-dim">Pay at your door</span>
                 </label>
-                <div className="flex items-center gap-3 border border-paper/15 p-3.5 opacity-50">
-                  <input type="radio" disabled />
-                  <CreditCard size={18} />
-                  <span className="text-sm">UPI / Cards / Wallets</span>
-                  <span className="ml-auto text-xs">Coming soon</span>
-                </div>
               </div>
             </section>
           </motion.div>
@@ -337,7 +416,13 @@ export default function CheckoutPage() {
                   : "cursor-not-allowed bg-ink-3 text-paper-dim",
               )}
             >
-              {placing ? <Loader2 size={20} className="animate-spin" /> : "Place COD Order"}
+              {placing ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : method === "RAZORPAY" ? (
+                cart ? `Pay ${formatPrice(cart.summary.total)}` : "Pay Now"
+              ) : (
+                "Place COD Order"
+              )}
             </button>
             {error && (
               <p role="alert" className="mt-3 border border-blood/50 bg-blood/10 px-3 py-2 text-sm text-blood">
