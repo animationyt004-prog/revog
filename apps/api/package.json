@@ -18,12 +18,16 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:import:apple-sarees": "ts-node prisma/import-apple-sarees.ts",
+    "db:fix:apple-saree-images": "ts-node prisma/fix-apple-saree-images.ts",
+    "db:host:apple-saree-images": "ts-node prisma/host-apple-saree-images.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1087.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
