@@ -204,19 +204,70 @@ export class ProductsService {
     });
   }
 
+  /** Serviceability for any Indian pincode. We ship pan-India via courier, so
+   *  every valid pincode is serviceable + COD. Curated pincodes use their own
+   *  data; others are enriched with city/state from India Post when reachable. */
   async checkPincode(code: string) {
-    const pin = await this.prisma.pincode.findUnique({ where: { pincode: code } });
-    if (!pin) {
+    // Indian pincodes are 6 digits and never start with 0.
+    if (!/^[1-9][0-9]{5}$/.test(code)) {
       return { serviceable: false as const, pincode: code };
     }
+
+    // Curated pincodes: use their (possibly better) ETA/COD data.
+    const pin = await this.prisma.pincode.findUnique({ where: { pincode: code } });
+    if (pin) {
+      return {
+        serviceable: true as const,
+        pincode: pin.pincode,
+        city: pin.city,
+        state: pin.state,
+        codAvailable: pin.codAvailable,
+        etaMinDays: pin.etaMinDays,
+        etaMaxDays: pin.etaMaxDays,
+      };
+    }
+
+    // Enrich unknown pincodes with real city/state from India Post (free API).
+    // If it definitively says the pincode doesn't exist, mark not serviceable;
+    // if it's unreachable, still accept the order (don't block on our side).
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${code}`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as Array<{
+          Status: string;
+          PostOffice?: Array<{ District: string; State: string }>;
+        }>;
+        const entry = data?.[0];
+        const po = entry?.PostOffice?.[0];
+        if (entry?.Status === 'Success' && po) {
+          return {
+            serviceable: true as const,
+            pincode: code,
+            city: po.District,
+            state: po.State,
+            codAvailable: true,
+            etaMinDays: 3,
+            etaMaxDays: 7,
+          };
+        }
+        if (entry && entry.Status !== 'Success') {
+          return { serviceable: false as const, pincode: code };
+        }
+      }
+    } catch {
+      // Timeout / offline — fall through to a generic serviceable reply.
+    }
+
     return {
       serviceable: true as const,
-      pincode: pin.pincode,
-      city: pin.city,
-      state: pin.state,
-      codAvailable: pin.codAvailable,
-      etaMinDays: pin.etaMinDays,
-      etaMaxDays: pin.etaMaxDays,
+      pincode: code,
+      city: null,
+      state: null,
+      codAvailable: true,
+      etaMinDays: 3,
+      etaMaxDays: 7,
     };
   }
 

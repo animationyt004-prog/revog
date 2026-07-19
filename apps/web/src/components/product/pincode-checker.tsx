@@ -62,7 +62,9 @@ export function PincodeChecker() {
           {result.serviceable ? (
             <>
               <p className="font-semibold text-volt">
-                Delivers to {result.city}, {result.state}
+                {result.city && result.state
+                  ? `Delivers to ${result.city}, ${result.state}`
+                  : `Delivery available at ${result.pincode}`}
               </p>
               <p className="mt-0.5 text-xs text-paper-dim">
                 Arrives in {result.etaMinDays}–{result.etaMaxDays} days ·{" "}

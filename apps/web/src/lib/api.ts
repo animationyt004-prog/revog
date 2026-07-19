@@ -108,8 +108,8 @@ export function getRelated(slug: string): Promise<ProductCardData[]> {
 export interface PincodeResult {
   serviceable: boolean;
   pincode: string;
-  city?: string;
-  state?: string;
+  city?: string | null;
+  state?: string | null;
   codAvailable?: boolean;
   etaMinDays?: number;
   etaMaxDays?: number;
