@@ -295,13 +295,13 @@ model ProductVariant {
 // ---------------------------------------------------------------------------
 
 model Cart {
-  id        String   @id @default(cuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token      String  @unique // guest cookie token
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique // guest cookie token
   couponCode String? // applied coupon, validated on read + at checkout
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   items CartItem[]
 
@@ -519,5 +519,28 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// ANALYTICS: lightweight first-party funnel events (visits, views, add-to-cart)
+// ---------------------------------------------------------------------------
+
+enum AnalyticsEventType {
+  PAGE_VIEW
+  PRODUCT_VIEW
+  ADD_TO_CART
+}
+
+model AnalyticsEvent {
+  id        String             @id @default(cuid())
+  type      AnalyticsEventType
+  sessionId String
+  path      String?
+  productId String?
+  createdAt DateTime           @default(now())
+
+  @@index([type, createdAt])
+  @@index([sessionId])
   @@index([createdAt])
 }

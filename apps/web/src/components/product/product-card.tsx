@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Heart, Loader2, Plus, Star } from "lucide-react";
 import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
+import { track } from "@/lib/track";
 import { useWishlist } from "@/lib/wishlist-store";
 import type { BadgeType, ProductCardData } from "@/lib/types";
 
@@ -46,6 +47,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   function quickAdd(variantId: string) {
     setAddingId(variantId);
     addItem(variantId)
+      .then(() => track("ADD_TO_CART", { productId: product.id }))
       .catch(() => undefined)
       .finally(() => {
         setAddingId(null);

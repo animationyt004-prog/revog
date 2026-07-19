@@ -8,6 +8,7 @@ import { ChevronRight, Loader2, RotateCcw, Star, Truck } from "lucide-react";
 import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { pixelTrack } from "@/lib/pixel";
+import { track } from "@/lib/track";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
 import { SizeGuideModal } from "./size-guide";
@@ -47,7 +48,9 @@ export function ProductView({ product }: { product: ProductDetail }) {
       value: product.price / 100,
       currency: "INR",
     });
-  }, [product.slug, product.name, product.price]);
+    // First-party analytics: product view.
+    track("PRODUCT_VIEW", { productId: product.id });
+  }, [product.slug, product.name, product.price, product.id]);
 
   const galleryImages = useMemo(() => {
     const forColor = product.images.filter((i) => i.color === color);
@@ -236,7 +239,10 @@ export function ProductView({ product }: { product: ProductDetail }) {
             setAdding(true);
             setCartError(null);
             addItem(selectedVariant.id)
-              .then(() => setAdded(true))
+              .then(() => {
+                setAdded(true);
+                track("ADD_TO_CART", { productId: product.id });
+              })
               .catch((e) =>
                 setCartError(e instanceof Error ? e.message : "Could not add to cart."),
               )

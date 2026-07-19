@@ -5,6 +5,7 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
 import { MetaPixel } from "@/components/meta-pixel";
 import { GoogleAds } from "@/components/google-ads";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
 const anton = Anton({
@@ -93,6 +94,7 @@ export default function RootLayout({
         </AuthProvider>
         <MetaPixel />
         <GoogleAds />
+        <AnalyticsTracker />
       </body>
     </html>
   );

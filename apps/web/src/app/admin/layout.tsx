@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
   ArrowLeft,
+  BarChart3,
   LayoutDashboard,
   Loader2,
   Package,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/format";
 
 const NAV = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Traffic", href: "/admin/analytics", icon: BarChart3 },
   { label: "Orders", href: "/admin/orders", icon: Package },
   { label: "Products", href: "/admin/products", icon: Shirt },
   { label: "Returns", href: "/admin/returns", icon: RotateCcw },
