@@ -1,9 +1,11 @@
 const NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+/** Obvious dummy values we must never link to — a dead chat is worse than none. */
+const PLACEHOLDERS = new Set(["919999999999", "9999999999", "911234567890", "1234567890"]);
 
 /** Floating WhatsApp chat link — standard trust signal for Indian D2C.
- *  Renders nothing until NEXT_PUBLIC_WHATSAPP_NUMBER is set. */
+ *  Renders nothing until a real NEXT_PUBLIC_WHATSAPP_NUMBER is set. */
 export function WhatsAppButton() {
-  if (!NUMBER) return null;
+  if (!NUMBER || PLACEHOLDERS.has(NUMBER)) return null;
   const href = `https://wa.me/${NUMBER}?text=${encodeURIComponent("Hi REVOG! I have a question about my order.")}`;
   return (
     <a

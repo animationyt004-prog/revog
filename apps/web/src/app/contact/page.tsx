@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { PageShell, PolicySection } from "@/components/layout/page-shell";
-import { BUSINESS, formattedAddress, formattedPhone, whatsappLink } from "@/lib/business";
+import {
+  BUSINESS,
+  CONTACT_INCOMPLETE,
+  formattedAddress,
+  formattedPhone,
+  whatsappLink,
+} from "@/lib/business";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -18,18 +24,20 @@ export default function ContactPage() {
       intro="Order help, returns, sizing or anything else — we're happy to help."
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <a
-          href={whatsappLink("Hi REVOG! I have a question about my order.")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
-        >
-          <MessageCircle size={18} className="mt-0.5 shrink-0 text-volt" />
-          <span>
-            <span className="block font-semibold text-paper">WhatsApp</span>
-            <span className="text-xs">Fastest — chat with us</span>
-          </span>
-        </a>
+        {!CONTACT_INCOMPLETE && (
+          <a
+            href={whatsappLink("Hi REVOG! I have a question about my order.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
+          >
+            <MessageCircle size={18} className="mt-0.5 shrink-0 text-volt" />
+            <span>
+              <span className="block font-semibold text-paper">WhatsApp</span>
+              <span className="text-xs">Fastest — chat with us</span>
+            </span>
+          </a>
+        )}
 
         <a
           href={`mailto:${BUSINESS.email}`}
@@ -42,16 +50,18 @@ export default function ContactPage() {
           </span>
         </a>
 
-        <a
-          href={`tel:+${BUSINESS.phone}`}
-          className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
-        >
-          <Phone size={18} className="mt-0.5 shrink-0 text-volt" />
-          <span>
-            <span className="block font-semibold text-paper">Phone</span>
-            <span className="text-xs">{formattedPhone()}</span>
-          </span>
-        </a>
+        {!CONTACT_INCOMPLETE && (
+          <a
+            href={`tel:+${BUSINESS.phone}`}
+            className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
+          >
+            <Phone size={18} className="mt-0.5 shrink-0 text-volt" />
+            <span>
+              <span className="block font-semibold text-paper">Phone</span>
+              <span className="text-xs">{formattedPhone()}</span>
+            </span>
+          </a>
+        )}
 
         <div className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4">
           <Clock size={18} className="mt-0.5 shrink-0 text-volt" />
@@ -62,16 +72,18 @@ export default function ContactPage() {
         </div>
       </div>
 
-      <PolicySection heading="Business address">
-        <p className="flex items-start gap-2">
-          <MapPin size={16} className="mt-0.5 shrink-0 text-volt" />
-          <span>
-            {BUSINESS.legalName}
-            <br />
-            {formattedAddress()}
-          </span>
-        </p>
-      </PolicySection>
+      {!CONTACT_INCOMPLETE && (
+        <PolicySection heading="Business address">
+          <p className="flex items-start gap-2">
+            <MapPin size={16} className="mt-0.5 shrink-0 text-volt" />
+            <span>
+              {BUSINESS.legalName}
+              <br />
+              {formattedAddress()}
+            </span>
+          </p>
+        </PolicySection>
+      )}
 
       <PolicySection heading="Order & return help">
         <p>
