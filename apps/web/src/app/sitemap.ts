@@ -15,6 +15,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily" as const,
       priority: 0.9,
     })),
+    // Trust / info pages — required reading for shoppers and payment gateways.
+    ...[
+      "about",
+      "contact",
+      "size-guide",
+      "policies/shipping",
+      "policies/returns",
+      "policies/privacy",
+      "policies/terms",
+    ].map((p) => ({
+      url: `${SITE}/${p}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+    })),
   ];
 
   return [
