@@ -8,18 +8,28 @@ const API_BASE =
     : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api");
 
 async function get<T>(path: string, fallback: T): Promise<T> {
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      // ISR: cached at the edge, refreshed every 60s.
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return fallback;
-    return (await res.json()) as T;
-  } catch {
-    // API down (e.g. during dev restarts) — render the page with empty
-    // sections instead of crashing the storefront.
-    return fallback;
+  // One retry smooths over blips (API restarts, transient network).
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        // ISR: cached at the edge, refreshed every 60s.
+        next: { revalidate: 60 },
+      });
+      if (res.ok) return (await res.json()) as T;
+    } catch {
+      // fall through to retry / failure handling
+    }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 1500));
   }
+
+  // On the SERVER we throw instead of returning empty data: a failed ISR
+  // revalidation then keeps serving the last good cached page, instead of
+  // caching an empty "Nothing matches" storefront while the API is down
+  // (which is exactly what happened during a slow API deploy).
+  if (typeof window === "undefined") {
+    throw new Error(`API unavailable: ${path}`);
+  }
+  return fallback;
 }
 
 export type Collection = "new" | "trending" | "limited" | "bestsellers";
