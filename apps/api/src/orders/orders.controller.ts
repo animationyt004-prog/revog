@@ -25,6 +25,7 @@ import type { Request } from 'express';
 import { CurrentUser, JwtAuthGuard, type JwtPayload } from '../auth/jwt-auth.guard';
 import { CART_COOKIE } from '../cart/cart.controller';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { CodOtpService } from '../cod-otp/cod-otp.service';
 import { AddressDto } from './addresses.controller';
 import { OrdersService } from './orders.service';
 
@@ -46,6 +47,11 @@ class CheckoutDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address?: AddressDto;
+
+  /** Short-lived token proving the buyer's phone was OTP-verified (COD). */
+  @IsOptional()
+  @IsString()
+  codVerifyToken?: string;
 }
 
 @Controller('orders')
@@ -55,6 +61,7 @@ export class OrdersController {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly codOtp: CodOtpService,
   ) {}
 
   private async optionalUser(req: Request): Promise<JwtPayload | null> {
@@ -100,6 +107,15 @@ export class OrdersController {
       };
     }
     if (!address) throw new BadRequestException('Shipping address is required.');
+
+    // When SMS verification is enabled, COD orders must carry a valid,
+    // phone-matched OTP token — this is what cuts fake/RTO-prone COD orders.
+    if (dto.paymentMethod === 'COD' && this.codOtp.enabled) {
+      const verified = await this.codOtp.isPhoneVerified(dto.codVerifyToken, address.phone);
+      if (!verified) {
+        throw new BadRequestException('Please verify your mobile number to place a COD order.');
+      }
+    }
 
     const order = await this.orders.checkout({
       cartToken,

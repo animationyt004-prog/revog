@@ -9,6 +9,7 @@ import { RedisModule } from './common/redis/redis.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
+import { CodOtpModule } from './cod-otp/cod-otp.module';
 import { EventsModule } from './events/events.module';
 import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
@@ -27,6 +28,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     AdminModule,
     AuthModule,
     CartModule,
+    CodOtpModule,
     EventsModule,
     OrdersModule,
     PaymentsModule,

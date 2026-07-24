@@ -60,9 +60,76 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // COD phone verification (only when the API has SMS OTP enabled).
+  const [codOtpEnabled, setCodOtpEnabled] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [codToken, setCodToken] = useState<string | null>(null);
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+
   useEffect(() => {
     if (user?.email) setEmail(user.email);
   }, [user?.email]);
+
+  useEffect(() => {
+    fetch(`${API}/cod-otp/status`)
+      .then((r) => (r.ok ? r.json() : { enabled: false }))
+      .then((d: { enabled: boolean }) => setCodOtpEnabled(!!d.enabled))
+      .catch(() => setCodOtpEnabled(false));
+  }, []);
+
+  // A changed phone invalidates a prior verification.
+  useEffect(() => {
+    setCodToken(null);
+    setOtpSent(false);
+    setOtpCode("");
+  }, [address.phone]);
+
+  const phoneOk = /^[6-9]\d{9}$/.test(address.phone);
+  const codNeedsOtp = method === "COD" && codOtpEnabled && !codToken;
+
+  async function sendCodOtp() {
+    if (!phoneOk || otpBusy) return;
+    setOtpBusy(true);
+    setOtpError(null);
+    try {
+      const res = await fetch(`${API}/cod-otp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: address.phone }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(d.message ?? "Could not send OTP.");
+      }
+      setOtpSent(true);
+    } catch (e) {
+      setOtpError(e instanceof Error ? e.message : "Could not send OTP.");
+    } finally {
+      setOtpBusy(false);
+    }
+  }
+
+  async function verifyCodOtp() {
+    if (otpCode.length < 4 || otpBusy) return;
+    setOtpBusy(true);
+    setOtpError(null);
+    try {
+      const res = await fetch(`${API}/cod-otp/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: address.phone, code: otpCode }),
+      });
+      const d = (await res.json().catch(() => ({}))) as { token?: string; message?: string };
+      if (!res.ok || !d.token) throw new Error(d.message ?? "Incorrect OTP.");
+      setCodToken(d.token);
+    } catch (e) {
+      setOtpError(e instanceof Error ? e.message : "Incorrect OTP.");
+    } finally {
+      setOtpBusy(false);
+    }
+  }
 
   // Meta Pixel: checkout started (fires once when the cart is known).
   const cartTotal = cart?.summary.total;
@@ -124,6 +191,7 @@ export default function CheckoutPage() {
           paymentMethod: method,
           email,
           address: { ...address, line2: address.line2 || undefined },
+          ...(method === "COD" && codToken ? { codVerifyToken: codToken } : {}),
         }),
       });
       if (!res.ok) {
@@ -355,6 +423,74 @@ export default function CheckoutPage() {
                   <span className="ml-auto text-xs text-paper-dim">Pay at your door</span>
                 </label>
               </div>
+
+              {/* COD phone verification */}
+              {method === "COD" && codOtpEnabled && (
+                <div className="mt-3 max-w-md border border-paper/15 bg-ink-2 p-3.5">
+                  {codToken ? (
+                    <p className="flex items-center gap-2 text-sm font-semibold text-volt">
+                      <span aria-hidden>✓</span> Mobile number verified
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold">Verify your mobile for COD</p>
+                      <p className="mt-0.5 text-xs text-paper-dim">
+                        We&apos;ll send an OTP to {phoneOk ? `+91 ${address.phone}` : "your number"} to
+                        confirm this order.
+                      </p>
+                      {!otpSent ? (
+                        <button
+                          type="button"
+                          onClick={() => void sendCodOtp()}
+                          disabled={!phoneOk || otpBusy}
+                          className={cn(
+                            "mt-2.5 px-4 py-2 text-sm font-semibold transition-colors",
+                            phoneOk && !otpBusy
+                              ? "bg-paper text-ink hover:bg-volt"
+                              : "cursor-not-allowed bg-ink-3 text-paper-dim",
+                          )}
+                        >
+                          {otpBusy ? "Sending…" : "Send OTP"}
+                        </button>
+                      ) : (
+                        <div className="mt-2.5 flex gap-2">
+                          <input
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                            placeholder="Enter OTP"
+                            aria-label="OTP"
+                            className="w-32 border border-paper/25 bg-ink px-3 py-2 text-sm outline-none focus:border-volt"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void verifyCodOtp()}
+                            disabled={otpCode.length < 4 || otpBusy}
+                            className={cn(
+                              "px-4 py-2 text-sm font-semibold transition-colors",
+                              otpCode.length >= 4 && !otpBusy
+                                ? "bg-paper text-ink hover:bg-volt"
+                                : "cursor-not-allowed bg-ink-3 text-paper-dim",
+                            )}
+                          >
+                            Verify
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void sendCodOtp()}
+                            disabled={otpBusy}
+                            className="px-2 py-2 text-xs text-paper-dim underline underline-offset-2"
+                          >
+                            Resend
+                          </button>
+                        </div>
+                      )}
+                      {otpError && <p className="mt-2 text-xs text-blood">{otpError}</p>}
+                    </>
+                  )}
+                </div>
+              )}
             </section>
           </motion.div>
 
@@ -412,10 +548,10 @@ export default function CheckoutPage() {
 
             <button
               onClick={() => void placeOrder()}
-              disabled={!formOk || placing}
+              disabled={!formOk || placing || codNeedsOtp}
               className={cn(
                 "display mt-5 flex w-full items-center justify-center gap-2 py-4 text-xl transition-all",
-                formOk && !placing
+                formOk && !placing && !codNeedsOtp
                   ? "bg-volt text-ink hover:-translate-y-0.5"
                   : "cursor-not-allowed bg-ink-3 text-paper-dim",
               )}
