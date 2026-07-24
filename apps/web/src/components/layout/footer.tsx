@@ -40,8 +40,8 @@ export function Footer() {
               REVOG<span className="text-volt">.</span>
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-paper-dim">
-              Streetwear without permission. Designed and made in India, worn
-              after hours everywhere.
+              Festive sarees, curated in India. Effortless drapes and honest
+              pricing, delivered across the country.
             </p>
           </div>
           {COLUMNS.map((col) => (

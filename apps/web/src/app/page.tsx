@@ -18,7 +18,7 @@ const SITE_JSON_LD = {
       name: SITE_NAME,
       url: SITE_URL,
       description:
-        "REVOG — premium Indian streetwear. Oversized tees, heavyweight hoodies, cargos and joggers.",
+        "REVOG — festive sarees online in India. Printed silk, organza and georgette sarees with matching blouse piece, COD and easy returns.",
     },
     {
       "@type": "WebSite",
@@ -58,7 +58,7 @@ export default async function HomePage() {
         <Hero />
         <ProductSection
           title="New"
-          accent="Drops"
+          accent="Arrivals"
           href="/collections/new-arrivals"
           products={newDrops}
           layout="rail"

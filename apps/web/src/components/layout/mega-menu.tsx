@@ -58,7 +58,7 @@ export function MegaMenu() {
                   CATEGORIES
                 </p>
                 <ul className="space-y-1">
-                  {categories.map((c) => (
+                  {categories.filter((c) => c._count.products > 0).map((c) => (
                     <li key={c.id}>
                       <Link
                         href={`/category/${c.slug}`}

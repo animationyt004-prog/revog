@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Anton, Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
@@ -8,14 +8,14 @@ import { GoogleAds } from "@/components/google-ads";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
-const anton = Anton({
-  variable: "--font-anton",
-  weight: "400",
+const playfair = Playfair_Display({
+  variable: "--font-serif",
+  weight: ["500", "600", "700", "800"],
   subsets: ["latin"],
-  // Display font drives the (huge) LCP text: "optional" means first paint
-  // uses the size-matched fallback with no late swap repaint — Anton kicks
-  // in from cache on subsequent loads. Keeps mobile LCP fast.
-  display: "optional",
+  // Elegant serif for headings — the fashion/ethnic display face. "swap" so
+  // the LCP hero text paints immediately with a serif fallback, then Playfair
+  // swaps in without blocking render.
+  display: "swap",
 });
 
 const inter = Inter({
@@ -29,39 +29,40 @@ const inter = Inter({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://revog-web.onrender.com";
 
 const DESCRIPTION =
-  "Oversized tees, heavyweight hoodies, cargos and joggers. Premium Indian streetwear built for after hours. Free shipping over ₹999. Cash on Delivery available.";
+  "Shop festive sarees online at REVOG — printed silk, organza and georgette sarees with matching blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "REVOG — Premium Indian Streetwear | Oversized Tees & Hoodies",
+    default: "REVOG — Buy Sarees Online in India | Silk, Organza & Georgette",
     template: "%s | REVOG",
   },
   description: DESCRIPTION,
   applicationName: "REVOG",
   keywords: [
-    "streetwear india",
-    "oversized t-shirts",
-    "oversized tshirt men",
-    "drop shoulder tee",
-    "hoodies for men",
-    "cargo pants men",
-    "joggers",
-    "premium streetwear",
+    "sarees online",
+    "buy sarees online india",
+    "silk saree",
+    "organza saree",
+    "georgette saree",
+    "bhagalpuri silk saree",
+    "printed saree",
+    "party wear saree",
+    "festive saree",
     "REVOG",
   ],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "REVOG",
-    title: "REVOG — Premium Indian Streetwear",
+    title: "REVOG — Buy Sarees Online in India",
     description: DESCRIPTION,
     url: SITE_URL,
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "REVOG — Premium Indian Streetwear",
+    title: "REVOG — Buy Sarees Online in India",
     description: DESCRIPTION,
   },
   robots: {
@@ -82,7 +83,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${inter.variable} h-full antialiased`}
+      className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>

@@ -9,10 +9,10 @@ import { useCart } from "@/lib/cart-store";
 import { MegaMenu } from "./mega-menu";
 
 const NAV_LINKS = [
-  { label: "New Drops", href: "/collections/new-arrivals" },
-  { label: "Tees", href: "/category/oversized-tees" },
-  { label: "Hoodies", href: "/category/hoodies" },
-  { label: "Cargos", href: "/category/cargos" },
+  { label: "New In", href: "/collections/new-arrivals" },
+  { label: "All Sarees", href: "/category/sarees" },
+  { label: "Organza", href: "/category/sarees?fabrics=Organza" },
+  { label: "Silk", href: "/category/sarees?fabrics=Bhagalpuri+Silk" },
   { label: "Best Sellers", href: "/collections/bestsellers" },
 ];
 

@@ -5,7 +5,9 @@ import type { CategoryData } from "@/lib/types";
 
 /** Bold image tiles linking to each category. */
 export function CategoryTiles({ categories }: { categories: CategoryData[] }) {
-  if (categories.length === 0) return null;
+  // Only surface categories that actually have products — empties look broken.
+  const shown = categories.filter((c) => c._count.products > 0);
+  if (shown.length === 0) return null;
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
@@ -15,7 +17,7 @@ export function CategoryTiles({ categories }: { categories: CategoryData[] }) {
         </h2>
       </FadeUp>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-        {categories.map((cat, i) => (
+        {shown.map((cat, i) => (
           <FadeUp key={cat.id} delay={i * 0.06} className={i === 0 ? "col-span-2 lg:col-span-1" : ""}>
             <Link
               href={`/category/${cat.slug}`}
