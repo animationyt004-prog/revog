@@ -17,6 +17,8 @@ interface AdminOrder {
   paymentStatus: string;
   total: number;
   placedAt: string;
+  courier?: string | null;
+  trackingNumber?: string | null;
   addressSnapshot: {
     fullName: string;
     line1: string;
@@ -82,12 +84,23 @@ function OrdersInner() {
 
   async function advance(orderNumber: string, next: string) {
     if (next === "CANCELLED" && !confirm(`Cancel ${orderNumber}? Stock will be restored.`)) return;
+
+    // Shipping requires a tracking number so the customer can track the parcel.
+    let ship: Record<string, string> = {};
+    if (next === "SHIPPED") {
+      const trackingNumber = prompt(`Tracking number (AWB) for ${orderNumber}:`)?.trim();
+      if (!trackingNumber) return;
+      const courier = prompt("Courier name (e.g. Delhivery, DTDC, Bluedart):")?.trim() ?? "";
+      const trackingUrl = prompt("Tracking link (optional — paste the courier's track URL):")?.trim() ?? "";
+      ship = { courier, trackingNumber, trackingUrl };
+    }
+
     setActing(true);
     try {
       await authedFetch(`/admin/orders/${orderNumber}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
+        body: JSON.stringify({ status: next, ...ship }),
       });
       await load();
     } finally {
@@ -178,6 +191,11 @@ function OrdersInner() {
                         {o.addressSnapshot.line1}, {o.addressSnapshot.city} — {o.addressSnapshot.pincode} ·{" "}
                         {o.addressSnapshot.phone}
                       </p>
+                      {o.trackingNumber && (
+                        <p className="mt-1 text-xs font-semibold text-volt">
+                          Shipped · {o.courier || "courier"} · AWB {o.trackingNumber}
+                        </p>
+                      )}
                     </div>
 
                     <div>

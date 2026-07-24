@@ -128,7 +128,12 @@ export class AdminService {
     return order;
   }
 
-  async advanceOrder(orderNumber: string, status: OrderStatus, note?: string) {
+  async advanceOrder(
+    orderNumber: string,
+    status: OrderStatus,
+    note?: string,
+    tracking?: { courier?: string; trackingNumber?: string; trackingUrl?: string },
+  ) {
     const order = await this.prisma.order.findUnique({
       where: { orderNumber },
       include: { items: true },
@@ -141,6 +146,24 @@ export class AdminService {
         `Cannot move ${order.orderNumber} from ${order.status} to ${status}.`,
       );
     }
+
+    if (status === OrderStatus.SHIPPED && !tracking?.trackingNumber) {
+      throw new BadRequestException('A tracking number is required to mark an order as shipped.');
+    }
+
+    // Shipment details attach when shipping; a courier note enriches the timeline.
+    const shipData =
+      status === OrderStatus.SHIPPED
+        ? {
+            courier: tracking?.courier?.trim() || null,
+            trackingNumber: tracking?.trackingNumber?.trim() || null,
+            trackingUrl: tracking?.trackingUrl?.trim() || null,
+          }
+        : {};
+    const shipNote =
+      status === OrderStatus.SHIPPED && tracking?.trackingNumber
+        ? `Shipped via ${tracking.courier || 'courier'} · AWB ${tracking.trackingNumber}`
+        : undefined;
 
     return this.prisma.$transaction(async (tx) => {
       // Cancelling puts sold stock back on the shelf.
@@ -168,7 +191,8 @@ export class AdminService {
         data: {
           status,
           ...paymentPaid,
-          events: { create: { status, note: note ?? `Status updated to ${status}` } },
+          ...shipData,
+          events: { create: { status, note: note ?? shipNote ?? `Status updated to ${status}` } },
         },
         include: { items: true, events: { orderBy: { createdAt: 'asc' } }, payment: true },
       });

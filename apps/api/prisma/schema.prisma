@@ -347,6 +347,11 @@ model Order {
   couponCode      String?
   addressSnapshot Json // frozen copy of the shipping address at purchase time
 
+  // Shipment / tracking — set by admin when the order is marked SHIPPED.
+  courier        String?
+  trackingNumber String?
+  trackingUrl    String?
+
   placedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
 

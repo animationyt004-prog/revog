@@ -6,6 +6,7 @@ import { Banknote, CheckCircle2, MapPin, Package } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
+import { OrderTracking } from "@/components/order/order-tracking";
 import { PixelPurchase } from "@/components/order/pixel-purchase";
 import { ReturnRequest } from "@/components/order/return-request";
 import { formatPrice } from "@/lib/format";
@@ -65,6 +66,9 @@ export default async function OrderPage({ params, searchParams }: Props) {
             door.
           </p>
         </div>
+
+        {/* Order progress + courier tracking */}
+        <OrderTracking order={order} />
 
         {/* Items */}
         <section className="mt-8 border border-paper/10">

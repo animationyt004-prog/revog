@@ -67,6 +67,21 @@ class AdvanceOrderDto {
   @IsString()
   @Length(0, 300)
   note?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 60)
+  courier?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 80)
+  trackingNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  trackingUrl?: string;
 }
 
 class UpdateProductDto {
@@ -238,7 +253,11 @@ export class AdminController {
 
   @Patch('orders/:orderNumber/status')
   advance(@Param('orderNumber') orderNumber: string, @Body() dto: AdvanceOrderDto) {
-    return this.admin.advanceOrder(orderNumber, dto.status, dto.note);
+    return this.admin.advanceOrder(orderNumber, dto.status, dto.note, {
+      courier: dto.courier,
+      trackingNumber: dto.trackingNumber,
+      trackingUrl: dto.trackingUrl,
+    });
   }
 
   // Products

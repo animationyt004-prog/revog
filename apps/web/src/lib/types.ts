@@ -112,6 +112,9 @@ export interface OrderData {
   taxAmount: number;
   total: number;
   couponCode: string | null;
+  courier?: string | null;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
   addressSnapshot: {
     fullName: string;
     phone: string;
