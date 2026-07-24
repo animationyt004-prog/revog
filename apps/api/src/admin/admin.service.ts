@@ -147,11 +147,7 @@ export class AdminService {
       );
     }
 
-    if (status === OrderStatus.SHIPPED && !tracking?.trackingNumber) {
-      throw new BadRequestException('A tracking number is required to mark an order as shipped.');
-    }
-
-    // Shipment details attach when shipping; a courier note enriches the timeline.
+    // Shipment details attach when shipping (optional); a courier note enriches the timeline.
     const shipData =
       status === OrderStatus.SHIPPED
         ? {
