@@ -96,7 +96,11 @@ export function WelcomePopup() {
       onClick={dismiss}
     >
       <div
-        className="relative w-full max-w-3xl overflow-hidden bg-ink shadow-2xl sm:grid sm:grid-cols-2"
+        className="relative w-full max-w-3xl overflow-hidden border bg-ink sm:grid sm:grid-cols-2"
+        style={{
+          borderColor: "rgba(201,162,75,0.5)",
+          boxShadow: "0 25px 60px rgba(94,15,43,0.35)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -107,15 +111,37 @@ export function WelcomePopup() {
           <X size={18} />
         </button>
 
-        {/* Festive banner */}
-        <div className="relative flex flex-col items-center justify-center bg-volt px-6 py-8 text-center text-ink sm:py-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] opacity-90">
-            Festive Offer
+        {/* Premium festive banner — deep wine → rose with gold accents */}
+        <div
+          className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-10 text-center sm:py-14"
+          style={{ background: "linear-gradient(150deg, #5e0f2b 0%, #8a1a42 52%, #b23260 100%)" }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-16 left-1/2 h-52 w-52 -translate-x-1/2"
+            style={{ background: "radial-gradient(circle, rgba(212,175,89,0.35), transparent 70%)" }}
+          />
+          {/* gold frame */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-3 border"
+            style={{ borderColor: "rgba(212,175,89,0.35)" }}
+          />
+          <p
+            className="text-[10px] font-semibold uppercase tracking-[0.35em]"
+            style={{ color: "#e7c983" }}
+          >
+            Welcome Offer
           </p>
-          <p className="display mt-2 text-6xl leading-none sm:text-7xl">10%</p>
-          <p className="display text-2xl">OFF</p>
-          <p className="mt-3 max-w-[15rem] text-xs leading-relaxed opacity-90">
-            on your first order above ₹999. Welcome to REVOG.
+          <div className="my-3 h-px w-10" style={{ background: "#d4af59" }} />
+          <p className="display text-6xl leading-none text-white sm:text-7xl">
+            10<span style={{ color: "#e7c983" }}>%</span>
+          </p>
+          <p className="display mt-1 text-xl tracking-[0.35em] text-white/90">OFF</p>
+          <p className="mt-4 max-w-[15rem] text-xs leading-relaxed text-white/75">
+            On your first order above ₹999.
+            <br />
+            Welcome to REVOG.
           </p>
         </div>
 
@@ -127,7 +153,12 @@ export function WelcomePopup() {
               <p className="mt-2 text-sm text-paper-dim">Use this code at checkout:</p>
               <button
                 onClick={copyCode}
-                className="mt-3 flex w-full items-center justify-center gap-2 border border-dashed border-volt bg-volt/10 py-3 text-lg font-bold tracking-widest text-volt transition-colors hover:bg-volt/20"
+                className="mt-3 flex w-full items-center justify-center gap-2 border border-dashed py-3.5 text-lg font-bold tracking-[0.2em] transition-colors"
+                style={{
+                  borderColor: "#c9a24b",
+                  color: "#8a1a42",
+                  background: "linear-gradient(180deg, #fbf3e2 0%, #f6e9cf 100%)",
+                }}
               >
                 {code}
                 {copied ? <Check size={16} /> : <Copy size={16} />}
