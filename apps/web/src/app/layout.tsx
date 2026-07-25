@@ -6,6 +6,7 @@ import { WhatsAppButton } from "@/components/layout/whatsapp-button";
 import { MetaPixel } from "@/components/meta-pixel";
 import { GoogleAds } from "@/components/google-ads";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { WelcomePopup } from "@/components/welcome-popup";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -92,6 +93,7 @@ export default function RootLayout({
               position:fixed would resolve against the header box. */}
           <CartDrawer />
           <WhatsAppButton />
+          <WelcomePopup />
         </AuthProvider>
         <MetaPixel />
         <GoogleAds />

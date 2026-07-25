@@ -17,6 +17,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
 import { ReturnsModule } from './returns/returns.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SubscribeModule } from './subscribe/subscribe.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     ProductsModule,
     ReturnsModule,
     ReviewsModule,
+    SubscribeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
