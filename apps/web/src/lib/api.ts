@@ -22,11 +22,17 @@ async function get<T>(path: string, fallback: T): Promise<T> {
     if (attempt === 0) await new Promise((r) => setTimeout(r, 1500));
   }
 
-  // On the SERVER we throw instead of returning empty data: a failed ISR
-  // revalidation then keeps serving the last good cached page, instead of
-  // caching an empty "Nothing matches" storefront while the API is down
-  // (which is exactly what happened during a slow API deploy).
-  if (typeof window === "undefined") {
+  // At RUNTIME on the server we throw instead of returning empty data: a
+  // failed ISR revalidation then keeps serving the last good cached page,
+  // instead of caching an empty "Nothing matches" storefront while the API
+  // is down.
+  //
+  // During `next build` we must NOT throw — prerendering would fail and take
+  // the whole deploy with it just because the API happened to be restarting.
+  // The page ships with empty sections and self-heals on the first
+  // revalidation (60s), which beats a broken deploy.
+  const isBuild = process.env.NEXT_PHASE === "phase-production-build";
+  if (typeof window === "undefined" && !isBuild) {
     throw new Error(`API unavailable: ${path}`);
   }
   return fallback;
