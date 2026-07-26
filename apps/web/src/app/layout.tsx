@@ -30,41 +30,41 @@ const inter = Inter({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.hyrafashions.com";
 
 const DESCRIPTION =
-  "Shop festive sarees online at Hyra Fashion — printed silk, organza and georgette sarees with matching blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
+  "Shop Indian fashion at Hyra Fashion — kurtis, kurtas, sarees, t-shirts and shirts. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Hyra Fashion — Buy Sarees Online in India | Silk, Organza & Georgette",
+    default: "Hyra Fashion — Kurtis, Sarees, T-Shirts & Shirts Online in India",
     template: "%s | Hyra Fashion",
   },
   description: DESCRIPTION,
   applicationName: "Hyra Fashion",
   keywords: [
+    "indian fashion online",
+    "kurti online",
+    "kurta online",
+    "kurti set",
     "sarees online",
-    "buy sarees online india",
     "silk saree",
     "organza saree",
-    "georgette saree",
-    "bhagalpuri silk saree",
-    "printed saree",
-    "party wear saree",
-    "festive saree",
+    "t shirt online",
+    "oversized t shirt",
+    "shirts online",
     "hyra fashion",
-    "hyra sarees",
   ],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Hyra Fashion",
-    title: "Hyra Fashion — Buy Sarees Online in India",
+    title: "Hyra Fashion — Indian Fashion Online",
     description: DESCRIPTION,
     url: SITE_URL,
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hyra Fashion — Buy Sarees Online in India",
+    title: "Hyra Fashion — Indian Fashion Online",
     description: DESCRIPTION,
   },
   robots: {

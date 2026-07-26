@@ -27,29 +27,29 @@ export function Hero() {
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
         <p className="hero-fade mb-5 inline-block border border-volt/50 px-3 py-1 text-xs font-semibold tracking-[0.25em] text-volt">
-          NEW FESTIVE COLLECTION
+          NEW ARRIVALS
         </p>
 
         <h1 className="display text-[15vw] leading-[1.02] sm:text-[10vw] lg:text-[8rem]">
           <span className="block overflow-hidden pb-1">
-            <span className="hero-line">Drape the</span>
+            <span className="hero-line">Indian fashion,</span>
           </span>
           <span className="block overflow-hidden pb-1">
-            <span className="hero-line hero-line-2 italic text-volt">occasion.</span>
+            <span className="hero-line hero-line-2 italic text-volt">all in one place.</span>
           </span>
         </h1>
 
         <p className="hero-fade hero-fade-1 mt-6 max-w-md text-sm leading-relaxed text-paper-dim sm:text-base">
-          Handpicked festive sarees — organza, silk and georgette — that drape
-          effortlessly and arrive with a matching blouse piece.
+          Kurtis, kurtas, sarees, tees and shirts — picked for fit, fabric and
+          how they actually feel to wear all day.
         </p>
 
         <div className="hero-fade hero-fade-2 mt-8 flex flex-wrap gap-3">
           <Link
-            href="/category/sarees"
+            href="/collections/new-arrivals"
             className="display group inline-flex items-center gap-2 rounded-sm bg-volt px-8 py-3.5 text-lg text-ink transition-transform hover:-translate-y-0.5"
           >
-            Shop Sarees
+            Shop New Arrivals
             <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
           </Link>
           <Link

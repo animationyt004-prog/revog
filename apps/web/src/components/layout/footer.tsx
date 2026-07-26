@@ -39,8 +39,8 @@ export function Footer() {
           <div>
             <Wordmark size="lg" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-paper-dim">
-              Festive sarees, curated in India. Effortless drapes and honest
-              pricing, delivered across the country.
+              Indian fashion for every day — ethnic and casual, curated in India
+              with honest pricing and delivery across the country.
             </p>
           </div>
           {COLUMNS.map((col) => (

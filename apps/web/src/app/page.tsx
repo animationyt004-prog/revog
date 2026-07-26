@@ -18,7 +18,7 @@ const SITE_JSON_LD = {
       name: SITE_NAME,
       url: SITE_URL,
       description:
-        "Hyra Fashion — festive sarees online in India. Printed silk, organza and georgette sarees with matching blouse piece, COD and easy returns.",
+        "Hyra Fashion — Indian fashion online. Kurtis, kurtas, sarees, t-shirts and shirts with COD and easy 7-day returns.",
     },
     {
       "@type": "WebSite",

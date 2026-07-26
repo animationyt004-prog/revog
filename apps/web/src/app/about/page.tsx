@@ -4,7 +4,7 @@ import { PageShell, PolicySection } from "@/components/layout/page-shell";
 export const metadata: Metadata = {
   title: "About Hyra Fashion",
   description:
-    "Hyra Fashion is an India-based online store for festive sarees — curated fabrics, honest pricing, Cash on Delivery and easy 7-day returns.",
+    "Hyra Fashion is an India-based online store for kurtis, kurtas, sarees, t-shirts and shirts — honest pricing, Cash on Delivery and easy 7-day returns.",
   alternates: { canonical: "/about" },
 };
 
@@ -13,27 +13,28 @@ export default function AboutPage() {
     <PageShell
       title="About Hyra Fashion"
       accent="."
-      intro="Festive Indian fashion, curated and delivered across the country."
+      intro="Indian fashion — ethnic and casual — curated and delivered across the country."
     >
       <PolicySection heading="Who we are">
         <p>
-          Hyra Fashion is an India-based online store for women&apos;s festive wear. We started with a
-          simple idea: buying a good saree online should be straightforward — clear photos, an
-          honest description of the fabric, a price without games, and the option to pay only when
-          the parcel reaches your door.
+          Hyra Fashion is an India-based online clothing store. We started with a simple idea:
+          buying clothes online should be straightforward — clear photos, an honest description of
+          the fabric, a price without games, and the option to pay only when the parcel reaches
+          your door.
         </p>
       </PolicySection>
 
       <PolicySection heading="What we sell">
         <p>
-          Our current edit focuses on sarees — organza, Bhagalpuri silk, georgette, satin and net —
-          chosen for how they drape and how comfortable they are to wear through a long function.
-          Every saree ships with an unstitched blouse piece so you can tailor it to your own fit.
+          Our range spans everyday ethnic and casual wear — kurtis and kurtas, sarees, oversized
+          t-shirts and shirts — chosen for fit, fabric and how a piece actually feels to wear for a
+          full day rather than just how it looks in a photo.
         </p>
         <p>
-          We describe each piece as accurately as we can, including when the styled blouse in a
-          photo is only for reference. If something isn&apos;t what you expected, our returns policy
-          is there for exactly that reason.
+          We describe each piece as accurately as we can, including what is and isn&apos;t included
+          in the box (sarees, for example, ship with an unstitched blouse piece, and a styled blouse
+          in a photo is only for reference). If something isn&apos;t what you expected, our returns
+          policy is there for exactly that reason.
         </p>
       </PolicySection>
 
@@ -56,7 +57,7 @@ export default function AboutPage() {
 
       <PolicySection heading="Talk to us">
         <p>
-          Questions about a saree, your order, or a return? Our{" "}
+          Questions about a product, your order, or a return? Our{" "}
           <a href="/contact" className="text-volt underline underline-offset-2">
             contact page
           </a>{" "}

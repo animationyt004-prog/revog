@@ -164,7 +164,7 @@ export function WelcomePopup() {
                 {copied ? <Check size={16} /> : <Copy size={16} />}
               </button>
               <Link
-                href="/category/sarees"
+                href="/collections/new-arrivals"
                 onClick={dismiss}
                 className="display mt-4 inline-block w-full bg-volt py-3 text-lg text-ink transition-transform hover:-translate-y-0.5"
               >

@@ -18,6 +18,32 @@ export interface CategorySeo {
 }
 
 export const CATEGORY_SEO: Record<string, CategorySeo> = {
+  "oversized-tees": {
+    metaTitle: "Oversized T-Shirts Online – Heavyweight Cotton Tees",
+    metaDescription:
+      "Shop oversized t-shirts at Hyra Fashion — heavyweight cotton, drop-shoulder fits that hold shape after washes. COD and easy 7-day returns.",
+    heading: "Oversized T-Shirts Online",
+    paragraphs: [
+      "An oversized tee only works if the fabric can carry the shape. Ours are cut from heavyweight cotton with a drop shoulder and a boxy body, so the tee falls cleanly instead of clinging — and stays that way after repeated washes rather than stretching at the neck within a month.",
+      "The fits are relaxed but not shapeless: room through the chest and sleeve, a length that sits right at the hip, and ribbed collars that keep their shape. Pre-shrunk and bio-washed, so what you try on the first day is what you get months later.",
+      "These work as the easiest layer you own — on their own in summer, under an overshirt or jacket when it cools down. Sizes run generous by design, so if you want a regular fit rather than a roomy one, take the smaller size; our size guide has the flat measurements for every size.",
+      "Shopping with Hyra Fashion is simple: transparent pricing, Cash on Delivery across serviceable pincodes, and easy 7-day returns if the fit isn't right.",
+    ],
+    faqs: [
+      {
+        q: "How should I pick a size in an oversized tee?",
+        a: "Our tees are cut generously. For a regular fit take the smaller size; for a roomier look take the larger one. The size guide lists flat chest, length and shoulder measurements for every size.",
+      },
+      {
+        q: "Will the fabric shrink or lose shape?",
+        a: "The cotton is pre-shrunk and bio-washed, and the collars are ribbed to hold their shape. Wash cold and dry in shade to keep them at their best.",
+      },
+      {
+        q: "Is Cash on Delivery available?",
+        a: "Yes, across serviceable pincodes in India. You can check your pincode on any product page.",
+      },
+    ],
+  },
   sarees: {
     metaTitle: "Buy Sarees Online – Silk, Organza & Georgette",
     metaDescription:
