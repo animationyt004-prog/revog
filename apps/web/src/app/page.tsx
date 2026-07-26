@@ -18,7 +18,7 @@ const SITE_JSON_LD = {
       name: SITE_NAME,
       url: SITE_URL,
       description:
-        "REVOG — festive sarees online in India. Printed silk, organza and georgette sarees with matching blouse piece, COD and easy returns.",
+        "Hyra Fashion — festive sarees online in India. Printed silk, organza and georgette sarees with matching blouse piece, COD and easy returns.",
     },
     {
       "@type": "WebSite",

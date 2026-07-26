@@ -15,7 +15,7 @@ const COLLECTIONS: Record<
     api: "new",
     title: "New",
     accent: "Drops",
-    blurb: "Fresh off the press. The latest REVOG releases.",
+    blurb: "Fresh off the press. The latest Hyra Fashion releases.",
   },
   trending: {
     api: "trending",

@@ -1,4 +1,4 @@
-// REVOG — Prisma schema
+// HYRA — Prisma schema
 // Money is stored as INTEGER PAISE everywhere (₹1 = 100 paise) to avoid
 // floating-point rounding bugs and to match Razorpay's amount unit.
 
@@ -215,7 +215,7 @@ model Product {
   name        String
   slug        String        @unique
   description String        @db.Text
-  brand       String        @default("REVOG")
+  brand       String        @default("Hyra Fashion")
   gender      Gender        @default(MEN)
   fit         Fit           @default(OVERSIZED)
   fabric      String?

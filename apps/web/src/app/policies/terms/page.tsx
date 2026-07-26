@@ -5,7 +5,7 @@ import { BUSINESS } from "@/lib/business";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "The terms that apply when you shop with REVOG — orders, pricing, payments, delivery, returns and acceptable use.",
+    "The terms that apply when you shop with Hyra Fashion — orders, pricing, payments, delivery, returns and acceptable use.",
   alternates: { canonical: "/policies/terms" },
 };
 

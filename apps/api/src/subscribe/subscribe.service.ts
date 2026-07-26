@@ -3,7 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { RedisService } from '../common/redis/redis.service';
 
 // The code the welcome popup rewards. Kept in sync with the promo ticker.
-const WELCOME_CODE = 'REVOG10';
+const WELCOME_CODE = 'HYRA10';
 
 /** Captures welcome-popup / newsletter signups and hands back the reward code. */
 @Injectable()

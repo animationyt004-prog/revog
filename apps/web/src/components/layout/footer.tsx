@@ -22,7 +22,7 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
   {
     heading: "Company",
     links: [
-      { label: "About REVOG", href: "/about" },
+      { label: "About Hyra Fashion", href: "/about" },
       { label: "Privacy Policy", href: "/policies/privacy" },
       { label: "Terms of Service", href: "/policies/terms" },
       { label: "Shipping Policy", href: "/policies/shipping" },
@@ -37,7 +37,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <p className="display text-3xl">
-              REVOG<span className="text-volt">.</span>
+              HYRA<span className="text-volt">.</span>
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-paper-dim">
               Festive sarees, curated in India. Effortless drapes and honest
@@ -63,7 +63,7 @@ export function Footer() {
           ))}
         </div>
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-paper/10 pt-6 text-xs text-paper-dim sm:flex-row">
-          <p>© {new Date().getFullYear()} REVOG. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Hyra Fashion. All rights reserved.</p>
           <p>
             Made in India <span aria-hidden>🇮🇳</span> · COD & UPI accepted
           </p>

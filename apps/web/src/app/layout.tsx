@@ -30,16 +30,16 @@ const inter = Inter({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://revog-web.onrender.com";
 
 const DESCRIPTION =
-  "Shop festive sarees online at REVOG — printed silk, organza and georgette sarees with matching blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
+  "Shop festive sarees online at Hyra Fashion — printed silk, organza and georgette sarees with matching blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "REVOG — Buy Sarees Online in India | Silk, Organza & Georgette",
-    template: "%s | REVOG",
+    default: "Hyra Fashion — Buy Sarees Online in India | Silk, Organza & Georgette",
+    template: "%s | Hyra Fashion",
   },
   description: DESCRIPTION,
-  applicationName: "REVOG",
+  applicationName: "Hyra Fashion",
   keywords: [
     "sarees online",
     "buy sarees online india",
@@ -50,20 +50,21 @@ export const metadata: Metadata = {
     "printed saree",
     "party wear saree",
     "festive saree",
-    "REVOG",
+    "hyra fashion",
+    "hyra sarees",
   ],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "REVOG",
-    title: "REVOG — Buy Sarees Online in India",
+    siteName: "Hyra Fashion",
+    title: "Hyra Fashion — Buy Sarees Online in India",
     description: DESCRIPTION,
     url: SITE_URL,
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "REVOG — Buy Sarees Online in India",
+    title: "Hyra Fashion — Buy Sarees Online in India",
     description: DESCRIPTION,
   },
   robots: {

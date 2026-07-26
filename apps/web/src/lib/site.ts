@@ -4,4 +4,4 @@
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://revog-web.onrender.com";
 
-export const SITE_NAME = "REVOG";
+export const SITE_NAME = "Hyra Fashion";

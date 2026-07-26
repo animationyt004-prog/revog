@@ -4,7 +4,7 @@ import { PageShell, PolicySection } from "@/components/layout/page-shell";
 export const metadata: Metadata = {
   title: "Size Guide",
   description:
-    "REVOG size guide — saree and blouse-piece measurements, plus garment-flat charts in inches for tops and bottoms.",
+    "Hyra Fashion size guide — saree and blouse-piece measurements, plus garment-flat charts in inches for tops and bottoms.",
   alternates: { canonical: "/size-guide" },
 };
 

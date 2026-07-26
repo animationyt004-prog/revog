@@ -195,7 +195,7 @@ export function CartDrawer() {
                         <input
                           value={couponInput}
                           onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
-                          placeholder="Coupon code (try REVOG10)"
+                          placeholder="Coupon code (try HYRA10)"
                           aria-label="Coupon code"
                           className="w-full border border-paper/25 bg-ink-2 px-3 py-2.5 text-sm uppercase outline-none placeholder:normal-case focus:border-volt"
                         />

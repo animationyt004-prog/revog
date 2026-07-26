@@ -5,12 +5,12 @@
  * reachable contact information and a real business address.
  */
 export const BUSINESS = {
-  name: "REVOG",
+  name: "Hyra Fashion",
   /** Legal/registered name, if different from the brand. */
-  legalName: "REVOG",
+  legalName: "Hyra Fashion",
 
   // TODO: replace with the real support inbox you actually monitor.
-  email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@revog.in",
+  email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@hyrafashion.in",
 
   /** Digits only, with country code — used for tel: and wa.me links. */
   // TODO: replace with the real WhatsApp/support number.
@@ -42,7 +42,7 @@ export const BUSINESS = {
 export const CONTACT_INCOMPLETE =
   BUSINESS.phone === "919999999999" || BUSINESS.address.line1 === "Address to be updated";
 
-export const whatsappLink = (message = "Hi REVOG! I have a question.") =>
+export const whatsappLink = (message = "Hi Hyra Fashion! I have a question.") =>
   `https://wa.me/${BUSINESS.phone}?text=${encodeURIComponent(message)}`;
 
 export const formattedPhone = () => {

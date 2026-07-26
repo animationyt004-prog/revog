@@ -249,7 +249,7 @@ export class AdminService {
       data: {
         name: data.name.trim(),
         slug,
-        description: data.description?.trim() || `${data.name.trim()} — available at REVOG.`,
+        description: data.description?.trim() || `${data.name.trim()} — available at Hyra Fashion.`,
         gender: 'MEN',
         fit: data.fit,
         fabric: data.fabric?.trim() || null,
@@ -259,7 +259,7 @@ export class AdminService {
         categoryId: category.id,
         badges: data.badges,
         isNewArrival: true,
-        metaTitle: `${data.name.trim()} | REVOG`,
+        metaTitle: `${data.name.trim()} | Hyra Fashion`,
         metaDescription: (data.description?.trim() || data.name.trim()).slice(0, 155),
         images: {
           // Gallery of uploaded photos, tagged to the primary colour (the

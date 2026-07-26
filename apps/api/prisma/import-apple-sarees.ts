@@ -155,7 +155,7 @@ async function upsertProduct(item: AppleSaree, categoryId: string): Promise<void
       categoryId,
       badges: [Badge.NEW],
       isNewArrival: true,
-      metaTitle: `${item.name} | REVOG`,
+      metaTitle: `${item.name} | HYRA`,
       metaDescription: description.slice(0, 155),
     },
     create: {
@@ -172,7 +172,7 @@ async function upsertProduct(item: AppleSaree, categoryId: string): Promise<void
       categoryId,
       badges: [Badge.NEW],
       isNewArrival: true,
-      metaTitle: `${item.name} | REVOG`,
+      metaTitle: `${item.name} | HYRA`,
       metaDescription: description.slice(0, 155),
       images: {
         create: [

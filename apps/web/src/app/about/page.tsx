@@ -2,22 +2,22 @@ import type { Metadata } from "next";
 import { PageShell, PolicySection } from "@/components/layout/page-shell";
 
 export const metadata: Metadata = {
-  title: "About REVOG",
+  title: "About Hyra Fashion",
   description:
-    "REVOG is an India-based online store for festive sarees — curated fabrics, honest pricing, Cash on Delivery and easy 7-day returns.",
+    "Hyra Fashion is an India-based online store for festive sarees — curated fabrics, honest pricing, Cash on Delivery and easy 7-day returns.",
   alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
   return (
     <PageShell
-      title="About REVOG"
+      title="About Hyra Fashion"
       accent="."
       intro="Festive Indian fashion, curated and delivered across the country."
     >
       <PolicySection heading="Who we are">
         <p>
-          REVOG is an India-based online store for women&apos;s festive wear. We started with a
+          Hyra Fashion is an India-based online store for women&apos;s festive wear. We started with a
           simple idea: buying a good saree online should be straightforward — clear photos, an
           honest description of the fabric, a price without games, and the option to pay only when
           the parcel reaches your door.

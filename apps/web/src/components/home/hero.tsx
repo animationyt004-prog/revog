@@ -13,7 +13,7 @@ export function Hero() {
         <div className="flex w-max animate-marquee-slow whitespace-nowrap">
           {Array.from({ length: 4 }).map((_, i) => (
             <span key={i} className="display text-outline mx-4 text-[16vw] leading-none">
-              REVOG
+              HYRA
             </span>
           ))}
         </div>

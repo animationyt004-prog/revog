@@ -50,7 +50,7 @@ export function Navbar() {
 
         {/* Wordmark */}
         <Link href="/" className="display text-xl leading-none sm:text-2xl">
-          REVOG<span className="text-volt">.</span>
+          HYRA<span className="text-volt">.</span>
         </Link>
 
         {/* Desktop links */}

@@ -5,7 +5,7 @@ import { BUSINESS } from "@/lib/business";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How REVOG collects, uses and protects your personal information — what we store, who we share it with, and the choices you have.",
+    "How Hyra Fashion collects, uses and protects your personal information — what we store, who we share it with, and the choices you have.",
   alternates: { canonical: "/policies/privacy" },
 };
 

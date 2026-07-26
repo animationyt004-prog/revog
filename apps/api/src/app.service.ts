@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   getInfo() {
     return {
-      name: 'REVOG API',
+      name: 'HYRA API',
       version: '0.1.0',
       health: '/api/health',
     };

@@ -7,7 +7,7 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
     <main className="grid min-h-screen place-items-center bg-ink px-4 text-center">
       <div>
         <p className="display text-4xl">
-          REVOG<span className="text-volt">.</span>
+          HYRA<span className="text-volt">.</span>
         </p>
         <h1 className="display mt-6 text-2xl text-paper">Store is waking up…</h1>
         <p className="mx-auto mt-2 max-w-sm text-sm text-paper-dim">
