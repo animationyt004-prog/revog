@@ -9,11 +9,11 @@ import { useCart } from "@/lib/cart-store";
 import { MegaMenu } from "./mega-menu";
 import { Wordmark } from "./wordmark";
 
-const NAV_LINKS = [
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+
+/** Always-valid links; category links are added from what's actually in stock. */
+const STATIC_LINKS = [
   { label: "New In", href: "/collections/new-arrivals" },
-  { label: "All Sarees", href: "/category/sarees" },
-  { label: "Organza", href: "/category/sarees?fabrics=Organza" },
-  { label: "Silk", href: "/category/sarees?fabrics=Bhagalpuri+Silk" },
   { label: "Best Sellers", href: "/collections/bestsellers" },
 ];
 
@@ -21,6 +21,9 @@ const NAV_LINKS = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // Category links come from the catalog so the nav can never point at an
+  // empty category (which used to happen whenever the range changed).
+  const [navLinks, setNavLinks] = useState(STATIC_LINKS);
   const authed = useAuth((s) => s.status === "authed");
   const itemCount = useCart((s) => s.cart?.summary.itemCount ?? 0);
   const openDrawer = useCart((s) => s.openDrawer);
@@ -30,6 +33,19 @@ export function Navbar() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API}/categories`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((cats: { name: string; slug: string; _count: { products: number } }[]) => {
+        const stocked = cats
+          .filter((c) => c._count.products > 0)
+          .slice(0, 3)
+          .map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
+        if (stocked.length) setNavLinks([STATIC_LINKS[0], ...stocked, STATIC_LINKS[1]]);
+      })
+      .catch(() => undefined);
   }, []);
 
   return (
@@ -57,7 +73,7 @@ export function Navbar() {
         {/* Desktop links */}
         <ul className="ml-8 hidden items-center gap-6 md:flex">
           <MegaMenu />
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
@@ -105,7 +121,7 @@ export function Navbar() {
       {/* Mobile drawer */}
       {open && (
         <ul className="border-t border-paper/10 bg-ink px-6 py-4 md:hidden">
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
