@@ -27,7 +27,7 @@ const inter = Inter({
 // Absolute base for canonical + Open Graph URLs. Set NEXT_PUBLIC_SITE_URL to
 // the custom domain once live; falls back to the deployed Render URL (never
 // localhost in prod, which would poison Google's index).
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://revog-web.onrender.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.hyrafashions.com";
 
 const DESCRIPTION =
   "Shop festive sarees online at Hyra Fashion — printed silk, organza and georgette sarees with matching blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
