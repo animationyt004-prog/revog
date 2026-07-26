@@ -35,9 +35,9 @@ export class OrdersService {
   ) {}
 
   private newOrderNumber(): string {
-    // RV-<base36 minute stamp>-<3 random digits> — short, sortable, unguessable enough.
+    // HY-<base36 minute stamp>-<3 random digits> — short, sortable, unguessable enough.
     const stamp = Math.floor(Date.now() / 60000).toString(36).toUpperCase();
-    return `RV-${stamp}-${randomInt(100, 1000)}`;
+    return `HY-${stamp}-${randomInt(100, 1000)}`;
   }
 
   /** Checkout: everything stock-critical happens inside one transaction.
