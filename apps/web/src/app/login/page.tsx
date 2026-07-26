@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Wordmark } from "@/components/layout/wordmark";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -74,7 +75,7 @@ export default function LoginPage() {
           <div className="flex w-max animate-marquee-slow whitespace-nowrap">
             {Array.from({ length: 4 }).map((_, i) => (
               <span key={i} className="display text-outline mx-4 text-[24vw] leading-none sm:text-[14vw]">
-                AFTER HOURS
+                HYRA FASHION
               </span>
             ))}
           </div>
@@ -90,8 +91,8 @@ export default function LoginPage() {
         </Link>
 
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
-          <Link href="/" className="display mb-10 text-center text-3xl">
-            HYRA<span className="text-volt">.</span>
+          <Link href="/" className="mb-10 flex justify-center" aria-label="Hyra Fashion — home">
+            <Wordmark size="lg" className="items-center" />
           </Link>
 
           <AnimatePresence mode="wait">

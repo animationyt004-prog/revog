@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { Wordmark } from "./wordmark";
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
     heading: "Shop",
     links: [
-      { label: "New Drops", href: "/collections/new-arrivals" },
+      { label: "New In", href: "/collections/new-arrivals" },
       { label: "Best Sellers", href: "/collections/bestsellers" },
       { label: "Trending", href: "/collections/trending" },
       { label: "Limited Edition", href: "/collections/limited" },
@@ -36,9 +37,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
-            <p className="display text-3xl">
-              HYRA<span className="text-volt">.</span>
-            </p>
+            <Wordmark size="lg" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-paper-dim">
               Festive sarees, curated in India. Effortless drapes and honest
               pricing, delivered across the country.

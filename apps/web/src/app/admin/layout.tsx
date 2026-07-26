@@ -53,7 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="flex w-16 shrink-0 flex-col border-r border-paper/10 bg-ink-2 sm:w-56">
         <Link href="/admin" className="display border-b border-paper/10 p-4 text-xl leading-none">
           <span className="hidden sm:inline">HYRA</span>
-          <span className="sm:hidden">R</span>
+          <span className="sm:hidden">H</span>
           <span className="text-volt">.</span>
           <span className="mt-1 hidden text-[10px] tracking-[0.3em] text-paper-dim sm:block">
             CONTROL ROOM

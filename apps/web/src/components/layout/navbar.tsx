@@ -7,6 +7,7 @@ import { cn } from "@/lib/format";
 import { useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
 import { MegaMenu } from "./mega-menu";
+import { Wordmark } from "./wordmark";
 
 const NAV_LINKS = [
   { label: "New In", href: "/collections/new-arrivals" },
@@ -49,8 +50,8 @@ export function Navbar() {
         </button>
 
         {/* Wordmark */}
-        <Link href="/" className="display text-xl leading-none sm:text-2xl">
-          HYRA<span className="text-volt">.</span>
+        <Link href="/" aria-label="Hyra Fashion — home">
+          <Wordmark size="sm" />
         </Link>
 
         {/* Desktop links */}
