@@ -13,7 +13,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Badge, Fit, OrderStatus, ProductStatus, ReturnStatus, Size } from '@prisma/client';
+import {
+  Badge,
+  Fit,
+  OrderStatus,
+  ProductStatus,
+  ReturnStatus,
+  Size,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
@@ -37,6 +44,7 @@ import { Roles, RolesGuard } from '../auth/roles.guard';
 import { StorageService } from '../common/storage/storage.service';
 import { ReturnsService } from '../returns/returns.service';
 import { AdminService } from './admin.service';
+import { SmsService } from '../common/sms/sms.service';
 
 class ListOrdersQuery {
   @IsOptional()
@@ -220,14 +228,25 @@ export class AdminController {
     private readonly admin: AdminService,
     private readonly returns: ReturnsService,
     private readonly storage: StorageService,
+    private readonly sms: SmsService,
   ) {}
+
+  /** Why SMS is failing, without needing server-log access. A broken SMS
+   *  account silently blocks every COD order, so it has to be visible. */
+  @Get('sms-status')
+  smsStatus() {
+    return this.sms.diagnostics;
+  }
 
   // Image upload → R2 (admin only). Returns the public URL to store on the product.
   @Post('upload')
   @HttpCode(201)
   @UseInterceptors(FileInterceptor('file'))
   async upload(
-    @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number; originalname: string } | undefined,
+    @UploadedFile()
+    file:
+      | { buffer: Buffer; mimetype: string; size: number; originalname: string }
+      | undefined,
     @Query('folder') folder = 'misc',
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
@@ -252,7 +271,10 @@ export class AdminController {
   }
 
   @Patch('orders/:orderNumber/status')
-  advance(@Param('orderNumber') orderNumber: string, @Body() dto: AdvanceOrderDto) {
+  advance(
+    @Param('orderNumber') orderNumber: string,
+    @Body() dto: AdvanceOrderDto,
+  ) {
     return this.admin.advanceOrder(orderNumber, dto.status, dto.note, {
       courier: dto.courier,
       trackingNumber: dto.trackingNumber,
