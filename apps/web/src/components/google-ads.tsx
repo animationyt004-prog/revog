@@ -1,23 +1,19 @@
 "use client";
 
 import Script from "next/script";
-
-// Public Google Ads conversion ID (visible in page HTML anyway). Falls back to
-// HYRA's ID so it works without extra Render config; override via env if needed.
-const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18325515272";
-// GA4 measurement id (G-XXXXXXXXXX) — set once a GA4 property exists.
-const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
+import { ADS_IDS, GA4_ID } from "@/lib/google-ads-config";
 
 /** Loads the Google Ads global site tag (gtag.js) for conversion tracking.
- *  Renders nothing until an Ads ID (AW-XXXXXXXXXX) is configured. */
+ *  Renders nothing until at least one Ads ID (AW-XXXXXXXXXX) is configured. */
 export function GoogleAds() {
-  if (!ADS_ID) return null;
+  if (!ADS_IDS.length) return null;
 
   return (
     <>
+      {/* One script load is enough; the extra accounts come from config calls. */}
       <Script
         id="gtag-src"
-        src={`https://www.googletagmanager.com/gtag/js?id=${ADS_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${ADS_IDS[0]}`}
         strategy="afterInteractive"
       />
       <Script id="gtag-init" strategy="afterInteractive">
@@ -25,7 +21,7 @@ export function GoogleAds() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${ADS_ID}');
+          ${ADS_IDS.map((id) => `gtag('config', '${id}');`).join("\n          ")}
           ${GA4_ID ? `gtag('config', '${GA4_ID}');` : ""}
         `}
       </Script>

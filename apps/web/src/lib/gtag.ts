@@ -3,6 +3,8 @@
 /** Google Ads (gtag.js) helper. No-ops safely until the tag has loaded and a
  *  conversion label is configured. */
 
+import { sendTo } from "./google-ads-config";
+
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -10,15 +12,17 @@ declare global {
   }
 }
 
-const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18325515272";
-// The Purchase conversion action's label, from Google Ads → Goals → Conversions
-// (the value after the slash in "AW-XXXXXXXXX/AbCdEf..."). Set via env.
-const PURCHASE_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL;
+// The Purchase conversion action, from Google Ads → Goals → Conversions. Set
+// this to the whole "AW-XXXXXXXXX/AbCdEf..." from the conversion snippet — a
+// bare label is also accepted but then it has to belong to the first account.
+const PURCHASE_SEND_TO = sendTo(
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL,
+);
 
 /** Report a purchase conversion to Google Ads once per order. */
 export function gtagPurchaseOnce(orderNumber: string, value: number): void {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  if (!PURCHASE_LABEL) return; // no conversion action configured yet
+  if (!PURCHASE_SEND_TO) return; // no conversion action configured yet
 
   const key = `revog:gads:purchase:${orderNumber}`;
   try {
@@ -29,7 +33,7 @@ export function gtagPurchaseOnce(orderNumber: string, value: number): void {
   }
 
   window.gtag("event", "conversion", {
-    send_to: `${ADS_ID}/${PURCHASE_LABEL}`,
+    send_to: PURCHASE_SEND_TO,
     value: value / 100, // paise → rupees
     currency: "INR",
     transaction_id: orderNumber,
