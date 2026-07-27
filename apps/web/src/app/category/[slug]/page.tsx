@@ -19,10 +19,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const seo = getCategorySeo(slug);
   const category = (await getCategories()).find((c) => c.slug === slug);
+  const title = seo?.metaTitle ?? (category ? category.name : "Category");
+  const description = seo?.metaDescription ?? category?.description ?? undefined;
   return {
-    title: seo?.metaTitle ?? (category ? category.name : "Category"),
-    description: seo?.metaDescription ?? category?.description ?? undefined,
+    title,
+    description,
     alternates: { canonical: `/category/${slug}` },
+    // Child openGraph replaces the root's wholesale, so images must repeat here
+    // or shared links lose their preview card.
+    openGraph: {
+      type: "website",
+      title: `${title} | Hyra Fashion`,
+      description,
+      url: `/category/${slug}`,
+      images: [{ url: "/og-logo.png", width: 1200, height: 630, alt: "Hyra Fashion" }],
+    },
   };
 }
 

@@ -42,6 +42,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${SITE}/products/${p.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.7,
+      // Image sitemap entries — gets product shots into Google Images, which
+      // is a major discovery surface for fashion queries.
+      ...(p.image ? { images: [p.image.url] } : {}),
     })),
   ];
 }

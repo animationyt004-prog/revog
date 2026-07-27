@@ -46,10 +46,20 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { collection } = await params;
   const meta = COLLECTIONS[collection];
+  const title = meta ? `${meta.title} ${meta.accent}` : "Collection";
   return {
-    title: meta ? `${meta.title} ${meta.accent}` : "Collection",
+    title,
     description: meta?.blurb,
     alternates: { canonical: `/collections/${collection}` },
+    // Child openGraph replaces the root's wholesale, so images must repeat here
+    // or shared links lose their preview card.
+    openGraph: {
+      type: "website",
+      title: `${title} | Hyra Fashion`,
+      description: meta?.blurb,
+      url: `/collections/${collection}`,
+      images: [{ url: "/og-logo.png", width: 1200, height: 630, alt: "Hyra Fashion" }],
+    },
   };
 }
 
