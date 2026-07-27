@@ -16,13 +16,24 @@ export class MailerService {
 
   constructor(config: ConfigService) {
     this.apiKey = config.get<string>('RESEND_API_KEY') || undefined;
-    // Our own verified domain is the default. Resend's shared
-    // onboarding@resend.dev sender is deliberately NOT the fallback: it only
-    // delivers to the Resend account owner, so every real customer would get
-    // a 403 while the store looked fine to whoever was testing it.
+    // Our own verified domain is the default, and it also overrides Resend's
+    // shared onboarding@resend.dev sender if that is what the environment
+    // asks for. That address can only ever reach the Resend account owner —
+    // configuring it means every real customer gets a 403 while the store
+    // looks healthy to whoever is testing it, so it is treated as a
+    // misconfiguration rather than honoured.
+    const VERIFIED_SENDER = 'Hyra Fashion <login@hyrafashions.com>';
+    const configured = config.get<string>('OTP_FROM_EMAIL');
+    if (configured?.includes('onboarding@resend.dev')) {
+      this.logger.warn(
+        `OTP_FROM_EMAIL is set to Resend's shared test sender, which only ` +
+          `delivers to the account owner. Using ${VERIFIED_SENDER} instead.`,
+      );
+    }
     this.from =
-      config.get<string>('OTP_FROM_EMAIL') ||
-      'Hyra Fashion <login@hyrafashions.com>';
+      configured && !configured.includes('onboarding@resend.dev')
+        ? configured
+        : VERIFIED_SENDER;
   }
 
   get configured(): boolean {
