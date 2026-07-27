@@ -32,6 +32,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.hyrafashions.c
 const DESCRIPTION =
   "Shop Indian fashion at Hyra Fashion — kurtis, kurtas, sarees, t-shirts and shirts. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
 
+const GOOGLE_SITE_VERIFICATION = "BjBV-BzfG2mo-lE4Mh7R9bpj4XiNFcKfADXdt5zyIgc";
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -77,6 +79,7 @@ export const metadata: Metadata = {
     // Merchant Center) and the retired Render URL, which stays verified while
     // its 301s are still passing ranking across.
     google: [
+      "BjBV-BzfG2mo-lE4Mh7R9bpj4XiNFcKfADXdt5zyIgc",
       "VxR0uN_uo9CUZ8wcdK_6Uzr4YPubx9PuoUVYnks94kY",
       "3gH9_kAwGAVwfNGXwsynHuYOVi82XUntu9raIcdlK-Y",
     ],
@@ -93,6 +96,9 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
+      <head>
+        <meta name="google-site-verification" content={GOOGLE_SITE_VERIFICATION} />
+      </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           {children}
