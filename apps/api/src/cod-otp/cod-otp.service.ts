@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../common/redis/redis.service';
+import { SmsService } from '../common/sms/sms.service';
 
 const OTP_TTL_S = 600; // 10 minutes
 const MAX_VERIFY_ATTEMPTS = 5;
@@ -13,30 +14,25 @@ const TOKEN_TTL = '20m';
 @Injectable()
 export class CodOtpService {
   private readonly logger = new Logger(CodOtpService.name);
-  private readonly apiKey: string;
   private readonly jwtSecret: string;
 
   constructor(
     config: ConfigService,
     private readonly redis: RedisService,
     private readonly jwt: JwtService,
+    private readonly sms: SmsService,
   ) {
-    this.apiKey = config.get<string>('FAST2SMS_API_KEY') ?? '';
     this.jwtSecret = config.getOrThrow<string>('JWT_ACCESS_SECRET');
   }
 
   /** COD OTP only gates checkout when an SMS provider is configured. Set the
    *  key to "TEST" to enable the gate while logging OTPs instead of sending. */
   get enabled(): boolean {
-    return this.apiKey.length > 0;
-  }
-
-  private get realSms(): boolean {
-    return this.apiKey.length > 0 && this.apiKey !== 'TEST';
+    return this.sms.configured;
   }
 
   private static normalize(phone: string): string {
-    return phone.replace(/\D/g, '').replace(/^91/, '').slice(-10);
+    return SmsService.normalizePhone(phone);
   }
 
   async send(rawPhone: string, ip: string): Promise<{ sent: true; testMode: boolean }> {
@@ -55,25 +51,13 @@ export class CodOtpService {
     await this.redis.client.set(`codotp:code:${phone}`, code, 'EX', OTP_TTL_S);
     await this.redis.client.del(`codotp:att:${phone}`);
 
-    if (this.realSms) {
-      await this.sendSms(phone, code);
-    } else {
-      // Test mode (no key, or key="TEST"): log instead of sending.
-      this.logger.warn(`[COD OTP TEST MODE] ${phone} -> ${code}`);
-    }
-    return { sent: true, testMode: !this.realSms };
-  }
-
-  /** Fast2SMS OTP route — provider owns the DLT-approved OTP template. */
-  private async sendSms(phone: string, code: string): Promise<void> {
-    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${this.apiKey}&route=otp&variables_values=${code}&numbers=${phone}`;
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) throw new Error(`SMS provider ${res.status}`);
-    } catch (err) {
-      this.logger.error(`Failed to send COD OTP to ${phone}: ${(err as Error).message}`);
+      await this.sms.sendOtp(phone, code);
+    } catch {
+      this.logger.error(`Failed to send COD OTP to ${phone}`);
       throw new BadRequestException('Could not send OTP right now. Please try again.');
     }
+    return { sent: true, testMode: !this.sms.realSms };
   }
 
   /** Returns a short-lived token proving this phone was verified. */

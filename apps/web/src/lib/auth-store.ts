@@ -6,10 +6,16 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
 export interface AuthUser {
   id: string;
-  email: string;
+  /** Null when the account was created by SMS login and never gave an email. */
+  email: string | null;
+  phone: string | null;
   name: string | null;
   role: string;
 }
+
+/** Which channel the server sent the code over — drives the "check your
+ *  inbox" vs "check your messages" copy on the OTP step. */
+export type OtpChannel = "email" | "phone";
 
 type AuthStatus = "loading" | "guest" | "authed";
 
@@ -19,8 +25,9 @@ interface AuthState {
   /** Access token lives in memory only — never in localStorage. */
   accessToken: string | null;
   bootstrap: () => Promise<void>;
-  requestOtp: (email: string) => Promise<void>;
-  verifyOtp: (email: string, code: string) => Promise<void>;
+  /** `identifier` is an email address or a 10-digit Indian mobile. */
+  requestOtp: (identifier: string) => Promise<OtpChannel>;
+  verifyOtp: (identifier: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -59,13 +66,15 @@ export const useAuth = create<AuthState>((set) => ({
     }
   },
 
-  requestOtp: async (email) => {
-    const res = await post("/auth/request-otp", { email });
+  requestOtp: async (identifier) => {
+    const res = await post("/auth/request-otp", { identifier });
     if (!res.ok) throw new Error(await errorMessage(res, "Could not send OTP."));
+    const data = (await res.json()) as { channel?: OtpChannel };
+    return data.channel ?? "email";
   },
 
-  verifyOtp: async (email, code) => {
-    const res = await post("/auth/verify-otp", { email, code });
+  verifyOtp: async (identifier, code) => {
+    const res = await post("/auth/verify-otp", { identifier, code });
     if (!res.ok) throw new Error(await errorMessage(res, "Incorrect OTP."));
     const data = (await res.json()) as { accessToken: string; user: AuthUser };
     set({ status: "authed", user: data.user, accessToken: data.accessToken });

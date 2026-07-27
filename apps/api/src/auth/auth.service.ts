@@ -12,16 +12,41 @@ import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 import { MailerService } from '../common/mailer/mailer.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { RedisService } from '../common/redis/redis.service';
+import { SmsService } from '../common/sms/sms.service';
 
 const OTP_TTL_MINUTES = 10;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_RATE_LIMIT = 5; // requests per window
 const OTP_RATE_WINDOW_S = 60;
 
+/** Login accepts either an email address or an Indian mobile number; the
+ *  channel that carries the code follows from which one was typed. */
+export type Identifier =
+  | { kind: 'email'; value: string }
+  | { kind: 'phone'; value: string };
+
+/** Anything with an "@" is treated as an email; everything else has to look
+ *  like a 10-digit Indian mobile once punctuation and +91 are stripped. */
+export function parseIdentifier(raw: string): Identifier | null {
+  const trimmed = raw.trim();
+  if (trimmed.includes('@')) {
+    const email = trimmed.toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? { kind: 'email', value: email } : null;
+  }
+  const phone = SmsService.normalizePhone(trimmed);
+  return SmsService.isValidPhone(phone) ? { kind: 'phone', value: phone } : null;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string; // raw value — goes into the httpOnly cookie only
-  user: { id: string; email: string; name: string | null; role: string };
+  user: {
+    id: string;
+    email: string | null;
+    phone: string | null;
+    name: string | null;
+    role: string;
+  };
 }
 
 @Injectable()
@@ -36,6 +61,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly mailer: MailerService,
+    private readonly sms: SmsService,
   ) {
     this.isProd = config.get('NODE_ENV') === 'production';
     this.refreshTtlDays = Number(config.get('JWT_REFRESH_TTL', '30d').replace(/\D/g, '') || 30);
@@ -47,12 +73,13 @@ export class AuthService {
 
   // ---------------------------------------------------------------- OTP
 
-  async requestOtp(email: string, ip: string): Promise<void> {
-    const [emailOk, ipOk] = await Promise.all([
-      this.redis.rateLimit(`otp:rl:email:${email}`, OTP_RATE_LIMIT, OTP_RATE_WINDOW_S),
+  async requestOtp(id: Identifier, ip: string): Promise<void> {
+    const identifier = id.value;
+    const [idOk, ipOk] = await Promise.all([
+      this.redis.rateLimit(`otp:rl:id:${identifier}`, OTP_RATE_LIMIT, OTP_RATE_WINDOW_S),
       this.redis.rateLimit(`otp:rl:ip:${ip}`, OTP_RATE_LIMIT * 3, OTP_RATE_WINDOW_S),
     ]);
-    if (!emailOk || !ipOk) {
+    if (!idOk || !ipOk) {
       throw new HttpException(
         'Too many OTP requests. Try again in a minute.',
         HttpStatus.TOO_MANY_REQUESTS,
@@ -61,35 +88,37 @@ export class AuthService {
 
     const code = String(randomInt(100000, 1000000)); // 6 digits
 
-    // A fresh OTP invalidates any previous pending ones for this email.
-    await this.prisma.otpCode.deleteMany({ where: { email, consumedAt: null } });
+    // A fresh OTP invalidates any previous pending ones for this identifier.
+    await this.prisma.otpCode.deleteMany({ where: { identifier, consumedAt: null } });
     await this.prisma.otpCode.create({
       data: {
-        email,
+        identifier,
         codeHash: this.hash(code),
         expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60_000),
       },
     });
 
-    // Always log in dev (and as a fallback when email isn't configured yet),
-    // so the flow is testable without an inbox. Send a real email whenever
-    // RESEND_API_KEY is present.
-    if (this.mailer.configured) {
-      try {
-        await this.mailer.sendOtp(email, code);
-      } catch {
-        this.logger.error(`Failed to email OTP to ${email}`);
-        // Don't leak whether the address exists; surface a generic 500.
-        throw new Error('Could not send the login code. Please try again.');
-      }
-    } else {
-      this.logger.log(`DEV OTP for ${email}: ${code}`);
+    // Whichever channel is configured does the sending; when neither is, the
+    // code is logged so the flow stays testable without an inbox or SMS
+    // balance. Failures are generic so we never leak whether an account exists.
+    const channel = id.kind === 'phone' ? this.sms : this.mailer;
+    if (!channel.configured) {
+      this.logger.log(`DEV OTP for ${identifier}: ${code}`);
+      return;
+    }
+    try {
+      if (id.kind === 'phone') await this.sms.sendOtp(identifier, code);
+      else await this.mailer.sendOtp(identifier, code);
+    } catch {
+      this.logger.error(`Failed to send OTP to ${identifier} via ${id.kind}`);
+      throw new Error('Could not send the login code. Please try again.');
     }
   }
 
-  async verifyOtp(email: string, code: string, meta: { ip?: string; userAgent?: string }): Promise<AuthTokens> {
+  async verifyOtp(id: Identifier, code: string, meta: { ip?: string; userAgent?: string }): Promise<AuthTokens> {
+    const identifier = id.value;
     const otp = await this.prisma.otpCode.findFirst({
-      where: { email, consumedAt: null },
+      where: { identifier, consumedAt: null },
       orderBy: { createdAt: 'desc' },
     });
     if (!otp || otp.expiresAt < new Date()) {
@@ -114,21 +143,31 @@ export class AuthService {
         where: { id: otp.id },
         data: { consumedAt: new Date() },
       }),
-      this.prisma.user.upsert({
-        where: { email },
-        create: { email, emailVerified: true },
-        update: { emailVerified: true },
-      }),
+      id.kind === 'email'
+        ? this.prisma.user.upsert({
+            where: { email: identifier },
+            create: { email: identifier, emailVerified: true },
+            update: { emailVerified: true },
+          })
+        : this.prisma.user.upsert({
+            where: { phone: identifier },
+            create: { phone: identifier },
+            update: {},
+          }),
     ]);
 
-    // Claim past guest orders placed with this (now verified) email so they
-    // appear in the account and unlock reviews/returns.
+    // Claim past guest orders so they appear in the account and unlock
+    // reviews/returns. Email logins match on the order's email; SMS logins
+    // match the delivery phone, which is the only handle those buyers gave us.
     const claimed = await this.prisma.order.updateMany({
-      where: { email, userId: null },
+      where:
+        id.kind === 'email'
+          ? { email: identifier, userId: null }
+          : { phone: identifier, userId: null },
       data: { userId: user.id },
     });
     if (claimed.count > 0) {
-      this.logger.log(`Claimed ${claimed.count} guest order(s) for ${email}`);
+      this.logger.log(`Claimed ${claimed.count} guest order(s) for ${identifier}`);
     }
 
     // New login = new token family.
@@ -139,7 +178,13 @@ export class AuthService {
   // ------------------------------------------------------- token issuing
 
   private async issueTokens(
-    user: { id: string; email: string; name: string | null; role: string },
+    user: {
+      id: string;
+      email: string | null;
+      phone: string | null;
+      name: string | null;
+      role: string;
+    },
     family: string,
     meta: { ip?: string; userAgent?: string },
     replacesId?: string,
@@ -173,7 +218,13 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        name: user.name,
+        role: user.role,
+      },
     };
   }
 

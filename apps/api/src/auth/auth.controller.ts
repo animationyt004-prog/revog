@@ -10,25 +10,38 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsEmail, IsString, Length } from 'class-validator';
+import { BadRequestException } from '@nestjs/common';
+import { IsString, Length } from 'class-validator';
 import type { Request, Response } from 'express';
 import { CartService } from '../cart/cart.service';
 import { CART_COOKIE } from '../cart/cart.controller';
-import { AuthService } from './auth.service';
+import { AuthService, parseIdentifier, type Identifier } from './auth.service';
 import { CurrentUser, JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 
+/** Login takes one field that is either an email or an Indian mobile — the
+ *  older clients that still post `email` keep working. */
 class RequestOtpDto {
-  @IsEmail()
-  email!: string;
+  @IsString()
+  @Length(3, 254)
+  identifier!: string;
 }
 
 class VerifyOtpDto {
-  @IsEmail()
-  email!: string;
+  @IsString()
+  @Length(3, 254)
+  identifier!: string;
 
   @IsString()
   @Length(6, 6)
   code!: string;
+}
+
+function requireIdentifier(raw: string): Identifier {
+  const id = parseIdentifier(raw);
+  if (!id) {
+    throw new BadRequestException('Enter a valid email address or 10-digit mobile number.');
+  }
+  return id;
 }
 
 const REFRESH_COOKIE = 'nc_refresh';
@@ -61,8 +74,13 @@ export class AuthController {
   @Post('request-otp')
   @HttpCode(200)
   async requestOtp(@Body() dto: RequestOtpDto, @Ip() ip: string) {
-    await this.auth.requestOtp(dto.email.toLowerCase(), ip);
-    return { ok: true, message: 'OTP sent. Check your email.' };
+    const id = requireIdentifier(dto.identifier);
+    await this.auth.requestOtp(id, ip);
+    return {
+      ok: true,
+      channel: id.kind,
+      message: id.kind === 'phone' ? 'OTP sent by SMS.' : 'OTP sent. Check your email.',
+    };
   }
 
   @Post('verify-otp')
@@ -73,7 +91,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.auth.verifyOtp(dto.email.toLowerCase(), dto.code, {
+    const tokens = await this.auth.verifyOtp(requireIdentifier(dto.identifier), dto.code, {
       ip,
       userAgent: req.headers['user-agent'],
     });

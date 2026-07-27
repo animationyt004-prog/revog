@@ -6,6 +6,14 @@ import {
 import { OrderStatus } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 
+/** Reviewer display name when the account has none: never show the raw
+ *  handle. "streetwear@gmail.com" -> "stre***", "9924575799" -> "99245***". */
+function maskHandle(email: string | null, phone: string | null): string {
+  if (email) return `${email.split('@')[0].slice(0, 4)}***`;
+  if (phone) return `${phone.slice(0, 5)}***`;
+  return 'Verified buyer';
+}
+
 @Injectable()
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -25,7 +33,7 @@ export class ReviewsService {
       where: { productId: product.id },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: { user: { select: { name: true, email: true } } },
+      include: { user: { select: { name: true, email: true, phone: true } } },
     });
     return reviews.map((r) => ({
       id: r.id,
@@ -34,8 +42,9 @@ export class ReviewsService {
       body: r.body,
       isVerifiedPurchase: r.isVerifiedPurchase,
       createdAt: r.createdAt,
-      // Never leak full emails: "str…@gmail.com" -> "str***"
-      author: r.user.name ?? `${r.user.email.split('@')[0].slice(0, 4)}***`,
+      // Never leak the full handle: "str…@gmail.com" -> "str***", and for
+      // SMS-only accounts fall back to the masked mobile.
+      author: r.user.name ?? maskHandle(r.user.email, r.user.phone),
     }));
   }
 

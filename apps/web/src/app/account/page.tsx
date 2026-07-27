@@ -58,10 +58,12 @@ export default function AccountPage() {
               </span>
               <div>
                 <h1 className="display text-3xl sm:text-4xl">
-                  {user.name ?? "Street Member"}
+                  {user.name ?? "Hyra Member"}
                   <span className="text-volt">.</span>
                 </h1>
-                <p className="text-sm text-paper-dim">{user.email}</p>
+                {/* SMS-only accounts have no email — show whichever handle
+                    they actually signed in with. */}
+                <p className="text-sm text-paper-dim">{user.email ?? user.phone}</p>
               </div>
             </div>
             <button

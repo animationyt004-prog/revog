@@ -5,19 +5,29 @@ import { Wordmark } from "@/components/layout/wordmark";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, KeyRound, Loader2, Mail, X } from "lucide-react";
+import { ArrowRight, KeyRound, Loader2, AtSign, X } from "lucide-react";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { cn } from "@/lib/format";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, type OtpChannel } from "@/lib/auth-store";
 
-type Step = "email" | "otp";
+type Step = "identifier" | "otp";
+
+/** Mirrors the server's rule: an "@" means email, otherwise it has to reduce
+ *  to a 10-digit Indian mobile. Used only to enable the submit button. */
+function looksValid(raw: string): boolean {
+  const v = raw.trim();
+  if (v.includes("@")) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  const digits = v.replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "");
+  return /^[6-9]\d{9}$/.test(digits);
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const { status, requestOtp, verifyOtp } = useAuth();
 
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<Step>("identifier");
+  const [identifier, setIdentifier] = useState("");
+  const [channel, setChannel] = useState<OtpChannel>("email");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +50,7 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await requestOtp(email.trim());
+      setChannel(await requestOtp(identifier.trim()));
       setStep("otp");
       setResendIn(30);
       setTimeout(() => otpRef.current?.focus(), 50);
@@ -55,7 +65,7 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await verifyOtp(email.trim(), code.trim());
+      await verifyOtp(identifier.trim(), code.trim());
       router.replace("/account");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Incorrect OTP.");
@@ -96,48 +106,51 @@ export default function LoginPage() {
           </Link>
 
           <AnimatePresence mode="wait">
-            {step === "email" ? (
+            {step === "identifier" ? (
               <motion.div
-                key="email"
+                key="identifier"
                 initial={{ opacity: 0, x: -24 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 24 }}
                 transition={{ duration: 0.3 }}
               >
                 <h1 className="display text-4xl">
-                  Enter The <span className="text-volt">Club.</span>
+                  Welcome <span className="text-volt">In.</span>
                 </h1>
                 <p className="mt-2 text-sm text-paper-dim">
-                  No passwords here. We&apos;ll mail you a one-time code.
+                  No passwords here. We&apos;ll send a one-time code to your
+                  mobile or email.
                 </p>
 
                 <form
                   className="mt-8"
                   onSubmit={(e) => { e.preventDefault(); void sendOtp(); }}
                 >
-                  <label htmlFor="email" className="mb-1.5 block text-xs font-semibold tracking-widest text-paper-dim">
-                    EMAIL
+                  <label htmlFor="identifier" className="mb-1.5 block text-xs font-semibold tracking-widest text-paper-dim">
+                    MOBILE OR EMAIL
                   </label>
                   <div className="flex items-center gap-2 border border-paper/25 bg-ink-2 px-3 focus-within:border-volt">
-                    <Mail size={16} className="text-paper-dim" />
+                    <AtSign size={16} className="text-paper-dim" />
                     <input
-                      id="email"
-                      type="email"
+                      id="identifier"
+                      type="text"
+                      inputMode="email"
+                      autoComplete="username"
                       required
                       autoFocus
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="98765 43210  or  you@example.com"
                       className="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-paper-dim/50"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    disabled={busy || !email.includes("@")}
+                    disabled={busy || !looksValid(identifier)}
                     className={cn(
                       "display mt-5 flex w-full items-center justify-center gap-2 py-4 text-xl transition-all",
-                      busy || !email.includes("@")
+                      busy || !looksValid(identifier)
                         ? "cursor-not-allowed bg-ink-3 text-paper-dim"
                         : "bg-volt text-ink hover:-translate-y-0.5",
                     )}
@@ -155,10 +168,13 @@ export default function LoginPage() {
                 transition={{ duration: 0.3 }}
               >
                 <h1 className="display text-4xl">
-                  Check Your <span className="text-volt">Mail.</span>
+                  Check Your{" "}
+                  <span className="text-volt">
+                    {channel === "phone" ? "Messages." : "Mail."}
+                  </span>
                 </h1>
                 <p className="mt-2 text-sm text-paper-dim">
-                  6-digit code sent to <span className="text-paper">{email}</span>
+                  6-digit code sent to <span className="text-paper">{identifier}</span>
                 </p>
 
                 <form
@@ -199,8 +215,8 @@ export default function LoginPage() {
                 </form>
 
                 <div className="mt-4 flex items-center justify-between text-xs text-paper-dim">
-                  <button onClick={() => { setStep("email"); setError(null); }} className="underline hover:text-paper">
-                    Change email
+                  <button onClick={() => { setStep("identifier"); setError(null); }} className="underline hover:text-paper">
+                    {channel === "phone" ? "Change number" : "Change email"}
                   </button>
                   <button
                     disabled={resendIn > 0 || busy}
