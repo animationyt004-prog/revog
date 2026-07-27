@@ -4,7 +4,7 @@ import Script from "next/script";
 
 // Public Google Ads conversion ID (visible in page HTML anyway). Falls back to
 // HYRA's ID so it works without extra Render config; override via env if needed.
-const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18327470048";
+const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18325515272";
 // GA4 measurement id (G-XXXXXXXXXX) — set once a GA4 property exists.
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 

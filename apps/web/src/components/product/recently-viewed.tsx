@@ -35,9 +35,7 @@ export function RecentlyViewed({ current }: { current: ViewedItem }) {
       KEY,
       JSON.stringify([current, ...previous].slice(0, MAX)),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- object prop from a
-    // server component; keying on slug avoids effect loops if that changes
-  }, [current.slug]);
+  }, [current]);
 
   if (items.length === 0) return null;
 

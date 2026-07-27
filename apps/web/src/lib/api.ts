@@ -48,6 +48,7 @@ export type SortKey =
   | "rating";
 
 export interface ProductFilters {
+  q?: string;
   collection?: Collection;
   category?: string;
   sizes?: string[];
@@ -76,6 +77,7 @@ export interface Facets {
 
 function filterParams(opts: ProductFilters): URLSearchParams {
   const params = new URLSearchParams();
+  if (opts.q?.trim()) params.set("q", opts.q.trim());
   if (opts.collection) params.set("collection", opts.collection);
   if (opts.category) params.set("category", opts.category);
   if (opts.sizes?.length) params.set("sizes", opts.sizes.join(","));

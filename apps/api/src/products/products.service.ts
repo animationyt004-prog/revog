@@ -6,6 +6,7 @@ export type Collection = 'new' | 'trending' | 'limited' | 'bestsellers';
 export type SortKey = 'newest' | 'popular' | 'price_asc' | 'price_desc' | 'discount' | 'rating';
 
 export interface ListFilters {
+  q?: string;
   collection?: Collection;
   category?: string;
   sizes?: Size[];
@@ -55,6 +56,17 @@ export class ProductsService {
       ...(f.fabrics?.length ? { fabric: { in: f.fabrics } } : {}),
     };
 
+    if (f.q?.trim()) {
+      const q = f.q.trim();
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { brand: { contains: q, mode: 'insensitive' } },
+        { fabric: { contains: q, mode: 'insensitive' } },
+        { category: { name: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
+
     if (f.minPrice != null || f.maxPrice != null) {
       where.price = {
         ...(f.minPrice != null ? { gte: f.minPrice } : {}),
@@ -78,7 +90,7 @@ export class ProductsService {
   }
 
   async findAll(f: ListFilters) {
-    const take = Math.min(Math.max(f.take ?? 24, 1), 48);
+    const take = Math.min(Math.max(f.take ?? 24, 1), 200);
     const skip = Math.max(f.skip ?? 0, 0);
     const where = this.buildWhere(f);
     const sort = f.sort ?? (f.collection === 'bestsellers' ? 'popular' : 'newest');

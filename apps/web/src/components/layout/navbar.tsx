@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
@@ -19,8 +21,10 @@ const STATIC_LINKS = [
 
 /** Sticky navbar. Full mega menu lands in Phase 2 — this is the frame. */
 export function Navbar() {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   // Category links come from the catalog so the nav can never point at an
   // empty category (which used to happen whenever the range changed).
   const [navLinks, setNavLinks] = useState(STATIC_LINKS);
@@ -34,6 +38,14 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    setOpen(false);
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  }
 
   useEffect(() => {
     fetch(`${API}/categories`)
@@ -87,9 +99,21 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="ml-auto flex items-center gap-4 sm:gap-5">
-          <button aria-label="Search" className="transition-colors hover:text-volt">
-            <Search size={20} />
-          </button>
+          <form onSubmit={submitSearch} className="hidden items-center sm:flex">
+            <label className="relative block">
+              <span className="sr-only">Search products</span>
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-paper-dim"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search"
+                className="w-28 border border-paper/20 bg-ink-2 py-1.5 pl-8 pr-2 text-sm outline-none transition-all focus:w-44 focus:border-volt"
+              />
+            </label>
+          </form>
           <Link
             href={authed ? "/account" : "/login"}
             aria-label={authed ? "Account" : "Login"}
@@ -120,19 +144,54 @@ export function Navbar() {
 
       {/* Mobile drawer */}
       {open && (
-        <ul className="border-t border-paper/10 bg-ink px-6 py-4 md:hidden">
-          {navLinks.map((l) => (
-            <li key={l.href}>
+        <div className="border-t border-paper/10 bg-ink px-6 py-4 md:hidden">
+          <form onSubmit={submitSearch}>
+            <label className="relative block">
+              <span className="sr-only">Search products</span>
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-paper-dim"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search kurtis, sarees, shirts"
+                className="w-full border border-paper/20 bg-ink-2 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-volt"
+              />
+            </label>
+          </form>
+          <ul className="mt-3">
+            {navLinks.map((l) => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+            <li>
               <Link
-                href={l.href}
+                href={authed ? "/account" : "/login"}
                 onClick={() => setOpen(false)}
                 className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
               >
-                {l.label}
+                {authed ? "Account" : "Login"}
               </Link>
             </li>
-          ))}
-        </ul>
+            <li>
+              <Link
+                href="/wishlist"
+                onClick={() => setOpen(false)}
+                className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
+              >
+                Wishlist
+              </Link>
+            </li>
+          </ul>
+        </div>
       )}
     </header>
   );

@@ -24,6 +24,10 @@ const csv = () =>
 
 class ListProductsQuery {
   @IsOptional()
+  @IsString()
+  q?: string;
+
+  @IsOptional()
   @IsIn(['new', 'trending', 'limited', 'bestsellers'])
   collection?: Collection;
 
@@ -72,7 +76,7 @@ class ListProductsQuery {
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(48)
+  @Max(200)
   take?: number;
 
   @IsOptional()

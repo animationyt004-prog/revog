@@ -42,7 +42,7 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   }
 }
 
-export const useAuth = create<AuthState>((set, get) => ({
+export const useAuth = create<AuthState>((set) => ({
   status: "loading",
   user: null,
   accessToken: null,

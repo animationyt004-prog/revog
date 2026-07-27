@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { getFacets, getProductList, type Collection } from "@/lib/api";
 import { parseCatalogParams, type SearchParams } from "@/lib/catalog-params";
 import { CatalogControls } from "./catalog-controls";
+import { SITE_URL } from "@/lib/site";
 
 interface Props {
   title: string;
@@ -20,9 +21,34 @@ export async function CatalogView({ title, accent, blurb, scope, searchParams }:
     getProductList({ ...scope, ...filters, take: 48 }),
     getFacets(scope),
   ]);
+  const listingLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${title} ${accent}`.trim(),
+    url:
+      scope.category
+        ? `${SITE_URL}/category/${scope.category}`
+        : scope.collection
+          ? `${SITE_URL}/collections/${scope.collection === "new" ? "new-arrivals" : scope.collection}`
+          : SITE_URL,
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: total,
+      itemListElement: items.slice(0, 24).map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${SITE_URL}/products/${p.slug}`,
+        name: p.name,
+      })),
+    },
+  };
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingLd) }}
+      />
       <FadeUp>
         <h1 className="display text-5xl sm:text-6xl">
           {title} <span className="text-volt">{accent}</span>

@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18327470048";
+const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? "AW-18325515272";
 // The Purchase conversion action's label, from Google Ads → Goals → Conversions
 // (the value after the slash in "AW-XXXXXXXXX/AbCdEf..."). Set via env.
 const PURCHASE_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL;
