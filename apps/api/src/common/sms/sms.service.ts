@@ -6,30 +6,38 @@ import { ConfigService } from '@nestjs/config';
  * verification. The OTP route uses the provider's own DLT-approved template,
  * so no sender-id/template registration is needed on our side.
  *
- * When FAST2SMS_API_KEY is unset the service reports unconfigured; when it is
- * the literal "TEST" the flow stays enabled but codes are logged instead of
- * sent, so everything is testable without an SMS balance.
+ * Switching this on takes SMS_OTP_ENABLED=true *and* a key. Holding a key is
+ * not proof the channel works — Fast2SMS keeps the OTP route locked until a
+ * website verification is approved, and a key sitting in the environment
+ * while that is pending silently blocks every COD order at checkout. The
+ * explicit flag makes turning the channel on a decision rather than a
+ * side effect of pasting credentials.
+ *
+ * With the flag on, the literal key "TEST" logs codes instead of sending, so
+ * the flow stays testable without an SMS balance.
  */
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
   private readonly apiKey: string;
+  private readonly enabled: boolean;
   /** Reason the last send failed, surfaced to admins so a broken SMS account
    *  is diagnosable without shell access to the server logs. */
   private lastError: string | null = null;
 
   constructor(config: ConfigService) {
     this.apiKey = config.get<string>('FAST2SMS_API_KEY') ?? '';
+    this.enabled = config.get<string>('SMS_OTP_ENABLED') === 'true';
   }
 
-  /** Any key (including "TEST") switches SMS-gated features on. */
+  /** Whether SMS-gated features (login by mobile, COD verification) are on. */
   get configured(): boolean {
-    return this.apiKey.length > 0;
+    return this.enabled && this.apiKey.length > 0;
   }
 
   /** True only with a real provider key — TEST mode logs instead. */
   get realSms(): boolean {
-    return this.apiKey.length > 0 && this.apiKey !== 'TEST';
+    return this.configured && this.apiKey !== 'TEST';
   }
 
   /** Provider health for the admin diagnostics endpoint. */

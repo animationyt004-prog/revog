@@ -36,6 +36,12 @@ export class CodOtpService {
   }
 
   async send(rawPhone: string, ip: string): Promise<{ sent: true; testMode: boolean }> {
+    // A stale checkout bundle can still call this after the channel is turned
+    // off; answering "sent" would leave the buyer waiting for a code that was
+    // never going anywhere.
+    if (!this.enabled) {
+      throw new BadRequestException('Mobile verification is not required right now.');
+    }
     const phone = CodOtpService.normalize(rawPhone);
     if (!/^[6-9]\d{9}$/.test(phone)) {
       throw new BadRequestException('Enter a valid 10-digit mobile number.');
