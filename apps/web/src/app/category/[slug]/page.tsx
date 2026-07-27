@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { getCategories } from "@/lib/api";
+import { breadcrumbJsonLd } from "@/lib/breadcrumbs";
 import { getCategorySeo } from "@/lib/category-seo";
 import type { SearchParams } from "@/lib/catalog-params";
 
@@ -48,8 +49,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         }
       : null;
 
+  const crumbs = breadcrumbJsonLd([
+    { name: category.name, path: `/category/${slug}` },
+  ]);
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <PromoTicker />
       <Navbar />
       <CatalogView

@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import type { Collection } from "@/lib/api";
+import { breadcrumbJsonLd } from "@/lib/breadcrumbs";
 import type { SearchParams } from "@/lib/catalog-params";
 
 const COLLECTIONS: Record<
@@ -57,8 +58,19 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const meta = COLLECTIONS[collection];
   if (!meta) notFound();
 
+  const crumbs = breadcrumbJsonLd([
+    {
+      name: `${meta.title} ${meta.accent}`,
+      path: `/collections/${collection}`,
+    },
+  ]);
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <PromoTicker />
       <Navbar />
       <CatalogView
