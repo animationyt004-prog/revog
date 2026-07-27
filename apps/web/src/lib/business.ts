@@ -38,9 +38,10 @@ export const BUSINESS = {
   },
 } as const;
 
-/** True when the contact details are still placeholders. */
-export const CONTACT_INCOMPLETE =
-  BUSINESS.phone === "919999999999" || BUSINESS.address.line1 === "Address to be updated";
+/** Phone and address arrive at different times, so they gate separately — a
+ *  real number should be reachable even while the address is still pending. */
+export const HAS_PHONE = BUSINESS.phone !== "919999999999";
+export const HAS_ADDRESS = BUSINESS.address.line1 !== "Address to be updated";
 
 export const whatsappLink = (message = "Hi Hyra Fashion! I have a question.") =>
   `https://wa.me/${BUSINESS.phone}?text=${encodeURIComponent(message)}`;
