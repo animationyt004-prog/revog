@@ -45,6 +45,7 @@ import { StorageService } from '../common/storage/storage.service';
 import { ReturnsService } from '../returns/returns.service';
 import { AdminService } from './admin.service';
 import { SmsService } from '../common/sms/sms.service';
+import { MailerService } from '../common/mailer/mailer.service';
 
 class ListOrdersQuery {
   @IsOptional()
@@ -229,13 +230,15 @@ export class AdminController {
     private readonly returns: ReturnsService,
     private readonly storage: StorageService,
     private readonly sms: SmsService,
+    private readonly mailer: MailerService,
   ) {}
 
-  /** Why SMS is failing, without needing server-log access. A broken SMS
-   *  account silently blocks every COD order, so it has to be visible. */
-  @Get('sms-status')
-  smsStatus() {
-    return this.sms.diagnostics;
+  /** Why OTP delivery is failing, without needing server-log access. A broken
+   *  SMS account silently blocks every COD order and an unverified sender
+   *  domain blocks every login, so both have to be visible. */
+  @Get('otp-status')
+  otpStatus() {
+    return { sms: this.sms.diagnostics, email: this.mailer.diagnostics };
   }
 
   // Image upload → R2 (admin only). Returns the public URL to store on the product.

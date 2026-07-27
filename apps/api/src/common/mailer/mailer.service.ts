@@ -11,6 +11,8 @@ export class MailerService {
   private readonly logger = new Logger(MailerService.name);
   private readonly apiKey: string | undefined;
   private readonly from: string;
+  /** Reason the last send failed, for the admin diagnostics endpoint. */
+  private lastError: string | null = null;
 
   constructor(config: ConfigService) {
     this.apiKey = config.get<string>('RESEND_API_KEY') || undefined;
@@ -19,16 +21,32 @@ export class MailerService {
     // account owner's own address, so a verified domain is required before
     // real customers can receive a code.
     this.from =
-      config.get<string>('OTP_FROM_EMAIL') || 'Hyra Fashion <onboarding@resend.dev>';
+      config.get<string>('OTP_FROM_EMAIL') ||
+      'Hyra Fashion <onboarding@resend.dev>';
   }
 
   get configured(): boolean {
     return !!this.apiKey;
   }
 
+  /** Provider health for the admin diagnostics endpoint. */
+  get diagnostics(): {
+    configured: boolean;
+    from: string;
+    lastError: string | null;
+  } {
+    return {
+      configured: this.configured,
+      from: this.from,
+      lastError: this.lastError,
+    };
+  }
+
   async send(to: string, subject: string, html: string): Promise<void> {
     if (!this.apiKey) {
-      this.logger.warn(`Email not sent (RESEND_API_KEY unset) — to=${to} subject="${subject}"`);
+      this.logger.warn(
+        `Email not sent (RESEND_API_KEY unset) — to=${to} subject="${subject}"`,
+      );
       return;
     }
     const res = await fetch('https://api.resend.com/emails', {
@@ -40,10 +58,23 @@ export class MailerService {
       body: JSON.stringify({ from: this.from, to, subject, html }),
     });
     if (!res.ok) {
-      const detail = await res.text().catch(() => '');
-      this.logger.error(`Resend send failed (${res.status}): ${detail.slice(0, 300)}`);
-      throw new Error('Failed to send email.');
+      const body = await res.text().catch(() => '');
+      // Resend puts the useful part ("domain is not verified", quota, bad key)
+      // in a JSON `message`; keep it on the Error so callers can log it.
+      let reason = `HTTP ${res.status}`;
+      try {
+        const json = JSON.parse(body) as { message?: unknown };
+        if (typeof json.message === 'string') reason = json.message;
+      } catch {
+        if (body) reason = body.slice(0, 300);
+      }
+      this.lastError = reason.slice(0, 300);
+      this.logger.error(
+        `Resend send failed (${res.status}): ${this.lastError}`,
+      );
+      throw new Error(this.lastError);
     }
+    this.lastError = null;
   }
 
   /** Branded OTP email. */

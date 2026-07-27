@@ -141,9 +141,17 @@ export class AuthService {
     try {
       if (id.kind === 'phone') await this.sms.sendOtp(identifier, code);
       else await this.mailer.sendOtp(identifier, code);
-    } catch {
-      this.logger.error(`Failed to send OTP to ${identifier} via ${id.kind}`);
-      throw new Error('Could not send the login code. Please try again.');
+    } catch (err) {
+      // The provider's reason goes to the log; the caller gets a plain
+      // explanation. A bare Error here would surface as an opaque 500.
+      const reason = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Failed to send OTP to ${identifier} via ${id.kind}: ${reason}`,
+      );
+      throw new HttpException(
+        'Could not send the login code right now. Please try again in a moment.',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
   }
 
