@@ -11,33 +11,46 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
-import { IsString, Length } from 'class-validator';
+import { IsOptional, IsString, Length } from 'class-validator';
 import type { Request, Response } from 'express';
 import { CartService } from '../cart/cart.service';
 import { CART_COOKIE } from '../cart/cart.controller';
 import { AuthService, parseIdentifier, type Identifier } from './auth.service';
 import { CurrentUser, JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 
-/** Login takes one field that is either an email or an Indian mobile — the
- *  older clients that still post `email` keep working. */
+/** Login takes one field that is either an email or an Indian mobile. The
+ *  legacy `email` field is still accepted — cached storefront bundles in
+ *  open tabs keep posting it across a deploy. */
 class RequestOtpDto {
+  @IsOptional()
   @IsString()
   @Length(3, 254)
-  identifier!: string;
+  identifier?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(3, 254)
+  email?: string;
 }
 
 class VerifyOtpDto {
+  @IsOptional()
   @IsString()
   @Length(3, 254)
-  identifier!: string;
+  identifier?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(3, 254)
+  email?: string;
 
   @IsString()
   @Length(6, 6)
   code!: string;
 }
 
-function requireIdentifier(raw: string): Identifier {
-  const id = parseIdentifier(raw);
+function requireIdentifier(raw: string | undefined): Identifier {
+  const id = raw ? parseIdentifier(raw) : null;
   if (!id) {
     throw new BadRequestException('Enter a valid email address or 10-digit mobile number.');
   }
@@ -82,7 +95,7 @@ export class AuthController {
   @Post('request-otp')
   @HttpCode(200)
   async requestOtp(@Body() dto: RequestOtpDto, @Ip() ip: string) {
-    const id = requireIdentifier(dto.identifier);
+    const id = requireIdentifier(dto.identifier ?? dto.email);
     await this.auth.requestOtp(id, ip);
     return {
       ok: true,
@@ -99,7 +112,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.auth.verifyOtp(requireIdentifier(dto.identifier), dto.code, {
+    const tokens = await this.auth.verifyOtp(requireIdentifier(dto.identifier ?? dto.email), dto.code, {
       ip,
       userAgent: req.headers['user-agent'],
     });
