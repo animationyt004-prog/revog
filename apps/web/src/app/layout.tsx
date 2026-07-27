@@ -73,7 +73,13 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
   verification: {
-    google: "3gH9_kAwGAVwfNGXwsynHuYOVi82XUntu9raIcdlK-Y",
+    // One token per Google property: the current domain (Search Console +
+    // Merchant Center) and the retired Render URL, which stays verified while
+    // its 301s are still passing ranking across.
+    google: [
+      "VxR0uN_uo9CUZ8wcdK_6Uzr4YPubx9PuoUVYnks94kY",
+      "3gH9_kAwGAVwfNGXwsynHuYOVi82XUntu9raIcdlK-Y",
+    ],
   },
 };
 
