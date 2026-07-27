@@ -76,7 +76,7 @@ ${p.fabric ? `      <g:material>${esc(p.fabric)}</g:material>` : ""}
 }
 
 export async function GET() {
-  const list = await getProducts({ take: 48 });
+  const list = await getProducts({ take: 200 });
   const details = await Promise.all(list.map((p) => getProduct(p.slug)));
 
   const items = details

@@ -8,7 +8,7 @@ import { getCategories, getProducts } from "@/lib/api";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 // Organization + WebSite graph. WebSite's SearchAction enables Google's
-// sitelinks search box; Organization powers brand knowledge-panel data.
+// sitelinks search box; Organization and OnlineStore power brand/shop signals.
 const SITE_JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
@@ -17,8 +17,39 @@ const SITE_JSON_LD = {
       "@id": `${SITE_URL}/#organization`,
       name: SITE_NAME,
       url: SITE_URL,
+      // Google uses this for the brand logo in search results / knowledge panel.
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+        width: 512,
+        height: 512,
+      },
       description:
-        "Hyra Fashion — Indian fashion online. Kurtis, kurtas, sarees, t-shirts and shirts with COD and easy 7-day returns.",
+        "Hyra Fashion - Indian fashion online. Kurtis, kurtas, sarees, t-shirts and shirts with COD and easy 7-day returns.",
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        areaServed: "IN",
+        availableLanguage: ["en", "hi"],
+      },
+    },
+    {
+      "@type": "OnlineStore",
+      "@id": `${SITE_URL}/#store`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      parentOrganization: { "@id": `${SITE_URL}/#organization` },
+      areaServed: "IN",
+      paymentAccepted: ["Cash on Delivery", "UPI", "Cards"],
+      currenciesAccepted: "INR",
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 7,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+      },
     },
     {
       "@type": "WebSite",
@@ -55,7 +86,7 @@ export default async function HomePage() {
       <PromoTicker />
       <Navbar />
       <main>
-        <Hero />
+        <Hero products={newDrops} />
         <ProductSection
           title="New"
           accent="Arrivals"
