@@ -17,7 +17,9 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-  if (!product) return { title: "Not Found" };
+  // notFound() here (before streaming starts) yields a real 404 status;
+  // from the page body the shell has already flushed a 200 (soft 404).
+  if (!product) notFound();
   const desc = product.description.slice(0, 155);
   return {
     title: product.name,

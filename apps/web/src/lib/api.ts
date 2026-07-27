@@ -16,6 +16,10 @@ async function get<T>(path: string, fallback: T): Promise<T> {
         next: { revalidate: 60 },
       });
       if (res.ok) return (await res.json()) as T;
+      // A 404 is a definitive answer ("no such resource"), not an outage —
+      // return the fallback so callers can notFound() instead of retrying
+      // and then rendering the "store is waking up" outage page.
+      if (res.status === 404) return fallback;
     } catch {
       // fall through to retry / failure handling
     }
