@@ -22,8 +22,7 @@ const OTP_RATE_WINDOW_S = 60;
 /** Login accepts either an email address or an Indian mobile number; the
  *  channel that carries the code follows from which one was typed. */
 export type Identifier =
-  | { kind: 'email'; value: string }
-  | { kind: 'phone'; value: string };
+  { kind: 'email'; value: string } | { kind: 'phone'; value: string };
 
 /** Anything with an "@" is treated as an email; everything else has to look
  *  like a 10-digit Indian mobile once punctuation and +91 are stripped. */
@@ -31,10 +30,14 @@ export function parseIdentifier(raw: string): Identifier | null {
   const trimmed = raw.trim();
   if (trimmed.includes('@')) {
     const email = trimmed.toLowerCase();
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? { kind: 'email', value: email } : null;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ? { kind: 'email', value: email }
+      : null;
   }
   const phone = SmsService.normalizePhone(trimmed);
-  return SmsService.isValidPhone(phone) ? { kind: 'phone', value: phone } : null;
+  return SmsService.isValidPhone(phone)
+    ? { kind: 'phone', value: phone }
+    : null;
 }
 
 export interface AuthTokens {
@@ -64,7 +67,9 @@ export class AuthService {
     private readonly sms: SmsService,
   ) {
     this.isProd = config.get('NODE_ENV') === 'production';
-    this.refreshTtlDays = Number(config.get('JWT_REFRESH_TTL', '30d').replace(/\D/g, '') || 30);
+    this.refreshTtlDays = Number(
+      config.get('JWT_REFRESH_TTL', '30d').replace(/\D/g, '') || 30,
+    );
   }
 
   private hash(value: string): string {
@@ -73,11 +78,26 @@ export class AuthService {
 
   // ---------------------------------------------------------------- OTP
 
+  /** Channels the login form can actually deliver on. In dev both stay open
+   *  so the flow is testable with codes logged to the console. */
+  availableChannels(): { email: boolean; sms: boolean } {
+    if (!this.isProd) return { email: true, sms: true };
+    return { email: this.mailer.configured, sms: this.sms.configured };
+  }
+
   async requestOtp(id: Identifier, ip: string): Promise<void> {
     const identifier = id.value;
     const [idOk, ipOk] = await Promise.all([
-      this.redis.rateLimit(`otp:rl:id:${identifier}`, OTP_RATE_LIMIT, OTP_RATE_WINDOW_S),
-      this.redis.rateLimit(`otp:rl:ip:${ip}`, OTP_RATE_LIMIT * 3, OTP_RATE_WINDOW_S),
+      this.redis.rateLimit(
+        `otp:rl:id:${identifier}`,
+        OTP_RATE_LIMIT,
+        OTP_RATE_WINDOW_S,
+      ),
+      this.redis.rateLimit(
+        `otp:rl:ip:${ip}`,
+        OTP_RATE_LIMIT * 3,
+        OTP_RATE_WINDOW_S,
+      ),
     ]);
     if (!idOk || !ipOk) {
       throw new HttpException(
@@ -89,7 +109,9 @@ export class AuthService {
     const code = String(randomInt(100000, 1000000)); // 6 digits
 
     // A fresh OTP invalidates any previous pending ones for this identifier.
-    await this.prisma.otpCode.deleteMany({ where: { identifier, consumedAt: null } });
+    await this.prisma.otpCode.deleteMany({
+      where: { identifier, consumedAt: null },
+    });
     await this.prisma.otpCode.create({
       data: {
         identifier,
@@ -98,11 +120,21 @@ export class AuthService {
       },
     });
 
-    // Whichever channel is configured does the sending; when neither is, the
-    // code is logged so the flow stays testable without an inbox or SMS
-    // balance. Failures are generic so we never leak whether an account exists.
+    // Whichever channel is configured does the sending. Failures are generic
+    // so we never leak whether an account exists.
     const channel = id.kind === 'phone' ? this.sms : this.mailer;
     if (!channel.configured) {
+      // In dev the code is logged so the flow stays testable without an inbox
+      // or an SMS balance. In production that would be a trap: the caller is
+      // told "code sent" while it only ever reached the server log.
+      if (this.isProd) {
+        throw new HttpException(
+          id.kind === 'phone'
+            ? 'Login by mobile is unavailable right now. Please use your email address.'
+            : 'Login by email is unavailable right now. Please try again later.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
       this.logger.log(`DEV OTP for ${identifier}: ${code}`);
       return;
     }
@@ -115,22 +147,33 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(id: Identifier, code: string, meta: { ip?: string; userAgent?: string }): Promise<AuthTokens> {
+  async verifyOtp(
+    id: Identifier,
+    code: string,
+    meta: { ip?: string; userAgent?: string },
+  ): Promise<AuthTokens> {
     const identifier = id.value;
     const otp = await this.prisma.otpCode.findFirst({
       where: { identifier, consumedAt: null },
       orderBy: { createdAt: 'desc' },
     });
     if (!otp || otp.expiresAt < new Date()) {
-      throw new UnauthorizedException('OTP expired or not found. Request a new one.');
+      throw new UnauthorizedException(
+        'OTP expired or not found. Request a new one.',
+      );
     }
     if (otp.attempts >= OTP_MAX_ATTEMPTS) {
-      throw new UnauthorizedException('Too many wrong attempts. Request a new OTP.');
+      throw new UnauthorizedException(
+        'Too many wrong attempts. Request a new OTP.',
+      );
     }
 
     const expected = Buffer.from(otp.codeHash, 'hex');
     const actual = Buffer.from(this.hash(code), 'hex');
-    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+    if (
+      expected.length !== actual.length ||
+      !timingSafeEqual(expected, actual)
+    ) {
       await this.prisma.otpCode.update({
         where: { id: otp.id },
         data: { attempts: { increment: 1 } },
@@ -167,7 +210,9 @@ export class AuthService {
       data: { userId: user.id },
     });
     if (claimed.count > 0) {
-      this.logger.log(`Claimed ${claimed.count} guest order(s) for ${identifier}`);
+      this.logger.log(
+        `Claimed ${claimed.count} guest order(s) for ${identifier}`,
+      );
     }
 
     // New login = new token family.
@@ -230,7 +275,10 @@ export class AuthService {
 
   // ------------------------------------------------------------ rotation
 
-  async refresh(rawToken: string, meta: { ip?: string; userAgent?: string }): Promise<AuthTokens> {
+  async refresh(
+    rawToken: string,
+    meta: { ip?: string; userAgent?: string },
+  ): Promise<AuthTokens> {
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash: this.hash(rawToken) },
       include: { user: true },
@@ -243,7 +291,9 @@ export class AuthService {
         where: { family: stored.family, revokedAt: null },
         data: { revokedAt: new Date() },
       });
-      this.logger.warn(`Refresh token reuse detected — family ${stored.family} revoked`);
+      this.logger.warn(
+        `Refresh token reuse detected — family ${stored.family} revoked`,
+      );
       throw new ForbiddenException('Session invalidated. Please log in again.');
     }
     if (stored.expiresAt < new Date()) {

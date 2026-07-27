@@ -17,6 +17,19 @@ export interface AuthUser {
  *  inbox" vs "check your messages" copy on the OTP step. */
 export type OtpChannel = "email" | "phone";
 
+/** What the server can actually deliver on right now. SMS switches off with
+ *  its provider key, so the form asks only for what will work. */
+export async function fetchLoginChannels(): Promise<{ email: boolean; sms: boolean }> {
+  try {
+    const res = await fetch(`${API}/auth/channels`, { credentials: "include" });
+    if (!res.ok) throw new Error();
+    return (await res.json()) as { email: boolean; sms: boolean };
+  } catch {
+    // Assume email-only rather than offering a channel that may not send.
+    return { email: true, sms: false };
+  }
+}
+
 type AuthStatus = "loading" | "guest" | "authed";
 
 interface AuthState {

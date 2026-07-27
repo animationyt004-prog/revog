@@ -71,6 +71,14 @@ export class AuthController {
     });
   }
 
+  /** Which handles the login form may offer. SMS rides on the same provider
+   *  key as COD verification, so it disappears from the UI the moment that
+   *  key is pulled instead of failing at submit. */
+  @Get('channels')
+  channels() {
+    return this.auth.availableChannels();
+  }
+
   @Post('request-otp')
   @HttpCode(200)
   async requestOtp(@Body() dto: RequestOtpDto, @Ip() ip: string) {

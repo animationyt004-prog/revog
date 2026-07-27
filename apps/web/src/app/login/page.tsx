@@ -8,15 +8,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, KeyRound, Loader2, AtSign, X } from "lucide-react";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { cn } from "@/lib/format";
-import { useAuth, type OtpChannel } from "@/lib/auth-store";
+import { fetchLoginChannels, useAuth, type OtpChannel } from "@/lib/auth-store";
 
 type Step = "identifier" | "otp";
 
 /** Mirrors the server's rule: an "@" means email, otherwise it has to reduce
- *  to a 10-digit Indian mobile. Used only to enable the submit button. */
-function looksValid(raw: string): boolean {
+ *  to a 10-digit Indian mobile. Used only to enable the submit button —
+ *  mobile counts only while the SMS channel is actually live. */
+function looksValid(raw: string, smsOn: boolean): boolean {
   const v = raw.trim();
   if (v.includes("@")) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  if (!smsOn) return false;
   const digits = v.replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "");
   return /^[6-9]\d{9}$/.test(digits);
 }
@@ -32,7 +34,12 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const [smsOn, setSmsOn] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    void fetchLoginChannels().then((c) => setSmsOn(c.sms));
+  }, []);
 
   // Already logged in? Straight to the account page.
   useEffect(() => {
@@ -118,8 +125,8 @@ export default function LoginPage() {
                   Welcome <span className="text-volt">In.</span>
                 </h1>
                 <p className="mt-2 text-sm text-paper-dim">
-                  No passwords here. We&apos;ll send a one-time code to your
-                  mobile or email.
+                  No passwords here. We&apos;ll send a one-time code to your{" "}
+                  {smsOn ? "mobile or email" : "email"}.
                 </p>
 
                 <form
@@ -127,7 +134,7 @@ export default function LoginPage() {
                   onSubmit={(e) => { e.preventDefault(); void sendOtp(); }}
                 >
                   <label htmlFor="identifier" className="mb-1.5 block text-xs font-semibold tracking-widest text-paper-dim">
-                    MOBILE OR EMAIL
+                    {smsOn ? "MOBILE OR EMAIL" : "EMAIL"}
                   </label>
                   <div className="flex items-center gap-2 border border-paper/25 bg-ink-2 px-3 focus-within:border-volt">
                     <AtSign size={16} className="text-paper-dim" />
@@ -140,17 +147,19 @@ export default function LoginPage() {
                       autoFocus
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="98765 43210  or  you@example.com"
+                      placeholder={
+                        smsOn ? "98765 43210  or  you@example.com" : "you@example.com"
+                      }
                       className="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-paper-dim/50"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    disabled={busy || !looksValid(identifier)}
+                    disabled={busy || !looksValid(identifier, smsOn)}
                     className={cn(
                       "display mt-5 flex w-full items-center justify-center gap-2 py-4 text-xl transition-all",
-                      busy || !looksValid(identifier)
+                      busy || !looksValid(identifier, smsOn)
                         ? "cursor-not-allowed bg-ink-3 text-paper-dim"
                         : "bg-volt text-ink hover:-translate-y-0.5",
                     )}
