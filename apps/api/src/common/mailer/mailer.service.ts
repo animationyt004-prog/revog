@@ -14,9 +14,12 @@ export class MailerService {
 
   constructor(config: ConfigService) {
     this.apiKey = config.get<string>('RESEND_API_KEY') || undefined;
-    // e.g. "HYRA <otp@yourdomain.com>" — falls back to Resend's shared
-    // onboarding sender, which works for testing without a verified domain.
-    this.from = config.get<string>('OTP_FROM_EMAIL') || 'HYRA <onboarding@resend.dev>';
+    // e.g. "Hyra Fashion <login@hyrafashions.com>" — falls back to Resend's
+    // shared onboarding sender. That fallback only delivers to the Resend
+    // account owner's own address, so a verified domain is required before
+    // real customers can receive a code.
+    this.from =
+      config.get<string>('OTP_FROM_EMAIL') || 'Hyra Fashion <onboarding@resend.dev>';
   }
 
   get configured(): boolean {
@@ -47,14 +50,14 @@ export class MailerService {
   async sendOtp(to: string, code: string): Promise<void> {
     const html = `
 <div style="font-family:Arial,Helvetica,sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;color:#0d0d0e">
-  <p style="font-size:26px;font-weight:800;letter-spacing:1px;margin:0 0 24px">HYRA<span style="color:#4d7c0f">.</span></p>
+  <p style="font-size:26px;font-weight:800;letter-spacing:1px;margin:0 0 24px">HYRA<span style="color:#4d7c0f">.</span> FASHION</p>
   <p style="font-size:15px;margin:0 0 8px">Your one-time login code:</p>
   <p style="font-size:40px;font-weight:800;letter-spacing:10px;margin:8px 0 20px;color:#0d0d0e">${code}</p>
   <p style="font-size:13px;color:#63635d;margin:0 0 4px">Valid for 10 minutes. Never share this code with anyone.</p>
   <p style="font-size:13px;color:#63635d;margin:0">If you didn't request this, you can safely ignore this email.</p>
   <hr style="border:none;border-top:1px solid #e9e9e4;margin:24px 0" />
-  <p style="font-size:11px;color:#9a9a92;margin:0">HYRA — streetwear without permission.</p>
+  <p style="font-size:11px;color:#9a9a92;margin:0">Hyra Fashion — Indian fashion, all in one place.</p>
 </div>`.trim();
-    await this.send(to, `${code} is your HYRA login code`, html);
+    await this.send(to, `${code} is your Hyra Fashion login code`, html);
   }
 }
