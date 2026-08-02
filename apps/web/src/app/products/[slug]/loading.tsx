@@ -17,7 +17,12 @@ export default function Loading() {
           <div className="mt-3 h-12 w-4/5 bg-ink-2" />
           <div className="mt-4 h-8 w-40 bg-ink-2" />
           <div className="mt-8 h-4 w-24 bg-ink-3" />
-          <div className="mt-2 flex gap-2">
+          {/* Wraps like the real size picker does. Five fixed 48px swatches
+              plus gaps come to 272px, which is wider than the content box on a
+              narrow phone (a 280px viewport leaves 248px after px-4). Without
+              wrapping, this row stretched the grid column and gave the whole
+              page a horizontal scroll while the product was still loading. */}
+          <div className="mt-2 flex flex-wrap gap-2">
             {[0, 1, 2, 3, 4].map((i) => (
               <div key={i} className="h-11 w-12 bg-ink-2" />
             ))}
