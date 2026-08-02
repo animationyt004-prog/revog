@@ -109,7 +109,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
           initial={{ opacity: 0.4 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className="relative aspect-[3/4] overflow-hidden bg-ink-2"
+          className="relative aspect-[3/4] max-h-[50svh] overflow-hidden bg-ink-2 sm:max-h-none"
         >
           {activeImage && (
             <Image
@@ -118,7 +118,10 @@ export function ProductView({ product }: { product: ProductDetail }) {
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
+              // contain on phones: the box is capped there, and a saree cropped
+              // at the hem hides the drape and border a buyer is judging.
+              // Desktop has the full 3:4 box, so cover fills it with no loss.
+              className="object-contain sm:object-cover"
             />
           )}
           {discount > 0 && (
@@ -129,14 +132,14 @@ export function ProductView({ product }: { product: ProductDetail }) {
         </motion.div>
 
         {galleryImages.length > 1 && (
-          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
+          <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto sm:mt-3">
             {galleryImages.map((img, i) => (
               <button
                 key={img.id}
                 onClick={() => setImageIdx(i)}
                 aria-label={`View image ${i + 1}`}
                 className={cn(
-                  "relative aspect-[3/4] w-20 shrink-0 overflow-hidden bg-ink-2 transition-opacity",
+                  "relative aspect-[3/4] w-14 shrink-0 overflow-hidden bg-ink-2 transition-opacity sm:w-20",
                   i === imageIdx ? "ring-2 ring-volt" : "opacity-60 hover:opacity-100",
                 )}
               >

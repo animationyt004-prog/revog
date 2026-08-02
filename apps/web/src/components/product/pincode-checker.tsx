@@ -26,7 +26,7 @@ export function PincodeChecker() {
   }
 
   return (
-    <div className="mt-6 border border-paper/10 p-4">
+    <div className="mt-5 border border-paper/10 p-3.5 sm:mt-6 sm:p-4">
       <p className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold">
         <MapPin size={15} className="text-volt" /> Check Delivery
       </p>
