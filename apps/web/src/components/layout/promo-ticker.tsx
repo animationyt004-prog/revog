@@ -1,67 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { cn } from "@/lib/format";
 
 const DISMISS_KEY = "hyra:promo-dismissed";
+const HOLD_MS = 4000;
 
 /**
- * Announcement strip above the header. Three fixed messages rather than a
- * marquee: a scrolling strip means a shopper has to wait for the line they
- * care about to come round, and on a phone it never sat still long enough to
- * read. On narrow screens only the shipping line survives — the other two are
- * repeated in the trust strip a screen below.
+ * Announcement strip above the header. One line at a time, sliding up on a
+ * four-second hold rather than scrolling continuously: a marquee makes the
+ * reader wait for the line they care about and never sits still long enough
+ * on a phone to finish it.
  *
- * Dismissal is remembered for the session so it doesn't reappear on every
- * navigation, but comes back next visit.
+ * Every claim here has to be one the checkout honours — HYRA10 is a live
+ * coupon, ₹999 is the real free-shipping threshold. Advertising a code that
+ * fails at checkout costs more than the code was ever going to earn.
  */
 const MESSAGES = [
-  { text: "Free shipping on orders above ₹999", always: true },
-  { text: "New collection '26 — elevate your ethnic style", always: false },
-  { text: "COD available | Easy returns", always: false },
+  "Use code HYRA10 — 10% off orders above ₹999",
+  "Free shipping on orders above ₹999",
+  "Cash on Delivery available",
+  "Easy 7-day returns",
 ];
 
 export function PromoTicker() {
   const [dismissed, setDismissed] = useState(false);
-  // Read on mount rather than during render: sessionStorage isn't available
-  // while the server renders this, and reading it inline would desync
-  // hydration.
   const [ready, setReady] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const reduced = useRef(false);
 
   useEffect(() => {
+    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     try {
       setDismissed(sessionStorage.getItem(DISMISS_KEY) === "1");
     } catch {
-      // Private-mode browsers can throw on storage access; showing the bar is
-      // the harmless outcome.
+      // Private-mode browsers throw on storage access; showing the bar is the
+      // harmless outcome.
     }
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    if (paused || reduced.current) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % MESSAGES.length), HOLD_MS);
+    return () => clearInterval(t);
+  }, [paused]);
 
   function dismiss() {
     setDismissed(true);
     try {
       sessionStorage.setItem(DISMISS_KEY, "1");
     } catch {
-      // Nothing to do — the bar closes for this render either way.
+      // Closing for this render is enough.
     }
   }
 
   if (ready && dismissed) return null;
 
   return (
-    <div className="relative bg-paper text-ink" aria-label="Current offers">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-2 px-4 py-2 pr-10 text-center text-[11px] tracking-wide sm:grid-cols-3 sm:px-6 sm:text-xs">
-        {MESSAGES.map((m) => (
+    <div
+      className="relative bg-paper text-ink"
+      aria-label="Current offers"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Fixed height with the lines stacked inside it: animating height would
+          shove the whole page down every four seconds. */}
+      <div className="relative mx-auto h-9 max-w-7xl overflow-hidden px-10">
+        {MESSAGES.map((msg, i) => (
           <p
-            key={m.text}
-            className={
-              m.always
-                ? "sm:text-left"
-                : "hidden sm:block sm:last:text-right"
-            }
+            key={msg}
+            aria-hidden={i !== index}
+            className={cn(
+              "absolute inset-x-10 top-0 flex h-9 items-center justify-center text-center text-[11px] tracking-wide transition-all duration-500 sm:text-xs",
+              i === index
+                ? "translate-y-0 opacity-100"
+                : "pointer-events-none -translate-y-2 opacity-0",
+            )}
           >
-            {m.text}
+            {msg}
           </p>
         ))}
       </div>
