@@ -52,6 +52,13 @@ export interface ProductDetail {
   gender: string;
   fit: string;
   fabric: string | null;
+  // Spec sheet. Optional because older products predate these columns and the
+  // API only returns them once it is running against the current schema.
+  sareeLength?: string | null;
+  blouseDetails?: string | null;
+  washCare?: string | null;
+  occasion?: string | null;
+  transparency?: string | null;
   mrp: number;
   price: number;
   badges: BadgeType[];
