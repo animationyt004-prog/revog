@@ -12,6 +12,15 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
     ],
   },
   {
+    heading: "Trending",
+    links: [
+      { label: "Georgette Sarees", href: "/collections/georgette-sarees" },
+      { label: "Party Wear Sarees", href: "/collections/party-wear-sarees" },
+      { label: "Daily Wear Sarees", href: "/collections/daily-wear-sarees" },
+      { label: "Office Wear Sarees", href: "/collections/office-wear-sarees" },
+    ],
+  },
+  {
     heading: "Help",
     links: [
       { label: "Track Order", href: "/account/orders" },
@@ -33,25 +42,25 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-paper/10 bg-ink-2">
+    <footer className="mt-auto bg-night text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
           <div>
-            <Wordmark size="lg" />
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-paper-dim">
+            <Wordmark size="lg" tone="dark" />
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/65">
               Indian fashion for every day — ethnic and casual, curated in India
               with honest pricing and delivery across the country.
             </p>
           </div>
           {COLUMNS.map((col) => (
             <div key={col.heading}>
-              <h4 className="display mb-3 text-lg text-volt">{col.heading}</h4>
+              <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">{col.heading}</h4>
               <ul className="space-y-2">
                 {col.links.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-sm text-paper-dim transition-colors hover:text-paper"
+                      className="text-sm text-white/65 transition-colors hover:text-gold"
                     >
                       {l.label}
                     </Link>
@@ -61,7 +70,7 @@ export function Footer() {
             </div>
           ))}
         </div>
-        <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-paper/10 pt-6 text-xs text-paper-dim sm:flex-row">
+        <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/12 pt-6 text-xs text-white/55 sm:flex-row">
           <p>© {new Date().getFullYear()} Hyra Fashion. All rights reserved.</p>
           <p>
             Made in India <span aria-hidden>🇮🇳</span> · COD & UPI accepted

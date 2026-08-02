@@ -13,14 +13,14 @@ export function Testimonials({ reviews }: { reviews: Testimonial[] }) {
   const quotes = reviews.filter((r) => r.body);
 
   return (
-    <section aria-label="Customer reviews" className="border-y border-paper/10 bg-ink-2">
+    <section aria-label="Customer reviews" className="bg-night text-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-14">
         <FadeUp>
           <div className="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
-            <Star size={30} className="shrink-0 text-volt" strokeWidth={1.4} />
+            <Star size={30} className="shrink-0 text-gold" strokeWidth={1.4} />
             <p className="display text-2xl leading-tight sm:text-3xl">
               Loved by
-              <span className="block text-volt">thousands</span>
+              <span className="block text-gold">thousands</span>
             </p>
           </div>
         </FadeUp>
@@ -28,14 +28,14 @@ export function Testimonials({ reviews }: { reviews: Testimonial[] }) {
         {quotes.length === 0 ? (
           <FadeUp delay={0.06}>
             <div className="max-w-lg">
-              <p className="text-sm leading-relaxed text-paper-dim">
+              <p className="text-sm leading-relaxed text-white/70">
                 No reviews yet — this space is for our customers, so it stays
                 empty until they fill it. Order something and tell us how the
                 fabric held up.
               </p>
               <Link
                 href="/collections/new-arrivals"
-                className="mt-4 inline-block text-sm font-semibold text-volt underline underline-offset-4"
+                className="mt-4 inline-block text-sm font-semibold text-gold underline underline-offset-4"
               >
                 Browse new arrivals
               </Link>
@@ -49,20 +49,20 @@ export function Testimonials({ reviews }: { reviews: Testimonial[] }) {
                 delay={i * 0.05}
                 className="w-[78vw] shrink-0 snap-start sm:w-72"
               >
-                <figure className="flex h-full flex-col border-l border-paper/15 pl-5">
+                <figure className="flex h-full flex-col border-l border-white/15 pl-5">
                   <div className="flex gap-0.5" aria-label={`${r.rating} out of 5 stars`}>
                     {Array.from({ length: r.rating }).map((_, s) => (
-                      <Star key={s} size={13} className="fill-volt text-volt" aria-hidden />
+                      <Star key={s} size={13} className="fill-gold text-gold" aria-hidden />
                     ))}
                   </div>
-                  <blockquote className="mt-3 text-sm leading-relaxed text-paper">
+                  <blockquote className="mt-3 text-sm leading-relaxed text-white">
                     {r.body}
                   </blockquote>
-                  <figcaption className="mt-3 text-xs text-paper-dim">
+                  <figcaption className="mt-3 text-xs text-white/60">
                     — {r.author} ·{" "}
                     <Link
                       href={`/products/${r.product.slug}`}
-                      className="underline underline-offset-2 hover:text-volt"
+                      className="underline underline-offset-2 hover:text-gold"
                     >
                       {r.product.name}
                     </Link>

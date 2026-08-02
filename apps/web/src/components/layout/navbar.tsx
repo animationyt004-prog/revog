@@ -73,8 +73,8 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-paper/10 bg-ink/80 backdrop-blur-md transition-shadow",
-        scrolled && "shadow-[0_4px_20px_rgba(0,0,0,0.08)]",
+        "sticky top-0 z-50 bg-night text-white transition-shadow",
+        scrolled && "shadow-[0_4px_20px_rgba(0,0,0,0.35)]",
       )}
     >
       {/* Row one: search, centred wordmark, account actions. The logo sits in
@@ -95,41 +95,41 @@ export function Navbar() {
               <span className="sr-only">Search products</span>
               <Search
                 size={16}
-                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-paper-dim"
+                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-white/55"
               />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search for products…"
-                className="w-44 border-0 border-b border-paper/25 bg-transparent py-1.5 pl-6 pr-2 text-sm outline-none transition-all placeholder:text-paper-dim/70 focus:w-56 focus:border-volt"
+                className="w-44 border-0 border-b border-white/30 bg-transparent py-1.5 pl-6 pr-2 text-sm text-white outline-none transition-all placeholder:text-white/45 focus:w-56 focus:border-gold"
               />
             </label>
           </form>
         </div>
 
         <Link href="/" aria-label="Hyra Fashion — home" className="justify-self-center">
-          <Wordmark size="sm" className="items-center" />
+          <Wordmark size="sm" tone="dark" className="items-center" />
         </Link>
 
         <div className="flex items-center justify-end gap-4 sm:gap-5">
           <Link
             href={authed ? "/account" : "/login"}
             aria-label={authed ? "Account" : "Login"}
-            className="relative hidden transition-colors hover:text-volt sm:block"
+            className="relative hidden transition-colors hover:text-gold sm:block"
           >
             <User size={20} />
             {authed && (
-              <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-volt" />
+              <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-gold" />
             )}
           </Link>
           <Link
             href="/wishlist"
             aria-label={`Wishlist, ${wishCount} items`}
-            className="relative hidden transition-colors hover:text-volt sm:block"
+            className="relative hidden transition-colors hover:text-gold sm:block"
           >
             <Heart size={20} />
             {wishCount > 0 && (
-              <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-volt px-0.5 text-[10px] font-bold text-ink">
+              <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-0.5 text-[10px] font-bold text-paper">
                 {wishCount}
               </span>
             )}
@@ -137,11 +137,11 @@ export function Navbar() {
           <button
             aria-label={`Cart, ${itemCount} items`}
             onClick={openDrawer}
-            className="relative transition-colors hover:text-volt"
+            className="relative transition-colors hover:text-gold"
           >
             <ShoppingBag size={20} />
             {itemCount > 0 && (
-              <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-volt px-0.5 text-[10px] font-bold text-ink">
+              <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-0.5 text-[10px] font-bold text-paper">
                 {itemCount}
               </span>
             )}
@@ -151,14 +151,14 @@ export function Navbar() {
 
       {/* Row two: the category rail. Desktop only — on a phone these live in
           the drawer, where they have room to be tapped. */}
-      <nav aria-label="Categories" className="hidden border-t border-paper/10 md:block">
+      <nav aria-label="Categories" className="hidden border-t border-white/12 md:block">
         <ul className="mx-auto flex max-w-7xl items-center justify-center gap-8 px-6 py-3">
           <MegaMenu />
           {navLinks.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
-                className="text-xs font-semibold uppercase tracking-[0.14em] text-paper transition-colors hover:text-volt"
+                className="text-xs font-semibold uppercase tracking-[0.14em] text-white/85 transition-colors hover:text-gold"
               >
                 {l.label}
               </Link>
@@ -169,19 +169,19 @@ export function Navbar() {
 
       {/* Mobile drawer */}
       {open && (
-        <div className="border-t border-paper/10 bg-ink px-6 py-4 md:hidden">
+        <div className="border-t border-white/12 bg-night px-6 py-4 md:hidden">
           <form onSubmit={submitSearch}>
             <label className="relative block">
               <span className="sr-only">Search products</span>
               <Search
                 size={16}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-paper-dim"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/55"
               />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search kurtis, sarees, shirts"
-                className="w-full border border-paper/20 bg-ink-2 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-volt"
+                className="w-full border border-white/20 bg-night-2 py-2.5 pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/45 focus:border-gold"
               />
             </label>
           </form>
@@ -191,7 +191,7 @@ export function Navbar() {
                 <Link
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
+                  className="display block py-2.5 text-2xl text-white transition-colors hover:text-gold"
                 >
                   {l.label}
                 </Link>
@@ -201,7 +201,7 @@ export function Navbar() {
               <Link
                 href={authed ? "/account" : "/login"}
                 onClick={() => setOpen(false)}
-                className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
+                className="display block py-2.5 text-2xl text-white transition-colors hover:text-gold"
               >
                 {authed ? "Account" : "Login"}
               </Link>
@@ -210,7 +210,7 @@ export function Navbar() {
               <Link
                 href="/wishlist"
                 onClick={() => setOpen(false)}
-                className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
+                className="display block py-2.5 text-2xl text-white transition-colors hover:text-gold"
               >
                 Wishlist
               </Link>

@@ -4,9 +4,13 @@ import { cn } from "@/lib/format";
  *  `size` picks the name's type scale; the sub-label follows it. */
 export function Wordmark({
   size = "md",
+  tone = "light",
   className,
 }: {
   size?: "sm" | "md" | "lg" | "xl";
+  /** Surface the lockup sits on. On dark the rose dot loses contrast and the
+   *  muted sub-label disappears, so both shift. */
+  tone?: "light" | "dark";
   className?: string;
 }) {
   const name = {
@@ -26,9 +30,17 @@ export function Wordmark({
   return (
     <span className={cn("inline-flex flex-col items-start leading-none", className)}>
       <span className={cn("display leading-none", name)}>
-        HYRA<span className="text-volt">.</span>
+        HYRA<span className={tone === "dark" ? "text-gold" : "text-volt"}>.</span>
       </span>
-      <span className={cn("mt-1 font-semibold uppercase text-paper-dim", sub)}>Fashion</span>
+      <span
+        className={cn(
+          "mt-1 font-semibold uppercase",
+          tone === "dark" ? "text-white/60" : "text-paper-dim",
+          sub,
+        )}
+      >
+        Fashion
+      </span>
     </span>
   );
 }
