@@ -1,5 +1,4 @@
 import { CategoryTiles } from "@/components/home/category-tiles";
-import { CollectionBanners } from "@/components/home/collection-banners";
 import { Hero } from "@/components/home/hero";
 import { ProductSection } from "@/components/home/product-section";
 import { Testimonials } from "@/components/home/testimonials";
@@ -96,7 +95,6 @@ export default async function HomePage() {
           categories={categories}
           products={[...newDrops, ...bestSellers, ...trending]}
         />
-        <CollectionBanners products={bestSellers.length ? bestSellers : newDrops} />
         <ProductSection
           title="New"
           accent="Arrivals"
