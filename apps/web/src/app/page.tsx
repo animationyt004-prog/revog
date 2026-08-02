@@ -1,4 +1,5 @@
 import { CategoryTiles } from "@/components/home/category-tiles";
+import { CollectionBanners } from "@/components/home/collection-banners";
 import { Hero } from "@/components/home/hero";
 import { ProductSection } from "@/components/home/product-section";
 import { TrustStrip } from "@/components/home/trust-strip";
@@ -87,8 +88,10 @@ export default async function HomePage() {
       <PromoTicker />
       <Navbar />
       <main>
-        <Hero />
+        <Hero products={newDrops} />
         <TrustStrip />
+        <CategoryTiles categories={categories} />
+        <CollectionBanners products={bestSellers.length ? bestSellers : newDrops} />
         <ProductSection
           title="New"
           accent="Arrivals"
@@ -96,7 +99,6 @@ export default async function HomePage() {
           products={newDrops}
           layout="rail"
         />
-        <CategoryTiles categories={categories} />
         <ProductSection
           title="Best"
           accent="Sellers"

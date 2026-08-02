@@ -34,12 +34,17 @@ export function MegaMenu() {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
+      {/* Matches the category rail it now sits in: tracked caps, same weight
+          and padding as its siblings rather than the old taller nav row. */}
       <button
         aria-expanded={open}
-        className="flex items-center gap-1 py-5 text-sm font-medium text-paper-dim transition-colors hover:text-volt"
+        className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-paper transition-colors hover:text-volt"
       >
         Shop
-        <ChevronDown size={14} className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+        <ChevronDown
+          size={13}
+          className={open ? "rotate-180 transition-transform" : "transition-transform"}
+        />
       </button>
 
       <AnimatePresence>

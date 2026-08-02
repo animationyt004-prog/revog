@@ -67,53 +67,41 @@ export function Navbar() {
         scrolled && "shadow-[0_4px_20px_rgba(0,0,0,0.08)]",
       )}
     >
-      <nav className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:h-16 sm:px-6">
-        {/* Mobile menu toggle */}
-        <button
-          className="p-1 md:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+      {/* Row one: search, centred wordmark, account actions. The logo sits in
+          the middle on its own line so it reads as the brand mark rather than
+          one item in a row of links. */}
+      <div className="mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-20 sm:px-6">
+        <div className="flex items-center gap-2">
+          <button
+            className="p-1 md:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
 
-        {/* Wordmark */}
-        <Link href="/" aria-label="Hyra Fashion — home">
-          <Wordmark size="sm" />
-        </Link>
-
-        {/* Desktop links */}
-        <ul className="ml-8 hidden items-center gap-6 md:flex">
-          <MegaMenu />
-          {navLinks.map((l) => (
-            <li key={l.href}>
-              <Link
-                href={l.href}
-                className="text-sm font-medium text-paper-dim transition-colors hover:text-volt"
-              >
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Actions */}
-        <div className="ml-auto flex items-center gap-4 sm:gap-5">
-          <form onSubmit={submitSearch} className="hidden items-center sm:flex">
+          <form onSubmit={submitSearch} className="hidden items-center md:flex">
             <label className="relative block">
               <span className="sr-only">Search products</span>
               <Search
                 size={16}
-                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-paper-dim"
+                className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-paper-dim"
               />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
-                className="w-28 border border-paper/20 bg-ink-2 py-1.5 pl-8 pr-2 text-sm outline-none transition-all focus:w-44 focus:border-volt"
+                placeholder="Search for products…"
+                className="w-44 border-0 border-b border-paper/25 bg-transparent py-1.5 pl-6 pr-2 text-sm outline-none transition-all placeholder:text-paper-dim/70 focus:w-56 focus:border-volt"
               />
             </label>
           </form>
+        </div>
+
+        <Link href="/" aria-label="Hyra Fashion — home" className="justify-self-center">
+          <Wordmark size="sm" className="items-center" />
+        </Link>
+
+        <div className="flex items-center justify-end gap-4 sm:gap-5">
           <Link
             href={authed ? "/account" : "/login"}
             aria-label={authed ? "Account" : "Login"}
@@ -124,7 +112,11 @@ export function Navbar() {
               <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-volt" />
             )}
           </Link>
-          <Link href="/wishlist" aria-label="Wishlist" className="hidden transition-colors hover:text-volt sm:block">
+          <Link
+            href="/wishlist"
+            aria-label="Wishlist"
+            className="hidden transition-colors hover:text-volt sm:block"
+          >
             <Heart size={20} />
           </Link>
           <button
@@ -140,6 +132,24 @@ export function Navbar() {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Row two: the category rail. Desktop only — on a phone these live in
+          the drawer, where they have room to be tapped. */}
+      <nav aria-label="Categories" className="hidden border-t border-paper/10 md:block">
+        <ul className="mx-auto flex max-w-7xl items-center justify-center gap-8 px-6 py-3">
+          <MegaMenu />
+          {navLinks.map((l) => (
+            <li key={l.href}>
+              <Link
+                href={l.href}
+                className="text-xs font-semibold uppercase tracking-[0.14em] text-paper transition-colors hover:text-volt"
+              >
+                {l.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
 
       {/* Mobile drawer */}
