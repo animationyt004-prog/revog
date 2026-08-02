@@ -87,7 +87,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:py-10">
+    <div className="mx-auto grid max-w-7xl gap-5 px-4 py-4 sm:gap-8 sm:px-6 sm:py-6 lg:grid-cols-2 lg:gap-12 lg:py-10">
       {/* ---------------- Gallery ---------------- */}
       <div>
         <nav className="mb-3 flex items-center gap-1 text-xs text-paper-dim">
@@ -164,8 +164,8 @@ export function ProductView({ product }: { product: ProductDetail }) {
           </div>
         )}
 
-        <div className="mt-5 flex items-baseline gap-3">
-          <span className="text-3xl font-bold">{formatPrice(price)}</span>
+        <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:mt-5">
+          <span className="text-2xl font-bold sm:text-3xl">{formatPrice(price)}</span>
           {discount > 0 && (
             <>
               <span className="text-lg text-paper-dim line-through">{formatPrice(product.mrp)}</span>
@@ -176,7 +176,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
         <p className="mt-1 text-xs text-paper-dim">MRP inclusive of all taxes</p>
 
         {/* Color picker */}
-        <div className="mt-7">
+        <div className="mt-5 sm:mt-7">
           <p className="mb-2.5 text-sm font-semibold">
             Colour: <span className="text-paper-dim">{color}</span>
           </p>
@@ -198,7 +198,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
         </div>
 
         {/* Size picker */}
-        <div className="mt-6">
+        <div className="mt-5 sm:mt-6">
           <div className="mb-2.5 flex items-center justify-between">
             <p className="text-sm font-semibold">Size</p>
             <button
@@ -251,7 +251,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
           }}
           disabled={!size || adding}
           className={cn(
-            "display mt-8 flex w-full items-center justify-center gap-2 py-4 text-xl transition-all",
+            "display mt-6 flex w-full items-center justify-center gap-2 py-3.5 text-lg transition-all sm:mt-8 sm:py-4 sm:text-xl",
             size
               ? "bg-volt text-ink hover:-translate-y-0.5"
               : "cursor-not-allowed bg-ink-3 text-paper-dim",
