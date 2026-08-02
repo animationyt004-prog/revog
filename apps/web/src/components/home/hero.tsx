@@ -9,8 +9,10 @@ import type { ProductCardData } from "@/lib/types";
 export function Hero({ products = [] }: { products?: ProductCardData[] }) {
   const featured = products.filter((p) => p.image).slice(0, 3);
 
+  // Shorter than a full screen on phones: at 88svh the hero alone filled the
+  // viewport and nothing for sale was visible without scrolling.
   return (
-    <section className="relative flex min-h-[88svh] flex-col justify-center overflow-hidden bg-ink py-10">
+    <section className="relative flex min-h-[62svh] flex-col justify-center overflow-hidden bg-ink py-8 sm:min-h-[88svh] sm:py-10">
       {/* Ghost background type, drifting slowly. Desktop-only: on mobile this
           decorative strip becomes the LCP element and tanks the score. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 hidden flex-col justify-center opacity-60 sm:flex">
@@ -35,7 +37,7 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
             NEW ARRIVALS
           </p>
 
-          <h1 className="display text-[15vw] leading-[1.02] sm:text-[10vw] lg:text-[7rem]">
+          <h1 className="display text-[10.5vw] leading-[1.05] sm:text-[10vw] sm:leading-[1.02] lg:text-[7rem]">
             <span className="block overflow-hidden pb-1">
               <span className="hero-line">Indian fashion,</span>
             </span>

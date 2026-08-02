@@ -1,7 +1,12 @@
 import { Suspense } from "react";
 import { FadeUp } from "@/components/motion";
 import { ProductCard } from "@/components/product/product-card";
-import { getFacets, getProductList, type Collection } from "@/lib/api";
+import {
+  getFacets,
+  getProductList,
+  type Collection,
+  type ProductFilters,
+} from "@/lib/api";
 import { parseCatalogParams, type SearchParams } from "@/lib/catalog-params";
 import { CatalogControls } from "./catalog-controls";
 import { SITE_URL } from "@/lib/site";
@@ -11,14 +16,37 @@ interface Props {
   accent: string;
   blurb?: string | null;
   scope: { category?: string; collection?: Collection };
+  /**
+   * Filters that define the collection itself (a fabric, a price ceiling, an
+   * occasion). Applied first so the shopper's own filter choices override them.
+   */
+  baseFilters?: Partial<ProductFilters>;
   searchParams: SearchParams;
 }
 
+/**
+ * `parseCatalogParams` returns every key, using `undefined` for the ones the
+ * URL omits. Spreading that straight over `baseFilters` would erase the
+ * collection's own definition, so drop the empty keys first.
+ */
+function defined<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined),
+  ) as Partial<T>;
+}
+
 /** Server-rendered catalog page body: header, filter controls, grid. */
-export async function CatalogView({ title, accent, blurb, scope, searchParams }: Props) {
+export async function CatalogView({
+  title,
+  accent,
+  blurb,
+  scope,
+  baseFilters,
+  searchParams,
+}: Props) {
   const filters = parseCatalogParams(searchParams);
   const [{ items, total }, facets] = await Promise.all([
-    getProductList({ ...scope, ...filters, take: 48 }),
+    getProductList({ ...scope, ...baseFilters, ...defined(filters), take: 48 }),
     getFacets(scope),
   ]);
   const listingLd = {
@@ -50,7 +78,7 @@ export async function CatalogView({ title, accent, blurb, scope, searchParams }:
         dangerouslySetInnerHTML={{ __html: JSON.stringify(listingLd) }}
       />
       <FadeUp>
-        <h1 className="display text-5xl sm:text-6xl">
+        <h1 className="display text-3xl sm:text-6xl">
           {title} <span className="text-volt">{accent}</span>
         </h1>
         {blurb && <p className="mt-2 max-w-lg text-sm text-paper-dim">{blurb}</p>}

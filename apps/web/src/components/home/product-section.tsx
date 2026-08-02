@@ -26,7 +26,7 @@ export function ProductSection({
     <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
       <FadeUp>
         <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="display text-4xl sm:text-5xl">
+          <h2 className="display text-3xl sm:text-5xl">
             {title} {accent && <span className="text-volt">{accent}</span>}
           </h2>
           <Link

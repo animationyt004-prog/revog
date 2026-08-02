@@ -9,6 +9,7 @@ import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { pixelTrack } from "@/lib/pixel";
 import { track } from "@/lib/track";
+import { ProductSpecs } from "@/components/product/product-specs";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
 import { SizeGuideModal } from "./size-guide";
@@ -151,7 +152,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
         <p className="text-xs font-semibold tracking-[0.25em] text-volt">
           {product.brand.toUpperCase()} · {product.fit}
         </p>
-        <h1 className="display mt-2 text-4xl sm:text-5xl">{product.name}</h1>
+        <h1 className="display mt-2 text-2xl leading-snug sm:text-5xl sm:leading-tight">{product.name}</h1>
 
         {product.ratingCount > 0 && (
           <div className="mt-3 flex items-center gap-2 text-sm">
@@ -303,6 +304,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
               </p>
             </div>
           )}
+          <ProductSpecs product={product} />
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ export function CategoryTiles({ categories }: { categories: CategoryData[] }) {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
       <FadeUp>
-        <h2 className="display mb-6 text-4xl sm:text-5xl">
+        <h2 className="display mb-6 text-3xl sm:text-5xl">
           Shop By <span className="text-volt">Category</span>
         </h2>
       </FadeUp>
