@@ -29,8 +29,11 @@ export function Wordmark({
 
   return (
     <span className={cn("inline-flex flex-col items-start leading-none", className)}>
+      {/* The dot is the mark itself, so it keeps the brand rose on every
+          surface — a gold one in the footer read as a second logo. Only the
+          sub-label shifts for the backdrop. */}
       <span className={cn("display leading-none", name)}>
-        HYRA<span className={tone === "dark" ? "text-gold" : "text-volt"}>.</span>
+        HYRA<span className="text-volt">.</span>
       </span>
       <span
         className={cn(
