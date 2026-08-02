@@ -12,6 +12,7 @@ import { track } from "@/lib/track";
 import { ProductSpecs } from "@/components/product/product-specs";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
+import { ProductLightbox } from "./product-lightbox";
 import { SizeGuideModal } from "./size-guide";
 
 const SIZE_ORDER = ["FREE_SIZE", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
@@ -38,6 +39,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
   const [adding, setAdding] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const addItem = useCart((s) => s.addItem);
 
   // Meta Pixel: product view (for ad retargeting + optimization).
@@ -114,35 +116,42 @@ export function ProductView({ product }: { product: ProductDetail }) {
           <span className="hidden min-w-0 truncate text-paper sm:inline">{product.name}</span>
         </nav>
 
+        {/* Edge to edge on phones — the -mx-4 cancels the page padding so the
+            photo runs the full width of the screen, which is the only size at
+            which a border or weave actually reads. Tapping opens the viewer. */}
         <motion.div
           key={activeImage?.url}
           initial={{ opacity: 0.4 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className="relative aspect-[3/4] max-h-[42svh] overflow-hidden bg-ink-2 sm:max-h-none"
+          className="relative -mx-4 aspect-[3/4] overflow-hidden bg-ink-2 sm:mx-0"
         >
           {activeImage && (
-            <Image
-              src={activeImage.url}
-              alt={activeImage.alt ?? product.name}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              // contain on phones: the box is capped there, and a saree cropped
-              // at the hem hides the drape and border a buyer is judging.
-              // Desktop has the full 3:4 box, so cover fills it with no loss.
-              className="object-contain sm:object-cover"
-            />
+            <button
+              type="button"
+              onClick={() => setZoomOpen(true)}
+              aria-label="Open photo full screen"
+              className="absolute inset-0 block cursor-zoom-in"
+            >
+              <Image
+                src={activeImage.url}
+                alt={activeImage.alt ?? product.name}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </button>
           )}
           {discount > 0 && (
-            <span className="display absolute left-3 top-3 bg-blood px-2.5 py-1 text-sm">
+            <span className="display pointer-events-none absolute left-3 top-3 bg-blood px-2.5 py-1 text-sm">
               -{discount}%
             </span>
           )}
         </motion.div>
 
         {galleryImages.length > 1 && (
-          <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto sm:mt-3">
+          <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto px-0 sm:mt-3">
             {galleryImages.map((img, i) => (
               <button
                 key={img.id}
@@ -295,6 +304,16 @@ export function ProductView({ product }: { product: ProductDetail }) {
         </div>
 
         <PincodeChecker />
+
+        {zoomOpen && (
+          <ProductLightbox
+            images={galleryImages}
+            index={Math.min(imageIdx, galleryImages.length - 1)}
+            onIndex={setImageIdx}
+            onClose={() => setZoomOpen(false)}
+            alt={activeImage?.alt ?? product.name}
+          />
+        )}
 
         <SizeGuideModal
           open={guideOpen}
