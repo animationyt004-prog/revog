@@ -38,7 +38,7 @@ export function MegaMenu() {
           and padding as its siblings rather than the old taller nav row. */}
       <button
         aria-expanded={open}
-        className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/85 transition-colors hover:text-gold"
+        className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-paper transition-colors hover:text-volt"
       >
         Shop
         <ChevronDown
@@ -54,13 +54,13 @@ export function MegaMenu() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.18 }}
-            className="absolute inset-x-0 top-full border-b border-t border-white/12 bg-night text-white shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
+            className="absolute inset-x-0 top-full border-b border-t border-paper/10 bg-ink shadow-[0_18px_40px_rgba(0,0,0,0.12)]"
           >
             <div className="mx-auto grid max-w-7xl grid-cols-[1.2fr_1fr_1.2fr] gap-10 px-6 py-8">
               {/* Categories */}
               <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">
-                  Categories
+                <p className="display mb-3 text-sm tracking-widest text-paper-dim">
+                  CATEGORIES
                 </p>
                 <ul className="space-y-1">
                   {categories.filter((c) => c._count.products > 0).map((c) => (
@@ -70,10 +70,10 @@ export function MegaMenu() {
                         onClick={() => setOpen(false)}
                         className="group flex items-baseline justify-between py-1.5"
                       >
-                        <span className="display text-2xl transition-colors group-hover:text-gold">
+                        <span className="display text-2xl transition-colors group-hover:text-volt">
                           {c.name}
                         </span>
-                        <span className="text-xs text-white/50">
+                        <span className="text-xs text-paper-dim">
                           {c._count.products}
                         </span>
                       </Link>
@@ -84,8 +84,8 @@ export function MegaMenu() {
 
               {/* Collections */}
               <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">
-                  Collections
+                <p className="display mb-3 text-sm tracking-widest text-paper-dim">
+                  COLLECTIONS
                 </p>
                 <ul className="space-y-1">
                   {COLLECTIONS.map((c) => (
@@ -93,7 +93,7 @@ export function MegaMenu() {
                       <Link
                         href={c.href}
                         onClick={() => setOpen(false)}
-                        className="group flex items-center gap-2 py-1.5 text-base text-white/70 transition-colors hover:text-gold"
+                        className="group flex items-center gap-2 py-1.5 text-base text-paper-dim transition-colors hover:text-volt"
                       >
                         {c.label}
                         {c.hot && (
@@ -111,7 +111,7 @@ export function MegaMenu() {
               <Link
                 href="/collections/limited"
                 onClick={() => setOpen(false)}
-                className="group relative block overflow-hidden bg-night-2"
+                className="group relative block overflow-hidden bg-ink-2"
               >
                 {categories[0]?.image && (
                   <Image
@@ -125,7 +125,7 @@ export function MegaMenu() {
                 <div className="relative flex h-full min-h-44 flex-col justify-end p-5">
                   <p className="display text-3xl leading-none">
                     Limited<br />
-                    <span className="text-gold">Never Restocked.</span>
+                    <span className="text-volt">Never Restocked.</span>
                   </p>
                   <p className="mt-2 flex items-center gap-1 text-xs font-semibold">
                     Shop the vault <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
