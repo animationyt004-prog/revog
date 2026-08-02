@@ -48,6 +48,39 @@ export class ReviewsService {
     }));
   }
 
+  /**
+   * Recent reviews across the whole catalogue, for the storefront's
+   * testimonial rail. Verified purchases only and a body worth quoting — a
+   * bare star with no words says nothing to the next shopper, and an
+   * unverified one is exactly the sort of thing we refuse to invent.
+   */
+  async recent(take = 6) {
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        isVerifiedPurchase: true,
+        rating: { gte: 4 },
+        body: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(take, 12),
+      include: {
+        user: { select: { name: true, email: true, phone: true } },
+        product: { select: { name: true, slug: true } },
+      },
+    });
+
+    return reviews
+      .filter((r) => (r.body ?? '').trim().length >= 20)
+      .map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        body: r.body,
+        createdAt: r.createdAt,
+        product: r.product,
+        author: r.user.name ?? maskHandle(r.user.email, r.user.phone),
+      }));
+  }
+
   /** Has this user received this product? Drives the verified badge. */
   private async hasDeliveredPurchase(userId: string, productId: string): Promise<boolean> {
     const variants = await this.prisma.productVariant.findMany({

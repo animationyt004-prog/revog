@@ -2,11 +2,12 @@ import { CategoryTiles } from "@/components/home/category-tiles";
 import { CollectionBanners } from "@/components/home/collection-banners";
 import { Hero } from "@/components/home/hero";
 import { ProductSection } from "@/components/home/product-section";
+import { Testimonials } from "@/components/home/testimonials";
 import { TrustStrip } from "@/components/home/trust-strip";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
-import { getCategories, getProducts } from "@/lib/api";
+import { getCategories, getProducts, getTestimonials } from "@/lib/api";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 // Organization + WebSite graph. WebSite's SearchAction enables Google's
@@ -72,11 +73,12 @@ const SITE_JSON_LD = {
 };
 
 export default async function HomePage() {
-  const [newDrops, bestSellers, trending, categories] = await Promise.all([
+  const [newDrops, bestSellers, trending, categories, testimonials] = await Promise.all([
     getProducts({ collection: "new", take: 8 }),
     getProducts({ collection: "bestsellers", take: 8 }),
     getProducts({ collection: "trending", take: 4 }),
     getCategories(),
+    getTestimonials(6),
   ]);
 
   return (
@@ -90,7 +92,10 @@ export default async function HomePage() {
       <main>
         <Hero products={newDrops} />
         <TrustStrip />
-        <CategoryTiles categories={categories} />
+        <CategoryTiles
+          categories={categories}
+          products={[...newDrops, ...bestSellers, ...trending]}
+        />
         <CollectionBanners products={bestSellers.length ? bestSellers : newDrops} />
         <ProductSection
           title="New"
@@ -112,6 +117,7 @@ export default async function HomePage() {
           href="/collections/trending"
           products={trending}
         />
+        <Testimonials reviews={testimonials} />
       </main>
       <Footer />
     </>

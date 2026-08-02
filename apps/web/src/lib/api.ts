@@ -59,6 +59,7 @@ export interface ProductFilters {
   colors?: string[];
   fits?: string[];
   fabrics?: string[];
+  occasions?: string[];
   minPrice?: number; // paise
   maxPrice?: number; // paise
   sort?: SortKey;
@@ -88,6 +89,7 @@ function filterParams(opts: ProductFilters): URLSearchParams {
   if (opts.colors?.length) params.set("colors", opts.colors.join(","));
   if (opts.fits?.length) params.set("fits", opts.fits.join(","));
   if (opts.fabrics?.length) params.set("fabrics", opts.fabrics.join(","));
+  if (opts.occasions?.length) params.set("occasions", opts.occasions.join(","));
   if (opts.minPrice != null) params.set("minPrice", String(opts.minPrice));
   if (opts.maxPrice != null) params.set("maxPrice", String(opts.maxPrice));
   if (opts.sort) params.set("sort", opts.sort);
@@ -143,4 +145,19 @@ export function getCategories(): Promise<CategoryData[]> {
 
 export function getProduct(slug: string): Promise<ProductDetail | null> {
   return get<ProductDetail | null>(`/products/${slug}`, null);
+}
+
+export interface Testimonial {
+  id: string;
+  rating: number;
+  body: string | null;
+  createdAt: string;
+  product: { name: string; slug: string };
+  author: string;
+}
+
+/** Verified, quotable reviews across the catalogue. Empty is a normal answer
+ *  — the storefront shows an invitation to review rather than inventing one. */
+export function getTestimonials(take = 6): Promise<Testimonial[]> {
+  return get<Testimonial[]>(`/reviews/recent?take=${take}`, []);
 }
