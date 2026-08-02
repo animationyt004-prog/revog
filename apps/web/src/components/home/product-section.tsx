@@ -11,6 +11,10 @@ interface SectionProps {
   products: ProductCardData[];
   /** "rail" = horizontal scroll (mobile-friendly), "grid" = responsive grid */
   layout?: "rail" | "grid";
+  /** Drop sold-out lines. On for shop-the-look rails like New Arrivals, where
+   *  every tile is an invitation to buy and a dead one wastes the slot; off
+   *  for listings where seeing the full range still has value. */
+  inStockOnly?: boolean;
 }
 
 export function ProductSection({
@@ -19,8 +23,12 @@ export function ProductSection({
   href,
   products,
   layout = "grid",
+  inStockOnly = false,
 }: SectionProps) {
-  if (products.length === 0) return null;
+  const shown = inStockOnly
+    ? products.filter((p) => p.stockLabel !== "SOLD_OUT")
+    : products;
+  if (shown.length === 0) return null;
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
@@ -41,7 +49,7 @@ export function ProductSection({
 
       {layout === "rail" ? (
         <div className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          {products.map((p, i) => (
+          {shown.map((p, i) => (
             <FadeUp key={p.id} delay={i * 0.05} className="w-[70vw] shrink-0 snap-start sm:w-[300px]">
               <ProductCard product={p} />
             </FadeUp>
@@ -49,7 +57,7 @@ export function ProductSection({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-4">
-          {products.map((p, i) => (
+          {shown.map((p, i) => (
             <FadeUp key={p.id} delay={i * 0.05}>
               <ProductCard product={p} />
             </FadeUp>

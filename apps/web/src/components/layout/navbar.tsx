@@ -8,6 +8,7 @@ import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
 import { useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
+import { useWishlist } from "@/lib/wishlist-store";
 import { MegaMenu } from "./mega-menu";
 import { Wordmark } from "./wordmark";
 
@@ -31,6 +32,15 @@ export function Navbar() {
   const authed = useAuth((s) => s.status === "authed");
   const itemCount = useCart((s) => s.cart?.summary.itemCount ?? 0);
   const openDrawer = useCart((s) => s.openDrawer);
+  // The wishlist lives in localStorage and only reads it once asked, so the
+  // header has to prompt the hydrate — otherwise the badge sits at zero even
+  // when the list has items in it.
+  const hydrateWishlist = useWishlist((s) => s.hydrate);
+  const wishCount = useWishlist((s) => (s.hydrated ? s.slugs.length : 0));
+
+  useEffect(() => {
+    hydrateWishlist();
+  }, [hydrateWishlist]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -114,10 +124,15 @@ export function Navbar() {
           </Link>
           <Link
             href="/wishlist"
-            aria-label="Wishlist"
-            className="hidden transition-colors hover:text-volt sm:block"
+            aria-label={`Wishlist, ${wishCount} items`}
+            className="relative hidden transition-colors hover:text-volt sm:block"
           >
             <Heart size={20} />
+            {wishCount > 0 && (
+              <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-volt px-0.5 text-[10px] font-bold text-ink">
+                {wishCount}
+              </span>
+            )}
           </Link>
           <button
             aria-label={`Cart, ${itemCount} items`}

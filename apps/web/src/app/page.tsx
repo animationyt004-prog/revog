@@ -98,6 +98,7 @@ export default async function HomePage() {
           href="/collections/new-arrivals"
           products={newDrops}
           layout="rail"
+          inStockOnly
         />
         <ProductSection
           title="Best"
