@@ -1,6 +1,7 @@
 import { CategoryTiles } from "@/components/home/category-tiles";
 import { Hero } from "@/components/home/hero";
 import { ProductSection } from "@/components/home/product-section";
+import { TrustStrip } from "@/components/home/trust-strip";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
@@ -86,7 +87,8 @@ export default async function HomePage() {
       <PromoTicker />
       <Navbar />
       <main>
-        <Hero products={newDrops} />
+        <Hero />
+        <TrustStrip />
         <ProductSection
           title="New"
           accent="Arrivals"

@@ -1,14 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { formatPrice } from "@/lib/format";
-import type { ProductCardData } from "@/lib/types";
 
-/** Product-led first fold. Server component: the copy and first product image
- *  paint with SSR HTML so the storefront immediately shows what is for sale. */
-export function Hero({ products = [] }: { products?: ProductCardData[] }) {
-  const featured = products.filter((p) => p.image).slice(0, 3);
-
+/** Statement first fold. Server component, so the headline and calls to
+ *  action paint with the SSR HTML. The products themselves are carried by
+ *  the sections below rather than a collage up here. */
+export function Hero() {
   // Shorter than a full screen on phones: at 88svh the hero alone filled the
   // viewport and nothing for sale was visible without scrolling.
   return (
@@ -23,8 +19,10 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
         className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-volt/10 blur-3xl"
       />
 
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <div>
+      {/* Single column now that the collage is gone — the two-column split
+          would leave the right half of the fold empty. */}
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
+        <div className="max-w-3xl">
           <p className="hero-fade mb-5 text-[11px] font-semibold tracking-[0.3em] text-volt sm:mb-6">
             NEW ARRIVALS
           </p>
@@ -72,46 +70,6 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
           </p>
         </div>
 
-        {/* Captions sit under the photograph, not on it. The gradient scrim
-            that used to cover the bottom third muddied the exact part of a
-            saree — pallu and border — that decides the sale. */}
-        {featured.length > 0 && (
-          <div className="hero-fade hero-fade-2 grid grid-cols-3 gap-4 sm:gap-6">
-            {featured.map((product, index) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className={`group block min-w-0 ${
-                  index === 1 ? "mt-6 sm:mt-10" : index === 2 ? "mt-12 sm:mt-20" : ""
-                }`}
-              >
-                <div className="overflow-hidden bg-ink-2">
-                  {product.image && (
-                    <Image
-                      src={product.image.url}
-                      alt={product.image.alt}
-                      width={360}
-                      height={480}
-                      priority={index === 0}
-                      className="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    />
-                  )}
-                </div>
-                <p className="mt-3 line-clamp-2 text-[11px] leading-snug text-paper sm:text-xs">
-                  {product.name}
-                </p>
-                <p className="mt-1 text-[11px] text-paper-dim sm:text-xs">
-                  {formatPrice(product.price)}
-                  {product.mrp > product.price && (
-                    <span className="ml-1.5 line-through opacity-60">
-                      {formatPrice(product.mrp)}
-                    </span>
-                  )}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
     </section>
   );
