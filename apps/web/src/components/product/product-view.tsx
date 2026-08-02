@@ -89,19 +89,29 @@ export function ProductView({ product }: { product: ProductDetail }) {
   return (
     <div className="mx-auto grid max-w-7xl gap-5 px-4 py-4 sm:gap-8 sm:px-6 sm:py-6 lg:grid-cols-2 lg:gap-12 lg:py-10">
       {/* ---------------- Gallery ---------------- */}
-      <div>
-        <nav className="mb-3 flex items-center gap-1 text-xs text-paper-dim">
-          <Link href="/" className="hover:text-paper">Home</Link>
-          <ChevronRight size={12} />
+      {/* min-w-0 on both columns: a grid item defaults to min-width:auto, so
+          any stubborn child could otherwise widen the column past the screen. */}
+      <div className="min-w-0">
+        {/* The product name is dropped from the trail on phones — the h1
+            repeats it two lines below anyway. It also can't be trusted to
+            truncate: WebViews that skip the min-width:auto exception for
+            overflow:hidden let it stretch the grid column, which is what was
+            pushing the whole page sideways on Android. */}
+        <nav className="mb-3 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-paper-dim">
+          <Link href="/" className="shrink-0 hover:text-paper">Home</Link>
           {product.category && (
             <>
-              <Link href={`/category/${product.category.slug}`} className="hover:text-paper">
+              <ChevronRight size={12} className="shrink-0" />
+              <Link
+                href={`/category/${product.category.slug}`}
+                className="shrink-0 hover:text-paper"
+              >
                 {product.category.name}
               </Link>
-              <ChevronRight size={12} />
             </>
           )}
-          <span className="truncate text-paper">{product.name}</span>
+          <ChevronRight size={12} className="hidden shrink-0 sm:block" />
+          <span className="hidden min-w-0 truncate text-paper sm:inline">{product.name}</span>
         </nav>
 
         <motion.div
@@ -109,7 +119,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
           initial={{ opacity: 0.4 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className="relative aspect-[3/4] max-h-[50svh] overflow-hidden bg-ink-2 sm:max-h-none"
+          className="relative aspect-[3/4] max-h-[42svh] overflow-hidden bg-ink-2 sm:max-h-none"
         >
           {activeImage && (
             <Image
@@ -151,7 +161,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
       </div>
 
       {/* ---------------- Info panel ---------------- */}
-      <div className="lg:pt-8">
+      <div className="min-w-0 lg:pt-8">
         <p className="text-xs font-semibold tracking-[0.25em] text-volt">
           {product.brand.toUpperCase()} · {product.fit}
         </p>
@@ -183,7 +193,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
           <p className="mb-2.5 text-sm font-semibold">
             Colour: <span className="text-paper-dim">{color}</span>
           </p>
-          <div className="flex gap-2.5">
+          <div className="flex flex-wrap gap-2.5">
             {colors.map((c) => (
               <button
                 key={c.name}
@@ -254,7 +264,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
           }}
           disabled={!size || adding}
           className={cn(
-            "display mt-6 flex w-full items-center justify-center gap-2 py-3.5 text-lg transition-all sm:mt-8 sm:py-4 sm:text-xl",
+            "display mt-5 flex w-full items-center justify-center gap-2 py-3 text-base transition-all sm:mt-8 sm:py-4 sm:text-xl",
             size
               ? "bg-volt text-ink hover:-translate-y-0.5"
               : "cursor-not-allowed bg-ink-3 text-paper-dim",
@@ -273,7 +283,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
         {cartError && <p className="mt-2 text-sm text-blood">{cartError}</p>}
 
         {/* Delivery strip */}
-        <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-paper-dim">
+        <div className="mt-5 grid grid-cols-1 gap-2 text-xs text-paper-dim sm:mt-6 sm:grid-cols-2 sm:gap-3">
           <div className="flex items-center gap-2 border border-paper/10 p-3">
             <Truck size={16} className="shrink-0 text-volt" />
             Free shipping over ₹999 · COD available

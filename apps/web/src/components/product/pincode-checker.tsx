@@ -41,13 +41,13 @@ export function PincodeChecker() {
           onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setResult(null); }}
           placeholder="Enter 6-digit pincode"
           aria-label="Pincode"
-          className="w-full border border-paper/25 bg-ink-2 px-3 py-2.5 text-sm outline-none focus:border-volt"
+          className="w-full min-w-0 border border-paper/25 bg-ink-2 px-3 py-2.5 text-sm outline-none focus:border-volt"
         />
         <button
           type="submit"
           disabled={busy || code.length !== 6}
           className={cn(
-            "display px-5 text-base transition-colors",
+            "display shrink-0 px-4 text-base transition-colors sm:px-5",
             code.length === 6 && !busy
               ? "bg-paper text-ink hover:bg-volt"
               : "cursor-not-allowed bg-ink-3 text-paper-dim",

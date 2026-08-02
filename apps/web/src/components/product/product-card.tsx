@@ -169,7 +169,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       {/* Meta */}
       <div className="mt-2.5 space-y-1 px-0.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate text-sm font-medium text-paper">{product.name}</h3>
+          {/* min-w-0 is belt-and-braces: modern engines zero out min-width:auto
+              once overflow is hidden, but the Android WebViews our buyers use
+              don't, and there the long saree names stretch the whole grid. */}
+          <h3 className="min-w-0 truncate text-sm font-medium text-paper">{product.name}</h3>
           {product.ratingCount > 0 && (
             <span className="flex shrink-0 items-center gap-1 text-xs text-paper-dim">
               <Star size={11} className="fill-volt text-volt" />
