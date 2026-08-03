@@ -9,12 +9,12 @@ import { BadgeIndianRupee, MessageCircle, PackageCheck, RotateCcw, Truck } from 
 const SIGNALS = [
   {
     icon: BadgeIndianRupee,
-    // Only Cash on Delivery is live: online payment sits behind
-    // NEXT_PUBLIC_ENABLE_ONLINE_PAYMENT and is off in production, so checkout
-    // offers COD alone. Promising UPI and cards here sent shoppers all the way
-    // to checkout for a method that isn't there.
-    title: "Cash on Delivery",
-    detail: "Pay in cash when your order arrives",
+    // Both are live now: Razorpay went on with the webhook that confirms it,
+    // so checkout offers UPI, cards and wallets alongside COD. Keep this line
+    // in step with NEXT_PUBLIC_ENABLE_ONLINE_PAYMENT — it was overstating
+    // before, and understating is just as misleading.
+    title: "COD & online payment",
+    detail: "Cash on Delivery, UPI, cards & wallets",
   },
   {
     icon: Truck,

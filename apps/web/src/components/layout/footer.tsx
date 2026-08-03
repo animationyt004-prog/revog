@@ -94,7 +94,7 @@ export async function Footer() {
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/12 pt-6 text-xs text-white/55 sm:flex-row">
           <p>© {new Date().getFullYear()} Hyra Fashion. All rights reserved.</p>
           <p>
-            Made in India <span aria-hidden>🇮🇳</span> · Cash on Delivery accepted
+            Made in India <span aria-hidden>🇮🇳</span> · COD & UPI accepted
           </p>
         </div>
       </div>
