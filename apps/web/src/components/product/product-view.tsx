@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, Loader2, RotateCcw, Star, Truck } from "lucide-react";
 import { cn, formatPrice, sizeLabel } from "@/lib/format";
@@ -41,6 +42,44 @@ export function ProductView({ product }: { product: ProductDetail }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const addItem = useCart((s) => s.addItem);
+  // Comes from the cart summary so the banner can never quote a rate the
+  // server no longer applies. An empty cart still carries the percentage.
+  const prepaidPercent = useCart((s) => s.cart?.summary.prepaidPercent ?? 0);
+  const router = useRouter();
+  const [buying, setBuying] = useState(false);
+  // The sticky bar is a second copy of the buy action, so it only appears once
+  // the real one has scrolled away — two live buttons on screen at once is
+  // just noise.
+  const addToCartRef = useRef<HTMLButtonElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  useEffect(() => {
+    const el = addToCartRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { rootMargin: "-80px 0px 0px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  /** Add, then go straight to checkout. Same guard as Add To Cart: without a
+   *  size there is nothing to buy. */
+  function buyNow() {
+    if (!selectedVariant || buying) return;
+    setBuying(true);
+    setCartError(null);
+    addItem(selectedVariant.id)
+      .then(() => {
+        track("ADD_TO_CART", { productId: product.id });
+        router.push("/checkout");
+      })
+      .catch((e) => {
+        setCartError(e instanceof Error ? e.message : "Could not add to cart.");
+        setBuying(false);
+      });
+  }
 
   // Meta Pixel: product view (for ad retargeting + optimization).
   useEffect(() => {
@@ -257,6 +296,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
         </div>
 
         <button
+          ref={addToCartRef}
           onClick={() => {
             if (!selectedVariant) return;
             setAdding(true);
@@ -339,6 +379,49 @@ export function ProductView({ product }: { product: ProductDetail }) {
           <ProductSpecs product={product} />
         </div>
       </div>
+
+      {/* Sticky buy bar. Appears once the real Add To Cart has scrolled past,
+          so the action is always one tap away on a long product page. */}
+      {showStickyBar && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-paper/10 bg-ink/95 backdrop-blur-sm">
+          {prepaidPercent > 0 && (
+            <p className="bg-night px-4 py-1.5 text-center text-[11px] font-semibold tracking-wide text-gold sm:text-xs">
+              Get {prepaidPercent}% extra off on prepaid orders
+            </p>
+          )}
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs text-paper-dim">{product.name}</p>
+              <p className="text-sm font-bold text-paper">
+                {formatPrice(price)}
+                {discount > 0 && (
+                  <span className="ml-1.5 text-xs font-normal text-paper-dim line-through">
+                    {formatPrice(product.mrp)}
+                  </span>
+                )}
+              </p>
+            </div>
+            <button
+              onClick={buyNow}
+              disabled={!size || buying}
+              className={cn(
+                "display shrink-0 px-6 py-2.5 text-base transition-all sm:px-9 sm:text-lg",
+                size && !buying
+                  ? "bg-volt text-ink hover:-translate-y-0.5"
+                  : "cursor-not-allowed bg-ink-3 text-paper-dim",
+              )}
+            >
+              {buying ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : size ? (
+                "Buy It Now"
+              ) : (
+                "Select A Size"
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
