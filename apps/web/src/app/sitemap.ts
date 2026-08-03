@@ -1,16 +1,25 @@
 import type { MetadataRoute } from "next";
 import { getCategories, getProducts } from "@/lib/api";
+import { stockedCollectionSlugs } from "@/lib/collections";
 import { SITE_URL as SITE } from "@/lib/site";
 
+/**
+ * Only URLs worth crawling. Collections and categories are checked for stock
+ * first — an empty landing page is thin content, and a sitemap full of them
+ * spends crawl budget on pages that cannot rank while signalling a thinner
+ * site than we have. Both still carry noindex of their own; this keeps us
+ * from actively pointing Google at them.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, categories] = await Promise.all([
+  const [products, categories, collections] = await Promise.all([
     getProducts({ take: 200 }),
     getCategories(),
+    stockedCollectionSlugs(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE, changeFrequency: "daily", priority: 1 },
-    ...["new-arrivals", "trending", "limited", "bestsellers"].map((c) => ({
+    ...collections.map((c) => ({
       url: `${SITE}/collections/${c}`,
       changeFrequency: "daily" as const,
       priority: 0.9,
@@ -33,11 +42,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
-    ...categories.map((c) => ({
-      url: `${SITE}/category/${c.slug}`,
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    })),
+    ...categories
+      .filter((c) => c._count.products > 0)
+      .map((c) => ({
+        url: `${SITE}/category/${c.slug}`,
+        changeFrequency: "daily" as const,
+        priority: 0.8,
+      })),
     ...products.map((p) => ({
       url: `${SITE}/products/${p.slug}`,
       changeFrequency: "weekly" as const,

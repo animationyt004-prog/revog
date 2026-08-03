@@ -13,6 +13,8 @@ export interface ListFilters {
   colors?: string[];
   fits?: Fit[];
   fabrics?: string[];
+  /** Matches any product whose `occasion` mentions one of these. */
+  occasions?: string[];
   minPrice?: number; // paise
   maxPrice?: number; // paise
   sort?: SortKey;
@@ -54,6 +56,20 @@ export class ProductsService {
       ...(f.category ? { category: { slug: f.category } } : {}),
       ...(f.fits?.length ? { fit: { in: f.fits } } : {}),
       ...(f.fabrics?.length ? { fabric: { in: f.fabrics } } : {}),
+      // `occasion` is a comma-separated label ("Festive, Wedding, Party"), so
+      // match on substring. Goes in AND, not OR — the search query below owns
+      // `where.OR` and would otherwise overwrite this.
+      ...(f.occasions?.length
+        ? {
+            AND: [
+              {
+                OR: f.occasions.map((o) => ({
+                  occasion: { contains: o, mode: Prisma.QueryMode.insensitive },
+                })),
+              },
+            ],
+          }
+        : {}),
     };
 
     if (f.q?.trim()) {

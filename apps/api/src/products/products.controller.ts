@@ -60,6 +60,12 @@ class ListProductsQuery {
   fabrics?: string[];
 
   @IsOptional()
+  @csv()
+  @IsArray()
+  @IsString({ each: true })
+  occasions?: string[];
+
+  @IsOptional()
   @IsInt()
   @Min(0)
   minPrice?: number;

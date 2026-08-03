@@ -21,9 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = (await getCategories()).find((c) => c.slug === slug);
   const title = seo?.metaTitle ?? (category ? category.name : "Category");
   const description = seo?.metaDescription ?? category?.description ?? undefined;
+  // Same rule as collections: an empty category is thin content. Crawlable,
+  // so its internal links still count, but out of the index until it stocks.
+  const empty = !category || category._count.products === 0;
   return {
     title,
     description,
+    ...(empty ? { robots: { index: false, follow: true } } : {}),
     alternates: { canonical: `/category/${slug}` },
     // Child openGraph replaces the root's wholesale, so images must repeat here
     // or shared links lose their preview card.

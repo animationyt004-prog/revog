@@ -242,6 +242,14 @@ model Product {
   ratingCount Int   @default(0)
   soldCount   Int   @default(0)
 
+  // Spec sheet shown on the product page. These are the questions buyers ask
+  // before adding to cart, and the same values we declare on Flipkart/Meesho.
+  sareeLength   String? // e.g. "5.5 m"
+  blouseDetails String? // e.g. "Unstitched blouse piece included (0.8 m)"
+  washCare      String? // e.g. "Dry clean only"
+  occasion      String? // e.g. "Festive, Wedding"
+  transparency  String? // e.g. "Opaque"
+
   metaTitle       String?
   metaDescription String?
 

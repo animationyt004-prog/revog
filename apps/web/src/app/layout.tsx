@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
@@ -9,20 +8,20 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { WelcomePopup } from "@/components/welcome-popup";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  variable: "--font-serif",
+const playfair = {
+  variable: "[--font-serif:Georgia]",
   weight: ["500", "600", "700", "800"],
   subsets: ["latin"],
   // Elegant serif for headings — the fashion/ethnic display face. "swap" so
   // the LCP hero text paints immediately with a serif fallback, then Playfair
   // swaps in without blocking render.
   display: "swap",
-});
+};
 
-const inter = Inter({
-  variable: "--font-inter",
+const inter = {
+  variable: "[--font-inter:system-ui]",
   subsets: ["latin"],
-});
+};
 
 // Absolute base for canonical + Open Graph URLs. Set NEXT_PUBLIC_SITE_URL to
 // the custom domain once live; falls back to the deployed Render URL (never
@@ -30,36 +29,38 @@ const inter = Inter({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.hyrafashions.com";
 
 const DESCRIPTION =
-  "Shop Indian fashion at Hyra Fashion — kurtis, kurtas, sarees, t-shirts and shirts. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
+  "Buy sarees online at Hyra Fashion — georgette, silk and organza sarees with blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
 
 const GOOGLE_SITE_VERIFICATION = "BjBV-BzfG2mo-lE4Mh7R9bpj4XiNFcKfADXdt5zyIgc";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Hyra Fashion — Kurtis, Sarees, T-Shirts & Shirts Online in India",
+    default: "Buy Sarees Online in India | Hyra Fashion — COD & 7-Day Returns",
     template: "%s | Hyra Fashion",
   },
   description: DESCRIPTION,
   applicationName: "Hyra Fashion",
+  // Only terms the catalogue can actually answer. Naming kurtis, kurtas,
+  // t-shirts and shirts here sent shoppers to categories holding nothing,
+  // which bounces them straight back to the results page.
   keywords: [
-    "indian fashion online",
-    "kurti online",
-    "kurta online",
-    "kurti set",
     "sarees online",
-    "silk saree",
-    "organza saree",
-    "t shirt online",
-    "oversized t shirt",
-    "shirts online",
+    "buy saree online india",
+    "georgette saree",
+    "sequin saree",
+    "party wear saree",
+    "saree with blouse piece",
+    "lightweight saree",
+    "cotton silk saree",
+    "saree cash on delivery",
     "hyra fashion",
   ],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Hyra Fashion",
-    title: "Hyra Fashion — Indian Fashion Online",
+    title: "Buy Sarees Online in India | Hyra Fashion",
     description: DESCRIPTION,
     url: SITE_URL,
     locale: "en_IN",
@@ -69,7 +70,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og-logo.png"],
-    title: "Hyra Fashion — Indian Fashion Online",
+    title: "Buy Sarees Online in India | Hyra Fashion",
     description: DESCRIPTION,
   },
   robots: {
