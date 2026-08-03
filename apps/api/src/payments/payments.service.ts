@@ -15,6 +15,7 @@ export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private readonly client: Razorpay;
   private readonly keySecret: string;
+  private readonly webhookSecret: string | undefined;
   readonly keyId: string;
 
   constructor(
@@ -23,6 +24,7 @@ export class PaymentsService {
   ) {
     this.keyId = config.getOrThrow<string>('RAZORPAY_KEY_ID');
     this.keySecret = config.getOrThrow<string>('RAZORPAY_KEY_SECRET');
+    this.webhookSecret = config.get<string>('RAZORPAY_WEBHOOK_SECRET') || undefined;
     this.client = new Razorpay({ key_id: this.keyId, key_secret: this.keySecret });
   }
 
@@ -160,6 +162,95 @@ export class PaymentsService {
       });
     });
     return { ok: true };
+  }
+
+  /**
+   * Razorpay's server-to-server callback.
+   *
+   * The browser's /verify call is best-effort: a shopper whose tab closes or
+   * whose network drops between paying and returning leaves an order PENDING
+   * while Razorpay holds their money. This is the side that does not depend on
+   * their device staying alive, so it is the one that decides.
+   *
+   * Proof here is the webhook signature over the raw payload, not the
+   * checkout signature — the shopper's browser is not involved.
+   */
+  async handleWebhook(rawBody: Buffer, signature: string | undefined) {
+    if (!this.webhookSecret) {
+      // Refuse rather than trust an unsigned caller: without the secret this
+      // endpoint would confirm orders for anyone who found the URL.
+      this.logger.error('Webhook received but RAZORPAY_WEBHOOK_SECRET is unset');
+      throw new BadRequestException('Webhook not configured.');
+    }
+    if (!signature) throw new BadRequestException('Missing signature.');
+
+    const expected = createHmac('sha256', this.webhookSecret)
+      .update(rawBody)
+      .digest('hex');
+    const a = Buffer.from(expected, 'utf8');
+    const b = Buffer.from(signature, 'utf8');
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      this.logger.warn('Webhook signature mismatch');
+      throw new BadRequestException('Invalid signature.');
+    }
+
+    const event = JSON.parse(rawBody.toString('utf8')) as {
+      event?: string;
+      payload?: {
+        payment?: {
+          entity?: { id?: string; order_id?: string; error_description?: string };
+        };
+      };
+    };
+    const payment = event.payload?.payment?.entity;
+    if (!payment?.order_id || !payment.id) return { ok: true, ignored: true };
+
+    const record = await this.prisma.payment.findFirst({
+      where: { razorpayOrderId: payment.order_id },
+      include: { order: true },
+    });
+    // An unknown gateway order is not our problem to solve, and answering 2xx
+    // stops Razorpay retrying it forever.
+    if (!record?.order) return { ok: true, ignored: true };
+
+    if (event.event === 'payment.captured') {
+      await this.confirmPaid(record.order.id, record.id, payment.id);
+      return { ok: true, handled: 'payment.captured' };
+    }
+    if (event.event === 'payment.failed') {
+      await this.recordFailure(record.order.orderNumber, payment.error_description);
+      return { ok: true, handled: 'payment.failed' };
+    }
+    return { ok: true, ignored: true };
+  }
+
+  /** Mark an order paid. Shared by the browser callback and the webhook, so
+   *  whichever arrives first wins and the second is a no-op. */
+  private async confirmPaid(orderId: string, paymentId: string, razorpayPaymentId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || order.paymentStatus === PaymentStatus.PAID) return;
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.CONFIRMED,
+        paymentStatus: PaymentStatus.PAID,
+        payment: {
+          update: {
+            status: PaymentStatus.PAID,
+            razorpayPaymentId,
+            failureReason: null,
+          },
+        },
+        events: {
+          create: {
+            status: OrderStatus.CONFIRMED,
+            note: 'Payment confirmed by Razorpay webhook',
+          },
+        },
+      },
+    });
+    this.logger.log(`Order ${order.orderNumber} confirmed via webhook`);
   }
 
   /** Details needed to (re)open the checkout modal for a pending order. */

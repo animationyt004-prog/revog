@@ -4,7 +4,13 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  // rawBody keeps the untouched request bytes alongside the parsed body.
+  // Razorpay signs the exact payload it sent, so verifying against a
+  // re-serialised object would fail on any difference in key order or spacing.
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: false,
+    rawBody: true,
+  });
 
   // Parses the httpOnly refresh-token cookie on auth routes.
   app.use(cookieParser());

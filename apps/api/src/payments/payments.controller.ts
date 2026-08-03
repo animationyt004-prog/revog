@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import type { Request } from 'express';
 import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
 import { PaymentsService } from './payments.service';
 
@@ -40,6 +52,22 @@ export class PaymentsController {
   @HttpCode(200)
   verify(@Body() dto: VerifyPaymentDto) {
     return this.payments.verify(dto);
+  }
+
+  /**
+   * Razorpay's server-to-server callback. Deliberately takes the raw request
+   * rather than a DTO: the signature covers the exact bytes Razorpay sent, and
+   * the global ValidationPipe would reject their payload's fields anyway.
+   *
+   * Always answers 200 on a handled event so Razorpay stops retrying.
+   */
+  @Post('webhook')
+  @HttpCode(200)
+  webhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('x-razorpay-signature') signature?: string,
+  ) {
+    return this.payments.handleWebhook(req.rawBody ?? Buffer.alloc(0), signature);
   }
 
   @Post('failed')
