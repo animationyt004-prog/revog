@@ -8,6 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'crypto';
 import Razorpay from 'razorpay';
+import {
+  FREE_SHIPPING_THRESHOLD,
+  PREPAID_DISCOUNT_PERCENT,
+  SHIPPING_FEE,
+} from '../cart/cart.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 @Injectable()
@@ -24,12 +29,19 @@ export class PaymentsService {
   ) {
     this.keyId = config.getOrThrow<string>('RAZORPAY_KEY_ID');
     this.keySecret = config.getOrThrow<string>('RAZORPAY_KEY_SECRET');
-    this.webhookSecret = config.get<string>('RAZORPAY_WEBHOOK_SECRET') || undefined;
-    this.client = new Razorpay({ key_id: this.keyId, key_secret: this.keySecret });
+    this.webhookSecret =
+      config.get<string>('RAZORPAY_WEBHOOK_SECRET') || undefined;
+    this.client = new Razorpay({
+      key_id: this.keyId,
+      key_secret: this.keySecret,
+    });
   }
 
   /** Create the Razorpay order that the checkout modal will collect against. */
-  async createGatewayOrder(amountPaise: number, receipt: string): Promise<string> {
+  async createGatewayOrder(
+    amountPaise: number,
+    receipt: string,
+  ): Promise<string> {
     if (amountPaise < 100) {
       throw new BadRequestException('Order amount must be at least ₹1.');
     }
@@ -41,7 +53,11 @@ export class PaymentsService {
     return rpOrder.id;
   }
 
-  private signatureMatches(orderId: string, paymentId: string, signature: string): boolean {
+  private signatureMatches(
+    orderId: string,
+    paymentId: string,
+    signature: string,
+  ): boolean {
     const expected = createHmac('sha256', this.keySecret)
       .update(`${orderId}|${paymentId}`)
       .digest('hex');
@@ -61,7 +77,8 @@ export class PaymentsService {
       where: { orderNumber: input.orderNumber },
       include: { payment: true },
     });
-    if (!order || !order.payment) throw new NotFoundException('Order not found.');
+    if (!order || !order.payment)
+      throw new NotFoundException('Order not found.');
 
     // Idempotent: a repeated callback for an already-paid order is fine.
     if (order.paymentStatus === PaymentStatus.PAID) {
@@ -103,7 +120,11 @@ export class PaymentsService {
         },
       },
     });
-    return { ok: true, orderNumber: updated.orderNumber, status: updated.status };
+    return {
+      ok: true,
+      orderNumber: updated.orderNumber,
+      status: updated.status,
+    };
   }
 
   /**
@@ -118,12 +139,17 @@ export class PaymentsService {
    * held, so "retry" would have nothing reserved behind it. A shopper who
    * still wants the piece adds it to the cart again.
    */
-  async recordFailure(orderNumber: string, reason: string | undefined, email?: string) {
+  async recordFailure(
+    orderNumber: string,
+    reason: string | undefined,
+    email?: string,
+  ) {
     const order = await this.prisma.order.findUnique({
       where: { orderNumber },
       include: { payment: true, items: true },
     });
-    if (!order || !order.payment) throw new NotFoundException('Order not found.');
+    if (!order || !order.payment)
+      throw new NotFoundException('Order not found.');
     if (email && order.email !== email.toLowerCase()) {
       throw new BadRequestException('Order does not match.');
     }
@@ -179,7 +205,9 @@ export class PaymentsService {
     if (!this.webhookSecret) {
       // Refuse rather than trust an unsigned caller: without the secret this
       // endpoint would confirm orders for anyone who found the URL.
-      this.logger.error('Webhook received but RAZORPAY_WEBHOOK_SECRET is unset');
+      this.logger.error(
+        'Webhook received but RAZORPAY_WEBHOOK_SECRET is unset',
+      );
       throw new BadRequestException('Webhook not configured.');
     }
     if (!signature) throw new BadRequestException('Missing signature.');
@@ -198,7 +226,11 @@ export class PaymentsService {
       event?: string;
       payload?: {
         payment?: {
-          entity?: { id?: string; order_id?: string; error_description?: string };
+          entity?: {
+            id?: string;
+            order_id?: string;
+            error_description?: string;
+          };
         };
       };
     };
@@ -218,7 +250,10 @@ export class PaymentsService {
       return { ok: true, handled: 'payment.captured' };
     }
     if (event.event === 'payment.failed') {
-      await this.recordFailure(record.order.orderNumber, payment.error_description);
+      await this.recordFailure(
+        record.order.orderNumber,
+        payment.error_description,
+      );
       return { ok: true, handled: 'payment.failed' };
     }
     return { ok: true, ignored: true };
@@ -226,8 +261,14 @@ export class PaymentsService {
 
   /** Mark an order paid. Shared by the browser callback and the webhook, so
    *  whichever arrives first wins and the second is a no-op. */
-  private async confirmPaid(orderId: string, paymentId: string, razorpayPaymentId: string) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+  private async confirmPaid(
+    orderId: string,
+    paymentId: string,
+    razorpayPaymentId: string,
+  ) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
     if (!order || order.paymentStatus === PaymentStatus.PAID) return;
 
     await this.prisma.order.update({
@@ -251,6 +292,92 @@ export class PaymentsService {
       },
     });
     this.logger.log(`Order ${order.orderNumber} confirmed via webhook`);
+  }
+
+  /**
+   * Answer Magic Checkout's serviceability question for a set of addresses.
+   *
+   * Razorpay requires this endpoint to be public and unauthenticated, so it is
+   * built to hold no secrets: the only thing it can be asked about is a gateway
+   * order id Razorpay itself issued, and the only thing it returns is the fee
+   * schedule already published on the storefront. The cart is never consulted —
+   * the gateway order's own amount is the post-discount subtotal, which is all
+   * the shipping rule needs.
+   *
+   * COD is priced rather than discounted. Magic Checkout has no concept of a
+   * prepaid discount, so the same gap is expressed as a COD fee: the shopper
+   * sees one price and pays extra to defer it, which nets out to the 10% the
+   * product page advertises for paying now.
+   */
+  async magicShippingInfo(input: {
+    razorpayOrderId: string;
+    addresses: {
+      id?: string;
+      zipcode?: string;
+      state_code?: string;
+      country?: string;
+    }[];
+  }) {
+    const id = input.razorpayOrderId.startsWith('order_')
+      ? input.razorpayOrderId
+      : `order_${input.razorpayOrderId}`;
+
+    let goodsTotal: number;
+    try {
+      const rpOrder = (await this.client.orders.fetch(id)) as {
+        amount?: number | string;
+      };
+      goodsTotal = Number(rpOrder.amount ?? 0);
+    } catch {
+      // An order we cannot read is one we cannot price. Saying "not
+      // serviceable" stalls the sale; guessing a fee misquotes it. Fall back to
+      // the paid rate, which is the one that can never undercharge.
+      this.logger.warn(`Magic shipping-info: could not fetch ${id}`);
+      goodsTotal = 0;
+    }
+
+    const shippingFee =
+      goodsTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+    const codFee = this.prepaidGap(goodsTotal + shippingFee);
+
+    return {
+      addresses: input.addresses.map((a, i) => {
+        // Pan-India, so the only address we turn away is one outside it.
+        const serviceable = (a.country ?? 'IN').toUpperCase() === 'IN';
+        return {
+          id: a.id ?? String(i),
+          zipcode: a.zipcode,
+          state_code: a.state_code,
+          country: a.country,
+          serviceable,
+          shipping_fee: serviceable ? shippingFee : 0,
+          cod: serviceable,
+          // Documented rule: no COD means the fee must be zero, not omitted.
+          cod_fee: serviceable ? codFee : 0,
+          shipping_methods: [
+            {
+              id: 'standard',
+              name: 'Standard Delivery',
+              // ASCII only: this string is rendered inside Razorpay's modal,
+              // which is one more encoding boundary than a price label is
+              // worth risking.
+              description: 'Dispatched in 1-2 working days',
+              serviceable,
+              shipping_fee: serviceable ? shippingFee : 0,
+              cod: serviceable,
+              cod_fee: serviceable ? codFee : 0,
+            },
+          ],
+        };
+      }),
+    };
+  }
+
+  /** The rupee gap between paying now and paying at the door. Mirrors
+   *  CartService.prepaidSaving so the two can never quote different numbers. */
+  private prepaidGap(payable: number): number {
+    if (payable <= 0) return 0;
+    return Math.round((payable * PREPAID_DISCOUNT_PERCENT) / 100 / 100) * 100;
   }
 
   /** Details needed to (re)open the checkout modal for a pending order. */

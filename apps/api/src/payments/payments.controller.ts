@@ -11,7 +11,15 @@ import {
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
-import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsOptional,
+  IsString,
+  Length,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { PaymentsService } from './payments.service';
 
 class VerifyPaymentDto {
@@ -42,6 +50,50 @@ class PaymentFailedDto {
   email?: string;
 }
 
+class MagicAddressDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  zipcode?: string;
+
+  @IsOptional()
+  @IsString()
+  state_code?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+}
+
+/** Razorpay's shipping-info payload. Every field it sends is declared, even
+ *  the ones the handler ignores: the global pipe strips unknown properties,
+ *  and an undeclared field would be dropped before it could be read. */
+class MagicShippingInfoDto {
+  @IsString()
+  razorpay_order_id!: string;
+
+  @IsOptional()
+  @IsString()
+  order_id?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  contact?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MagicAddressDto)
+  addresses?: MagicAddressDto[];
+}
+
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
@@ -67,7 +119,10 @@ export class PaymentsController {
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-razorpay-signature') signature?: string,
   ) {
-    return this.payments.handleWebhook(req.rawBody ?? Buffer.alloc(0), signature);
+    return this.payments.handleWebhook(
+      req.rawBody ?? Buffer.alloc(0),
+      signature,
+    );
   }
 
   @Post('failed')
@@ -76,9 +131,41 @@ export class PaymentsController {
     return this.payments.recordFailure(dto.orderNumber, dto.reason, dto.email);
   }
 
+  /**
+   * Magic Checkout's serviceability lookup, configured as the "URL for
+   * shipping info" in the Razorpay dashboard.
+   *
+   * Razorpay documents this endpoint as GET but sends the addresses as a JSON
+   * body, which express parses either way; both verbs are bound so a change of
+   * mind on their side does not take the checkout down. It must stay public —
+   * Razorpay's servers cannot authenticate, and the handler is written to have
+   * nothing worth stealing.
+   */
+  @Get('magic/shipping-info')
+  @HttpCode(200)
+  magicShippingInfoGet(@Body() dto: MagicShippingInfoDto) {
+    return this.magicShippingInfo(dto);
+  }
+
+  @Post('magic/shipping-info')
+  @HttpCode(200)
+  magicShippingInfoPost(@Body() dto: MagicShippingInfoDto) {
+    return this.magicShippingInfo(dto);
+  }
+
+  private magicShippingInfo(dto: MagicShippingInfoDto) {
+    return this.payments.magicShippingInfo({
+      razorpayOrderId: dto.razorpay_order_id,
+      addresses: dto.addresses ?? [],
+    });
+  }
+
   /** Retry a pending order's payment (guest access gated by email match). */
   @Get('session/:orderNumber')
-  session(@Param('orderNumber') orderNumber: string, @Query('email') email = '') {
+  session(
+    @Param('orderNumber') orderNumber: string,
+    @Query('email') email = '',
+  ) {
     return this.payments.session(orderNumber, email);
   }
 }
