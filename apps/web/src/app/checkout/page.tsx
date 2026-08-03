@@ -403,7 +403,13 @@ export default function CheckoutPage() {
                     />
                     <CreditCard size={18} className={method === "RAZORPAY" ? "text-volt" : ""} />
                     <span className="text-sm font-semibold">UPI / Cards / Wallets</span>
-                    <span className="ml-auto text-xs text-paper-dim">Pay now, securely</span>
+                    {cart && cart.summary.prepaidSaving > 0 ? (
+                      <span className="ml-auto text-xs font-semibold text-volt">
+                        Save {formatPrice(cart.summary.prepaidSaving)}
+                      </span>
+                    ) : (
+                      <span className="ml-auto text-xs text-paper-dim">Pay now, securely</span>
+                    )}
                   </label>
                 )}
                 <label
@@ -539,9 +545,19 @@ export default function CheckoutPage() {
                   <dt>Includes GST</dt>
                   <dd>{formatPrice(summary.taxIncluded)}</dd>
                 </div>
+                {method === "RAZORPAY" && summary.prepaidSaving > 0 && (
+                  <div className="flex justify-between text-volt">
+                    <dt>Prepaid discount ({summary.prepaidPercent}%)</dt>
+                    <dd>-{formatPrice(summary.prepaidSaving)}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-paper/10 pt-2 text-base font-bold">
-                  <dt>To Pay (COD)</dt>
-                  <dd>{formatPrice(summary.total)}</dd>
+                  <dt>{method === "RAZORPAY" ? "To Pay Online" : "To Pay (COD)"}</dt>
+                  <dd>
+                    {formatPrice(
+                      method === "RAZORPAY" ? summary.prepaidTotal : summary.total,
+                    )}
+                  </dd>
                 </div>
               </dl>
             )}
@@ -559,7 +575,7 @@ export default function CheckoutPage() {
               {placing ? (
                 <Loader2 size={20} className="animate-spin" />
               ) : method === "RAZORPAY" ? (
-                cart ? `Pay ${formatPrice(cart.summary.total)}` : "Pay Now"
+                cart ? `Pay ${formatPrice(cart.summary.prepaidTotal)}` : "Pay Now"
               ) : (
                 "Place COD Order"
               )}

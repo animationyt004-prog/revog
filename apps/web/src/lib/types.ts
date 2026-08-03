@@ -97,6 +97,12 @@ export interface CartSummary {
   amountToFreeShipping: number;
   taxIncluded: number;
   total: number;
+  /** What paying online saves, and the total it lands at. The cart has no
+   *  payment method, so these describe the prepaid option rather than the
+   *  current state — checkout applies them for real. */
+  prepaidSaving: number;
+  prepaidTotal: number;
+  prepaidPercent: number;
   totalSavings: number;
 }
 

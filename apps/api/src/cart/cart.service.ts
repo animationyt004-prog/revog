@@ -12,6 +12,13 @@ export const SHIPPING_FEE = 9900; // ₹99
 export const GST_RATE = 18; // % — prices are GST-INCLUSIVE (Indian retail norm)
 const MAX_QTY_PER_LINE = 10;
 
+/** Paying online instead of on delivery earns this off the payable amount.
+ *  It is not generosity: a prepaid order cannot be refused at the door, and
+ *  the return-to-origin courier bill on a refused COD parcel costs more than
+ *  this discount. Applied after shipping so choosing it can never push a cart
+ *  back under the free-delivery threshold. */
+export const PREPAID_DISCOUNT_PERCENT = 10;
+
 const CART_INCLUDE = {
   items: {
     orderBy: { createdAt: 'asc' as const },
@@ -209,6 +216,13 @@ export class CartService {
     );
   }
 
+  /** What the shopper saves by paying online, in paise. Rounded to whole
+   *  rupees so the amount reads cleanly next to a cash total. */
+  prepaidSaving(payable: number): number {
+    if (payable <= 0) return 0;
+    return Math.round((payable * PREPAID_DISCOUNT_PERCENT) / 100 / 100) * 100;
+  }
+
   couponDiscount(coupon: Coupon, subtotal: number): number {
     if (coupon.type === CouponType.PERCENT) {
       // Round to whole rupees so COD totals stay cash-friendly.
@@ -260,6 +274,9 @@ export class CartService {
     const shippingFee =
       items.length === 0 || afterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
     const total = afterDiscount + shippingFee;
+    // Informational: the cart has no payment method yet, so this is what the
+    // total *would* drop to if they pay online. Checkout applies it for real.
+    const prepaidSaving = this.prepaidSaving(total);
     // Prices are GST-inclusive; surface the contained tax for transparency.
     const taxIncluded = Math.round((afterDiscount * GST_RATE) / (100 + GST_RATE));
 
@@ -279,6 +296,9 @@ export class CartService {
         amountToFreeShipping: Math.max(0, FREE_SHIPPING_THRESHOLD - afterDiscount),
         taxIncluded,
         total,
+        prepaidSaving,
+        prepaidTotal: total - prepaidSaving,
+        prepaidPercent: PREPAID_DISCOUNT_PERCENT,
         totalSavings: mrpTotal - subtotal + couponDiscount,
       },
     };

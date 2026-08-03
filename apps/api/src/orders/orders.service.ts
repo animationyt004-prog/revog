@@ -58,12 +58,17 @@ export class OrdersService {
     const { summary } = view;
 
     const isCod = opts.paymentMethod === PaymentMethod.COD;
+    // Prepaid discount is decided here, on the server, from the cart's own
+    // totals — never from anything the client sent. It is the difference
+    // between an order that can be refused at the door and one that cannot.
+    const prepaidSaving = isCod ? 0 : summary.prepaidSaving;
+    const payable = summary.total - prepaidSaving;
     const orderNumber = this.newOrderNumber();
     // Gateway order first: if Razorpay is down we fail before touching stock.
     // An orphaned (never-paid) gateway order is harmless.
     const razorpayOrderId = isCod
       ? null
-      : await this.payments.createGatewayOrder(summary.total, orderNumber);
+      : await this.payments.createGatewayOrder(payable, orderNumber);
 
     const order = await this.prisma.$transaction(
       async (tx) => {
@@ -111,10 +116,12 @@ export class OrdersService {
           paymentMethod: opts.paymentMethod,
           paymentStatus: PaymentStatus.PENDING,
           subtotal: summary.subtotal,
-          discount: summary.couponDiscount,
+          // Both reductions live in one column; the coupon code is recorded
+          // separately, so the remainder is the prepaid share.
+          discount: summary.couponDiscount + prepaidSaving,
           shippingFee: summary.shippingFee,
           taxAmount: summary.taxIncluded,
-          total: summary.total,
+          total: payable,
           couponCode: summary.couponCode,
           addressSnapshot: opts.address as unknown as Prisma.InputJsonValue,
           items: {
@@ -132,7 +139,7 @@ export class OrdersService {
             create: {
               method: opts.paymentMethod,
               status: PaymentStatus.PENDING,
-              amount: summary.total,
+              amount: payable,
               razorpayOrderId,
             },
           },
