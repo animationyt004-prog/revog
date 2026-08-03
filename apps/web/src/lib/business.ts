@@ -9,8 +9,11 @@ export const BUSINESS = {
   /** Legal/registered name, if different from the brand. */
   legalName: "Hyra Fashion",
 
-  // TODO: replace with the real support inbox you actually monitor.
-  email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@hyrafashion.in",
+  // On the domain we actually own. The old default was support@hyrafashion.in
+  // — a different domain (no "s", .in not .com), so anything a customer sent
+  // there went nowhere. This address still needs a real mailbox or a
+  // forwarding rule behind it before it can be relied on.
+  email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@hyrafashions.com",
 
   /** Digits only, with country code — used for tel: and wa.me links. */
   // TODO: replace with the real WhatsApp/support number.

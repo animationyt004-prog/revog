@@ -14,11 +14,10 @@ import { Wordmark } from "./wordmark";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
-/** Always-valid links; category links are added from what's actually in stock. */
-const STATIC_LINKS = [
-  { label: "New In", href: "/collections/new-arrivals" },
-  { label: "Best Sellers", href: "/collections/bestsellers" },
-];
+/** New In is always populated — it is just the newest of whatever exists.
+ *  Best Sellers depends on the data and is only added once it has stock. */
+const NEW_IN = { label: "New In", href: "/collections/new-arrivals" };
+const BEST_SELLERS = { label: "Best Sellers", href: "/collections/bestsellers" };
 
 /** Sticky navbar. Full mega menu lands in Phase 2 — this is the frame. */
 export function Navbar() {
@@ -28,7 +27,7 @@ export function Navbar() {
   const [query, setQuery] = useState("");
   // Category links come from the catalog so the nav can never point at an
   // empty category (which used to happen whenever the range changed).
-  const [navLinks, setNavLinks] = useState(STATIC_LINKS);
+  const [navLinks, setNavLinks] = useState([NEW_IN]);
   const authed = useAuth((s) => s.status === "authed");
   const itemCount = useCart((s) => s.cart?.summary.itemCount ?? 0);
   const openDrawer = useCart((s) => s.openDrawer);
@@ -57,16 +56,32 @@ export function Navbar() {
     router.push(`/search?q=${encodeURIComponent(q)}`);
   }
 
+  // Categories and Best Sellers both come from the catalogue, so the rail can
+  // never point at a landing page holding nothing — which is what sent
+  // shoppers to an empty Best Sellers before.
   useEffect(() => {
-    fetch(`${API}/categories`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((cats: { name: string; slug: string; _count: { products: number } }[]) => {
-        const stocked = cats
-          .filter((c) => c._count.products > 0)
-          .slice(0, 3)
-          .map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
-        if (stocked.length) setNavLinks([STATIC_LINKS[0], ...stocked, STATIC_LINKS[1]]);
-      })
+    Promise.all([
+      fetch(`${API}/categories`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${API}/products?collection=bestsellers&take=1`)
+        .then((r) => (r.ok ? r.json() : { total: 0 }))
+        .catch(() => ({ total: 0 })),
+    ])
+      .then(
+        ([cats, best]: [
+          { name: string; slug: string; _count: { products: number } }[],
+          { total?: number },
+        ]) => {
+          const stocked = cats
+            .filter((c) => c._count.products > 0)
+            .slice(0, 3)
+            .map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
+          setNavLinks([
+            NEW_IN,
+            ...stocked,
+            ...((best.total ?? 0) > 0 ? [BEST_SELLERS] : []),
+          ]);
+        },
+      )
       .catch(() => undefined);
   }, []);
 

@@ -9,8 +9,12 @@ import { BadgeIndianRupee, MessageCircle, PackageCheck, RotateCcw, Truck } from 
 const SIGNALS = [
   {
     icon: BadgeIndianRupee,
-    title: "COD & UPI",
-    detail: "Cash on Delivery, UPI, cards & netbanking",
+    // Only Cash on Delivery is live: online payment sits behind
+    // NEXT_PUBLIC_ENABLE_ONLINE_PAYMENT and is off in production, so checkout
+    // offers COD alone. Promising UPI and cards here sent shoppers all the way
+    // to checkout for a method that isn't there.
+    title: "Cash on Delivery",
+    detail: "Pay in cash when your order arrives",
   },
   {
     icon: Truck,
