@@ -104,24 +104,60 @@ export class PaymentsService {
     return { ok: true, orderNumber: updated.orderNumber, status: updated.status };
   }
 
-  /** Record a failed attempt; order stays PENDING for retry. */
+  /**
+   * Record a failed attempt and put the stock back.
+   *
+   * Checkout decrements stock when it creates the order, before the gateway
+   * has taken anything — that is what stops two people buying the last piece
+   * at once. When the payment then fails, those units have to return, or every
+   * abandoned card attempt quietly retires inventory that was never sold.
+   *
+   * The order is left CANCELLED rather than PENDING: its stock is no longer
+   * held, so "retry" would have nothing reserved behind it. A shopper who
+   * still wants the piece adds it to the cart again.
+   */
   async recordFailure(orderNumber: string, reason: string | undefined, email?: string) {
     const order = await this.prisma.order.findUnique({
       where: { orderNumber },
-      include: { payment: true },
+      include: { payment: true, items: true },
     });
     if (!order || !order.payment) throw new NotFoundException('Order not found.');
     if (email && order.email !== email.toLowerCase()) {
       throw new BadRequestException('Order does not match.');
     }
     if (order.paymentStatus === PaymentStatus.PAID) return { ok: true };
+    // Already released — a second failure callback must not double-restock.
+    if (order.status === OrderStatus.CANCELLED) return { ok: true };
 
-    await this.prisma.payment.update({
-      where: { id: order.payment.id },
-      data: {
-        status: PaymentStatus.FAILED,
-        failureReason: reason?.slice(0, 300) ?? 'Payment failed',
-      },
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of order.items) {
+        // variantId is nullable: a variant deleted since the order was placed
+        // leaves the line for the record but has no stock to return.
+        if (!item.variantId) continue;
+        await tx.productVariant.updateMany({
+          where: { id: item.variantId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+      await tx.payment.update({
+        where: { id: order.payment!.id },
+        data: {
+          status: PaymentStatus.FAILED,
+          failureReason: reason?.slice(0, 300) ?? 'Payment failed',
+        },
+      });
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.CANCELLED,
+          events: {
+            create: {
+              status: OrderStatus.CANCELLED,
+              note: 'Payment failed — stock returned',
+            },
+          },
+        },
+      });
     });
     return { ok: true };
   }
