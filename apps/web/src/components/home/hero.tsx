@@ -5,22 +5,41 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/format";
+import { HERO_SLIDES, type HeroSlide } from "@/lib/hero-slides";
 import type { ProductCardData } from "@/lib/types";
 
 const ADVANCE_MS = 5000;
 
+/** Copy used when the banner is running on catalogue photography — every
+ *  slide shares it, because a product shot carries no campaign line. */
+const FALLBACK_COPY = {
+  eyebrow: "NEW COLLECTION",
+  title: "Timeless elegance.",
+  accent: "Redefined for you.",
+  subtitle: "Indian fashion crafted for every moment that matters.",
+  ctaLabel: "Shop new arrivals",
+  ctaHref: "/collections/new-arrivals",
+};
+
 /**
- * Opening banner. Client component for the carousel state, but React still
- * renders the first slide server-side, so the LCP image is in the SSR HTML
- * and does not wait on hydration — the reason the first shot carries
- * `priority` and the rest do not.
+ * Opening banner. Slides come from HERO_SLIDES when that file has been filled
+ * in — each with its own artwork and copy — and otherwise fall back to the
+ * first few catalogue photographs under one shared headline, so the banner is
+ * never empty and never advertises something we don't stock.
  *
- * Backdrops are real catalogue photography rather than separate creative:
- * the supplier's model shots already read as editorial, and sourcing them
- * from stock means the banner can never advertise something we don't sell.
+ * Client component for the carousel state, but React still renders the first
+ * slide server-side, so the LCP image is in the SSR HTML and does not wait on
+ * hydration. That is why only the first shot carries `priority`.
  */
 export function Hero({ products = [] }: { products?: ProductCardData[] }) {
-  const slides = products.filter((p) => p.image).slice(0, 5);
+  const slides: HeroSlide[] =
+    HERO_SLIDES.length > 0
+      ? HERO_SLIDES
+      : products
+          .filter((p) => p.image)
+          .slice(0, 5)
+          .map((p) => ({ ...FALLBACK_COPY, image: p.image!.url }));
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = slides.length;
@@ -34,7 +53,7 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
   );
 
   // Auto-advance, held while the pointer or keyboard focus is inside the
-  // banner so it can't yank a slide away mid-read. Skipped outright for
+  // banner so it can't pull a slide away mid-read. Skipped outright for
   // anyone who has asked the OS to reduce motion.
   const reduced = useRef(false);
   useEffect(() => {
@@ -46,6 +65,9 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
     const t = setInterval(() => setIndex((i) => (i + 1) % count), ADVANCE_MS);
     return () => clearInterval(t);
   }, [count, paused]);
+
+  if (count === 0) return null;
+  const active = slides[index];
 
   return (
     <section
@@ -59,33 +81,31 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
     >
       {/* Only the current slide and the one queued behind it are mounted.
           Every slide fills the banner, so a lazy one still intersects the
-          viewport and downloads anyway — five catalogue shots is about a
+          viewport and downloads anyway — five full-bleed shots is about a
           megabyte before anything else on the page has loaded. Mounting the
-          next one keeps the crossfade smooth; stepping backwards mounts on
+          next keeps the crossfade smooth; stepping backwards mounts on
           demand, by which point the file is cached. */}
-      {slides.map((p, i) => {
+      {slides.map((s, i) => {
         const mounted = i === index || i === (index + 1) % count;
         if (!mounted) return null;
         return (
           <div
-            key={p.id}
+            key={s.image}
             aria-hidden={i !== index}
             className={cn(
               "absolute inset-0 transition-opacity duration-700",
               i === index ? "opacity-100" : "opacity-0",
             )}
           >
-            {p.image && (
-              <Image
-                src={p.image.url}
-                alt=""
-                aria-hidden
-                fill
-                priority={i === 0}
-                sizes="100vw"
-                className="object-cover object-[68%_25%]"
-              />
-            )}
+            <Image
+              src={s.image}
+              alt=""
+              aria-hidden
+              fill
+              priority={i === 0}
+              sizes="100vw"
+              className="object-cover object-[68%_25%]"
+            />
           </div>
         );
       })}
@@ -104,26 +124,25 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
           {/* Type goes light here rather than the page's near-black: it sits
               on the photograph, not on the page surface. */}
           <p className="text-[11px] font-semibold tracking-[0.3em] text-gold">
-            NEW COLLECTION
+            {active.eyebrow}
           </p>
 
           <h1 className="display mt-4 text-[9vw] leading-[1.05] text-white sm:mt-5 sm:text-[5vw] lg:text-[3.9rem]">
-            Timeless elegance.
-            <span className="block italic">Redefined for you.</span>
+            {active.title}
+            <span className="block text-gold">{active.accent}</span>
           </h1>
 
+          <span aria-hidden className="mt-5 block h-px w-40 bg-gold/45 sm:w-56" />
+
           <p className="mt-4 max-w-md text-sm leading-relaxed text-white/80 sm:text-base">
-            Indian fashion crafted for every moment that matters.
+            {active.subtitle}
           </p>
 
-          {/* text-paper, not text-ink: in this palette `ink` is the warm white
-              page surface and `paper` is the near-black type. White on gold
-              lands around 2.6:1; the near-black clears AA at roughly 6.9:1. */}
           <Link
-            href="/collections/new-arrivals"
+            href={active.ctaHref}
             className="display group mt-6 inline-flex items-center gap-2 rounded-sm bg-gold px-7 py-3 text-base text-paper transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:mt-8 sm:px-9 sm:py-3.5 sm:text-lg"
           >
-            Shop new arrivals
+            {active.ctaLabel}
             <ArrowRight
               size={18}
               className="transition-transform duration-300 group-hover:translate-x-1"
@@ -150,9 +169,9 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
           </button>
 
           <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
-            {slides.map((p, i) => (
+            {slides.map((s, i) => (
               <button
-                key={p.id}
+                key={s.image}
                 onClick={() => go(i)}
                 aria-label={`Go to slide ${i + 1} of ${count}`}
                 aria-current={i === index}
