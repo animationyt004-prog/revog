@@ -10,6 +10,7 @@ import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { pixelTrack } from "@/lib/pixel";
 import { track } from "@/lib/track";
+import { AvailableOffers } from "@/components/product/available-offers";
 import { ProductSpecs } from "@/components/product/product-specs";
 import type { ProductDetail } from "@/lib/types";
 import { PincodeChecker } from "./pincode-checker";
@@ -376,6 +377,8 @@ export function ProductView({ product }: { product: ProductDetail }) {
               </p>
             </div>
           )}
+          <AvailableOffers />
+
           <ProductSpecs product={product} />
         </div>
       </div>

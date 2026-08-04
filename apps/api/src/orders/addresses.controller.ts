@@ -9,8 +9,19 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IsBoolean, IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
-import { CurrentUser, JwtAuthGuard, type JwtPayload } from '../auth/jwt-auth.guard';
+import {
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  type JwtPayload,
+} from '../auth/jwt-auth.guard';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 export class AddressDto {

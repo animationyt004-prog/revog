@@ -4,7 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+} from '@prisma/client';
 import { randomInt } from 'crypto';
 import { CartService } from '../cart/cart.service';
 import { PaymentsService } from '../payments/payments.service';
@@ -36,7 +41,9 @@ export class OrdersService {
 
   private newOrderNumber(): string {
     // HY-<base36 minute stamp>-<3 random digits> — short, sortable, unguessable enough.
-    const stamp = Math.floor(Date.now() / 60000).toString(36).toUpperCase();
+    const stamp = Math.floor(Date.now() / 60000)
+      .toString(36)
+      .toUpperCase();
     return `HY-${stamp}-${randomInt(100, 1000)}`;
   }
 
@@ -72,97 +79,106 @@ export class OrdersService {
 
     const order = await this.prisma.$transaction(
       async (tx) => {
-      // 1. Atomically decrement stock; a 0-count update means someone beat us.
-      for (const item of view.items) {
-        const updated = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-        if (updated.count === 0) {
-          throw new BadRequestException(
-            `"${item.name}" (${item.color} / ${item.size}) just sold out in the quantity you wanted.`,
-          );
+        // 1. Atomically decrement stock; a 0-count update means someone beat us.
+        for (const item of view.items) {
+          const updated = await tx.productVariant.updateMany({
+            where: { id: item.variantId, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (updated.count === 0) {
+            throw new BadRequestException(
+              `"${item.name}" (${item.color} / ${item.size}) just sold out in the quantity you wanted.`,
+            );
+          }
+          await tx.product.updateMany({
+            where: { slug: item.slug },
+            data: { soldCount: { increment: item.quantity } },
+          });
         }
-        await tx.product.updateMany({
-          where: { slug: item.slug },
-          data: { soldCount: { increment: item.quantity } },
-        });
-      }
 
-      // 2. Redeem the coupon within the same transaction.
-      if (summary.couponCode) {
-        const redeemed = await tx.coupon.updateMany({
-          where: {
-            code: summary.couponCode,
-            isActive: true,
-            OR: [{ usageLimit: null }, { usedCount: { lt: this.prisma.coupon.fields.usageLimit } }],
-          },
-          data: { usedCount: { increment: 1 } },
-        });
-        if (redeemed.count === 0) {
-          throw new BadRequestException('Coupon is no longer valid.');
+        // 2. Redeem the coupon within the same transaction.
+        if (summary.couponCode) {
+          const redeemed = await tx.coupon.updateMany({
+            where: {
+              code: summary.couponCode,
+              isActive: true,
+              OR: [
+                { usageLimit: null },
+                { usedCount: { lt: this.prisma.coupon.fields.usageLimit } },
+              ],
+            },
+            data: { usedCount: { increment: 1 } },
+          });
+          if (redeemed.count === 0) {
+            throw new BadRequestException('Coupon is no longer valid.');
+          }
         }
-      }
 
-      // 3. Create the order with full snapshots.
-      const created = await tx.order.create({
-        data: {
-          orderNumber,
-          userId: opts.userId ?? null,
-          email: opts.email.toLowerCase(),
-          phone: opts.address.phone,
-          // COD confirms immediately; online payment confirms on verify.
-          status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
-          paymentMethod: opts.paymentMethod,
-          paymentStatus: PaymentStatus.PENDING,
-          subtotal: summary.subtotal,
-          // Both reductions live in one column; the coupon code is recorded
-          // separately, so the remainder is the prepaid share.
-          discount: summary.couponDiscount + prepaidSaving,
-          shippingFee: summary.shippingFee,
-          taxAmount: summary.taxIncluded,
-          total: payable,
-          couponCode: summary.couponCode,
-          addressSnapshot: opts.address as unknown as Prisma.InputJsonValue,
-          items: {
-            create: view.items.map((i) => ({
-              variantId: i.variantId,
-              productName: i.name,
-              variantLabel: `${i.color} / ${i.size}`,
-              image: i.image,
-              unitPrice: i.unitPrice,
-              quantity: i.quantity,
-              lineTotal: i.lineTotal,
-            })),
-          },
-          payment: {
-            create: {
-              method: opts.paymentMethod,
-              status: PaymentStatus.PENDING,
-              amount: payable,
-              razorpayOrderId,
+        // 3. Create the order with full snapshots.
+        const created = await tx.order.create({
+          data: {
+            orderNumber,
+            userId: opts.userId ?? null,
+            email: opts.email.toLowerCase(),
+            phone: opts.address.phone,
+            // COD confirms immediately; online payment confirms on verify.
+            status: isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING,
+            paymentMethod: opts.paymentMethod,
+            paymentStatus: PaymentStatus.PENDING,
+            subtotal: summary.subtotal,
+            // Every reduction lands in one column, so subtotal - discount +
+            // shipping must equal total. Leaving the automatic multi-buy amount
+            // out would charge the right sum but record an invoice that does not
+            // add up.
+            discount:
+              summary.couponDiscount + summary.bundleDiscount + prepaidSaving,
+            shippingFee: summary.shippingFee,
+            taxAmount: summary.taxIncluded,
+            total: payable,
+            couponCode: summary.couponCode,
+            addressSnapshot: opts.address as unknown as Prisma.InputJsonValue,
+            items: {
+              create: view.items.map((i) => ({
+                variantId: i.variantId,
+                productName: i.name,
+                variantLabel: `${i.color} / ${i.size}`,
+                image: i.image,
+                unitPrice: i.unitPrice,
+                quantity: i.quantity,
+                lineTotal: i.lineTotal,
+              })),
+            },
+            payment: {
+              create: {
+                method: opts.paymentMethod,
+                status: PaymentStatus.PENDING,
+                amount: payable,
+                razorpayOrderId,
+              },
+            },
+            events: {
+              create: isCod
+                ? {
+                    status: OrderStatus.CONFIRMED,
+                    note: 'Order placed — Cash on Delivery',
+                  }
+                : {
+                    status: OrderStatus.PENDING,
+                    note: 'Order placed — awaiting online payment',
+                  },
             },
           },
-          events: {
-            create: isCod
-              ? {
-                  status: OrderStatus.CONFIRMED,
-                  note: 'Order placed — Cash on Delivery',
-                }
-              : {
-                  status: OrderStatus.PENDING,
-                  note: 'Order placed — awaiting online payment',
-                },
-          },
-        },
-        include: ORDER_INCLUDE,
-      });
+          include: ORDER_INCLUDE,
+        });
 
-      // 4. Empty the cart.
-      await tx.cartItem.deleteMany({ where: { cartId: raw.id } });
-      await tx.cart.update({ where: { id: raw.id }, data: { couponCode: null } });
+        // 4. Empty the cart.
+        await tx.cartItem.deleteMany({ where: { cartId: raw.id } });
+        await tx.cart.update({
+          where: { id: raw.id },
+          data: { couponCode: null },
+        });
 
-      return created;
+        return created;
       },
       // Checkout spans several round-trips; from a dev machine far from the DB
       // region the default 5s expires. Production (same-region) runs in <1s.
@@ -176,7 +192,11 @@ export class OrdersService {
         ? {
             keyId: this.payments.keyId,
             razorpayOrderId,
-            amount: summary.total,
+            // The amount the gateway order was actually raised for. Sending
+            // summary.total here quoted the COD price for a prepaid order —
+            // Razorpay charges off the order id, so the shopper was charged
+            // correctly but shown a figure that did not match.
+            amount: payable,
             currency: 'INR' as const,
           }
         : null,
@@ -192,7 +212,10 @@ export class OrdersService {
   }
 
   /** Fetch one order. Owners fetch by number; guests must also match email. */
-  async findByNumber(orderNumber: string, viewer: { userId?: string; email?: string }) {
+  async findByNumber(
+    orderNumber: string,
+    viewer: { userId?: string; email?: string },
+  ) {
     const order = await this.prisma.order.findUnique({
       where: { orderNumber },
       include: ORDER_INCLUDE,

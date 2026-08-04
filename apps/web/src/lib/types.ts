@@ -92,6 +92,13 @@ export interface CartSummary {
   mrpSavings: number;
   couponCode: string | null;
   couponDiscount: number;
+  /** The automatic multi-buy reduction currently earned, and the tier that
+   *  earned it. Zero when the basket is short of the first tier. */
+  bundleDiscount: number;
+  bundlePercent: number;
+  /** Every tier, whether or not it is earned yet, so the storefront can show
+   *  the ladder. Constant, so an empty cart carries it too. */
+  bundleTiers: { minQuantity: number; percent: number }[];
   shippingFee: number;
   freeShippingThreshold: number;
   amountToFreeShipping: number;

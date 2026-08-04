@@ -56,8 +56,12 @@ export class CartController {
   }
 
   /** Cart endpoints serve guests and users alike: auth is optional. */
-  private async identity(req: Request): Promise<{ userId?: string; token?: string }> {
-    const token = (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE];
+  private async identity(
+    req: Request,
+  ): Promise<{ userId?: string; token?: string }> {
+    const token = (req.cookies as Record<string, string> | undefined)?.[
+      CART_COOKIE
+    ];
     const header = req.headers.authorization;
     const bearer = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
     if (bearer) {

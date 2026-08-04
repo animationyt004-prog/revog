@@ -22,7 +22,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 import type { Request } from 'express';
-import { CurrentUser, JwtAuthGuard, type JwtPayload } from '../auth/jwt-auth.guard';
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  type JwtPayload,
+} from '../auth/jwt-auth.guard';
 import { CART_COOKIE } from '../cart/cart.controller';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CodOtpService } from '../cod-otp/cod-otp.service';
@@ -80,15 +84,19 @@ export class OrdersController {
   @Post('checkout')
   @HttpCode(201)
   async checkout(
-    @Body(new ValidationPipe({ whitelist: true, transform: true })) dto: CheckoutDto,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: CheckoutDto,
     @Req() req: Request,
   ) {
     const user = await this.optionalUser(req);
-    const cartToken = (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE];
+    const cartToken = (req.cookies as Record<string, string> | undefined)?.[
+      CART_COOKIE
+    ];
     if (!cartToken) throw new BadRequestException('Your cart is empty.');
 
     const email = user?.email ?? dto.email;
-    if (!email) throw new BadRequestException('Email is required for guest checkout.');
+    if (!email)
+      throw new BadRequestException('Email is required for guest checkout.');
 
     let address = dto.address;
     if (!address && user && dto.addressId) {
@@ -106,14 +114,20 @@ export class OrdersController {
         pincode: saved.pincode,
       };
     }
-    if (!address) throw new BadRequestException('Shipping address is required.');
+    if (!address)
+      throw new BadRequestException('Shipping address is required.');
 
     // When SMS verification is enabled, COD orders must carry a valid,
     // phone-matched OTP token — this is what cuts fake/RTO-prone COD orders.
     if (dto.paymentMethod === 'COD' && this.codOtp.enabled) {
-      const verified = await this.codOtp.isPhoneVerified(dto.codVerifyToken, address.phone);
+      const verified = await this.codOtp.isPhoneVerified(
+        dto.codVerifyToken,
+        address.phone,
+      );
       if (!verified) {
-        throw new BadRequestException('Please verify your mobile number to place a COD order.');
+        throw new BadRequestException(
+          'Please verify your mobile number to place a COD order.',
+        );
       }
     }
 

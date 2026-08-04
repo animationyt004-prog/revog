@@ -19,6 +19,24 @@ const MAX_QTY_PER_LINE = 10;
  *  back under the free-delivery threshold. */
 export const PREPAID_DISCOUNT_PERCENT = 10;
 
+/**
+ * Automatic multi-buy tiers, best matching tier wins.
+ *
+ * Deliberately a percentage rather than the flat "2 sarees for ₹2199" the
+ * category advertises. That format only works on a flat catalogue: ours runs
+ * ₹799 to ₹1699, so a flat bundle price would overcharge someone pairing two
+ * ₹799 pieces and hand away a third of the margin on two ₹1699 ones. A
+ * percentage is honest at both ends — it can never cost the shopper more than
+ * buying the same pieces separately.
+ *
+ * Applied to the subtotal before any coupon, and it does not stack with one;
+ * the shopper keeps whichever is worth more.
+ */
+export const BUNDLE_TIERS = [
+  { minQuantity: 2, percent: 15 },
+  { minQuantity: 3, percent: 25 },
+] as const;
+
 const CART_INCLUDE = {
   items: {
     orderBy: { createdAt: 'asc' as const },
@@ -40,9 +58,7 @@ const CART_INCLUDE = {
   },
 };
 
-type CartWithItems = NonNullable<
-  Awaited<ReturnType<CartService['findRaw']>>
->;
+type CartWithItems = NonNullable<Awaited<ReturnType<CartService['findRaw']>>>;
 
 @Injectable()
 export class CartService {
@@ -57,7 +73,10 @@ export class CartService {
 
   /** Resolve the caller's cart: by user when logged in, else by cookie token.
    *  Creates one lazily. Returns the cart plus the token the cookie must hold. */
-  async resolve(opts: { userId?: string; token?: string }): Promise<CartWithItems> {
+  async resolve(opts: {
+    userId?: string;
+    token?: string;
+  }): Promise<CartWithItems> {
     if (opts.userId) {
       const byUser = await this.prisma.cart.findFirst({
         where: { userId: opts.userId },
@@ -88,26 +107,37 @@ export class CartService {
   }
 
   /** On login: fold the guest cookie cart into the user's cart. */
-  async mergeGuestIntoUser(guestToken: string | undefined, userId: string): Promise<void> {
+  async mergeGuestIntoUser(
+    guestToken: string | undefined,
+    userId: string,
+  ): Promise<void> {
     if (!guestToken) return;
     const guest = await this.findRaw(guestToken);
     if (!guest || guest.userId) return;
 
     const userCart = await this.prisma.cart.findFirst({ where: { userId } });
     if (!userCart) {
-      await this.prisma.cart.update({ where: { id: guest.id }, data: { userId } });
+      await this.prisma.cart.update({
+        where: { id: guest.id },
+        data: { userId },
+      });
       return;
     }
     // Combine quantities line by line, then drop the guest cart.
     for (const item of guest.items) {
       const existing = await this.prisma.cartItem.findUnique({
-        where: { cartId_variantId: { cartId: userCart.id, variantId: item.variantId } },
+        where: {
+          cartId_variantId: { cartId: userCart.id, variantId: item.variantId },
+        },
       });
       if (existing) {
         await this.prisma.cartItem.update({
           where: { id: existing.id },
           data: {
-            quantity: Math.min(existing.quantity + item.quantity, MAX_QTY_PER_LINE),
+            quantity: Math.min(
+              existing.quantity + item.quantity,
+              MAX_QTY_PER_LINE,
+            ),
           },
         });
       } else {
@@ -129,7 +159,8 @@ export class CartService {
       select: { stock: true },
     });
     if (!variant) throw new NotFoundException('Variant not found.');
-    if (variant.stock < 1) throw new BadRequestException('This size is sold out.');
+    if (variant.stock < 1)
+      throw new BadRequestException('This size is sold out.');
 
     const existing = await this.prisma.cartItem.findUnique({
       where: { cartId_variantId: { cartId, variantId } },
@@ -163,12 +194,16 @@ export class CartService {
     }
     await this.prisma.cartItem.update({
       where: { id: item.id },
-      data: { quantity: Math.min(quantity, item.variant.stock, MAX_QTY_PER_LINE) },
+      data: {
+        quantity: Math.min(quantity, item.variant.stock, MAX_QTY_PER_LINE),
+      },
     });
   }
 
   async removeItem(cartId: string, itemId: string) {
-    const item = await this.prisma.cartItem.findFirst({ where: { id: itemId, cartId } });
+    const item = await this.prisma.cartItem.findFirst({
+      where: { id: itemId, cartId },
+    });
     if (!item) throw new NotFoundException('Cart item not found.');
     await this.prisma.cartItem.delete({ where: { id: item.id } });
   }
@@ -194,7 +229,8 @@ export class CartService {
       where: { code: code.toUpperCase() },
     });
     const now = new Date();
-    if (!coupon || !coupon.isActive) throw new BadRequestException('Invalid coupon code.');
+    if (!coupon || !coupon.isActive)
+      throw new BadRequestException('Invalid coupon code.');
     if (coupon.startsAt && coupon.startsAt > now)
       throw new BadRequestException('This coupon is not live yet.');
     if (coupon.expiresAt && coupon.expiresAt < now)
@@ -218,6 +254,21 @@ export class CartService {
 
   /** What the shopper saves by paying online, in paise. Rounded to whole
    *  rupees so the amount reads cleanly next to a cash total. */
+  /** The best tier a basket of this many pieces qualifies for, and what it is
+   *  worth. Rounded to whole rupees so no total ever carries stray paise. */
+  private bundleFor(
+    unitCount: number,
+    subtotal: number,
+  ): { percent: number; amount: number } | null {
+    if (subtotal <= 0) return null;
+    const tier = BUNDLE_TIERS.filter((t) => unitCount >= t.minQuantity).sort(
+      (a, b) => b.percent - a.percent,
+    )[0];
+    if (!tier) return null;
+    const amount = Math.round((subtotal * tier.percent) / 100 / 100) * 100;
+    return amount > 0 ? { percent: tier.percent, amount } : null;
+  }
+
   prepaidSaving(payable: number): number {
     if (payable <= 0) return 0;
     return Math.round((payable * PREPAID_DISCOUNT_PERCENT) / 100 / 100) * 100;
@@ -227,7 +278,9 @@ export class CartService {
     if (coupon.type === CouponType.PERCENT) {
       // Round to whole rupees so COD totals stay cash-friendly.
       const raw = Math.round((subtotal * coupon.value) / 100 / 100) * 100;
-      return coupon.maxDiscount != null ? Math.min(raw, coupon.maxDiscount) : raw;
+      return coupon.maxDiscount != null
+        ? Math.min(raw, coupon.maxDiscount)
+        : raw;
     }
     return Math.min(coupon.value, subtotal);
   }
@@ -258,6 +311,9 @@ export class CartService {
     const subtotal = items.reduce((s, i) => s + i.lineTotal, 0);
     const mrpTotal = items.reduce((s, i) => s + i.mrp * i.quantity, 0);
 
+    const unitCount = items.reduce((s, i) => s + i.quantity, 0);
+    const bundle = this.bundleFor(unitCount, subtotal);
+
     let couponCode: string | null = null;
     let couponDiscount = 0;
     if (cart.couponCode && items.length > 0) {
@@ -270,15 +326,29 @@ export class CartService {
       }
     }
 
-    const afterDiscount = subtotal - couponDiscount;
+    // One discount on the goods, not two. The bundle applies automatically, so
+    // letting it stack would quietly pay a coupon holder twice for the same
+    // basket; the shopper keeps whichever single reduction is larger.
+    const bundleDiscount =
+      bundle && bundle.amount > couponDiscount ? bundle.amount : 0;
+    if (bundleDiscount > 0) {
+      couponDiscount = 0;
+      couponCode = null;
+    }
+
+    const afterDiscount = subtotal - couponDiscount - bundleDiscount;
     const shippingFee =
-      items.length === 0 || afterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+      items.length === 0 || afterDiscount >= FREE_SHIPPING_THRESHOLD
+        ? 0
+        : SHIPPING_FEE;
     const total = afterDiscount + shippingFee;
     // Informational: the cart has no payment method yet, so this is what the
     // total *would* drop to if they pay online. Checkout applies it for real.
     const prepaidSaving = this.prepaidSaving(total);
     // Prices are GST-inclusive; surface the contained tax for transparency.
-    const taxIncluded = Math.round((afterDiscount * GST_RATE) / (100 + GST_RATE));
+    const taxIncluded = Math.round(
+      (afterDiscount * GST_RATE) / (100 + GST_RATE),
+    );
 
     return {
       id: cart.id,
@@ -291,15 +361,23 @@ export class CartService {
         mrpSavings: mrpTotal - subtotal,
         couponCode,
         couponDiscount,
+        bundleDiscount,
+        bundlePercent: bundleDiscount > 0 ? (bundle?.percent ?? 0) : 0,
+        // Every tier, always — the storefront shows the ladder so a shopper
+        // one piece short can see what the next one is worth.
+        bundleTiers: BUNDLE_TIERS.map((t) => ({ ...t })),
         shippingFee,
         freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
-        amountToFreeShipping: Math.max(0, FREE_SHIPPING_THRESHOLD - afterDiscount),
+        amountToFreeShipping: Math.max(
+          0,
+          FREE_SHIPPING_THRESHOLD - afterDiscount,
+        ),
         taxIncluded,
         total,
         prepaidSaving,
         prepaidTotal: total - prepaidSaving,
         prepaidPercent: PREPAID_DISCOUNT_PERCENT,
-        totalSavings: mrpTotal - subtotal + couponDiscount,
+        totalSavings: mrpTotal - subtotal + couponDiscount + bundleDiscount,
       },
     };
   }
