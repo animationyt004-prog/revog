@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: `/products/${slug}` },
     openGraph: {
       type: "website",
-      title: `${product.name} | Hyra Fashion`,
+      title: `${product.name} | HyraLuxe`,
       description: desc,
       url: `${SITE_URL}/products/${slug}`,
       images: product.images[0] ? [{ url: product.images[0].url }] : [],
@@ -76,7 +76,7 @@ export default async function ProductPage({ params }: Props) {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
-      seller: { "@type": "Organization", name: "Hyra Fashion" },
+      seller: { "@type": "Organization", name: "HyraLuxe" },
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
         applicableCountry: "IN",

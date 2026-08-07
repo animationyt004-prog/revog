@@ -141,7 +141,7 @@ export function WelcomePopup() {
           <p className="mt-4 max-w-[15rem] text-xs leading-relaxed text-white/75">
             On your first order above ₹999.
             <br />
-            Welcome to Hyra Fashion.
+            Welcome to HyraLuxe.
           </p>
         </div>
 

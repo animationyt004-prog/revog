@@ -5,9 +5,18 @@
  * reachable contact information and a real business address.
  */
 export const BUSINESS = {
-  name: "Hyra Fashion",
-  /** Legal/registered name, if different from the brand. */
-  legalName: "Hyra Fashion",
+  name: "HyraLuxe",
+  /**
+   * Legal/registered name, if different from the brand.
+   *
+   * This is a legal fact, not a design choice: it goes into the Organization
+   * JSON-LD Google reads and onto the policy pages. Renaming the storefront
+   * does not rename the registered entity, so this must be whatever the GST /
+   * incorporation paperwork actually says. Left matching the brand only
+   * because the two were the same before the rename — correct it here the
+   * moment the registered name is confirmed.
+   */
+  legalName: "HyraLuxe",
 
   // On the domain we actually own. The old default was support@hyrafashion.in
   // — a different domain (no "s", .in not .com), so anything a customer sent
@@ -46,7 +55,7 @@ export const BUSINESS = {
 export const HAS_PHONE = BUSINESS.phone !== "919999999999";
 export const HAS_ADDRESS = BUSINESS.address.line1 !== "Address to be updated";
 
-export const whatsappLink = (message = "Hi Hyra Fashion! I have a question.") =>
+export const whatsappLink = (message = "Hi HyraLuxe! I have a question.") =>
   `https://wa.me/${BUSINESS.phone}?text=${encodeURIComponent(message)}`;
 
 export const formattedPhone = () => {

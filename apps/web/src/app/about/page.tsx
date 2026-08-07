@@ -2,22 +2,22 @@ import type { Metadata } from "next";
 import { PageShell, PolicySection } from "@/components/layout/page-shell";
 
 export const metadata: Metadata = {
-  title: "About Hyra Fashion",
+  title: "About HyraLuxe",
   description:
-    "Hyra Fashion is an India-based online store for kurtis, kurtas, sarees, t-shirts and shirts — honest pricing, Cash on Delivery and easy 7-day returns.",
+    "HyraLuxe is an India-based online store for kurtis, kurtas, sarees, t-shirts and shirts — honest pricing, Cash on Delivery and easy 7-day returns.",
   alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
   return (
     <PageShell
-      title="About Hyra Fashion"
+      title="About HyraLuxe"
       accent="."
       intro="Indian fashion — ethnic and casual — curated and delivered across the country."
     >
       <PolicySection heading="Who we are">
         <p>
-          Hyra Fashion is an India-based online clothing store. We started with a simple idea:
+          HyraLuxe is an India-based online clothing store. We started with a simple idea:
           buying clothes online should be straightforward — clear photos, an honest description of
           the fabric, a price without games, and the option to pay only when the parcel reaches
           your door.

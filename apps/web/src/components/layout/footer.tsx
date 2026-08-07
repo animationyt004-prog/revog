@@ -33,7 +33,7 @@ const STATIC_COLUMNS: Column[] = [
   {
     heading: "Company",
     links: [
-      { label: "About Hyra Fashion", href: "/about" },
+      { label: "About HyraLuxe", href: "/about" },
       { label: "Privacy Policy", href: "/policies/privacy" },
       { label: "Terms of Service", href: "/policies/terms" },
       { label: "Shipping Policy", href: "/policies/shipping" },
@@ -92,7 +92,7 @@ export async function Footer() {
           ))}
         </div>
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/12 pt-6 text-xs text-white/55 sm:flex-row">
-          <p>© {new Date().getFullYear()} Hyra Fashion. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} HyraLuxe. All rights reserved.</p>
           <p>
             Made in India <span aria-hidden>🇮🇳</span> · COD & UPI accepted
           </p>

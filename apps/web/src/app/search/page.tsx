@@ -11,7 +11,7 @@ interface Props {
 
 export const metadata: Metadata = {
   title: "Search",
-  description: "Search Hyra Fashion products by style, fabric, category or brand.",
+  description: "Search HyraLuxe products by style, fabric, category or brand.",
   alternates: { canonical: "/search" },
   robots: { index: false, follow: true },
 };

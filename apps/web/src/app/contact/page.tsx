@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Reach Hyra Fashion for order help, returns or product questions — WhatsApp, phone or email. We usually reply the same day.",
+    "Reach HyraLuxe for order help, returns or product questions — WhatsApp, phone or email. We usually reply the same day.",
   alternates: { canonical: "/contact" },
 };
 
@@ -27,7 +27,7 @@ export default function ContactPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         {HAS_PHONE && (
           <a
-            href={whatsappLink("Hi Hyra Fashion! I have a question about my order.")}
+            href={whatsappLink("Hi HyraLuxe! I have a question about my order.")}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/format";
 
-/** The HYRA FASHION lockup: serif name over small tracked caps.
+/** The HYRALUXE lockup: serif name over small tracked caps.
  *  `size` picks the name's type scale; the sub-label follows it. */
 export function Wordmark({
   size = "md",
@@ -42,7 +42,7 @@ export function Wordmark({
           sub,
         )}
       >
-        Fashion
+        Luxe
       </span>
     </span>
   );

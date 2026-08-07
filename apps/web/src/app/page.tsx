@@ -27,7 +27,7 @@ const SITE_JSON_LD = {
         height: 512,
       },
       description:
-        "Hyra Fashion - Indian fashion online. Kurtis, kurtas, sarees, t-shirts and shirts with COD and easy 7-day returns.",
+        "HyraLuxe - Indian fashion online. Kurtis, kurtas, sarees, t-shirts and shirts with COD and easy 7-day returns.",
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",

@@ -122,7 +122,7 @@ export function Navbar() {
           </form>
         </div>
 
-        <Link href="/" aria-label="Hyra Fashion — home" className="justify-self-center">
+        <Link href="/" aria-label="HyraLuxe — home" className="justify-self-center">
           <Wordmark size="sm" className="items-center" />
         </Link>
 

@@ -92,7 +92,7 @@ export default function LoginPage() {
           <div className="flex w-max animate-marquee-slow whitespace-nowrap">
             {Array.from({ length: 4 }).map((_, i) => (
               <span key={i} className="display text-outline mx-4 text-[24vw] leading-none sm:text-[14vw]">
-                HYRA FASHION
+                HYRALUXE
               </span>
             ))}
           </div>
@@ -108,7 +108,7 @@ export default function LoginPage() {
         </Link>
 
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
-          <Link href="/" className="mb-10 flex justify-center" aria-label="Hyra Fashion — home">
+          <Link href="/" className="mb-10 flex justify-center" aria-label="HyraLuxe — home">
             <Wordmark size="lg" className="items-center" />
           </Link>
 

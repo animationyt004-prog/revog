@@ -5,7 +5,7 @@ import { BUSINESS } from "@/lib/business";
 export const metadata: Metadata = {
   title: "Returns & Refunds",
   description:
-    "Easy 7-day returns at Hyra Fashion. Return unused items with tags intact and get a refund within 5–7 business days. Here's exactly how it works.",
+    "Easy 7-day returns at HyraLuxe. Return unused items with tags intact and get a refund within 5–7 business days. Here's exactly how it works.",
   alternates: { canonical: "/policies/returns" },
 };
 

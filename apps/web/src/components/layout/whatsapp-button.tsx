@@ -6,7 +6,7 @@ const PLACEHOLDERS = new Set(["919999999999", "9999999999", "911234567890", "123
  *  Renders nothing until a real NEXT_PUBLIC_WHATSAPP_NUMBER is set. */
 export function WhatsAppButton() {
   if (!NUMBER || PLACEHOLDERS.has(NUMBER)) return null;
-  const href = `https://wa.me/${NUMBER}?text=${encodeURIComponent("Hi Hyra Fashion! I have a question about my order.")}`;
+  const href = `https://wa.me/${NUMBER}?text=${encodeURIComponent("Hi HyraLuxe! I have a question about my order.")}`;
   return (
     <a
       href={href}

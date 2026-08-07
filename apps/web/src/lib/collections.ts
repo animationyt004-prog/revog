@@ -21,10 +21,10 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     api: "new",
     title: "New",
     accent: "Drops",
-    blurb: "Fresh off the press. The latest Hyra Fashion releases.",
+    blurb: "Fresh off the press. The latest HyraLuxe releases.",
     seoTitle: "New Arrivals Online - Latest Sarees, Kurtis & Fashion",
     seoDescription:
-      "Shop new arrivals at Hyra Fashion: latest sarees, kurtis, t-shirts and shirts online in India with COD, UPI, free shipping over Rs.999 and 7-day returns.",
+      "Shop new arrivals at HyraLuxe: latest sarees, kurtis, t-shirts and shirts online in India with COD, UPI, free shipping over Rs.999 and 7-day returns.",
   },
   trending: {
     api: "trending",
@@ -33,7 +33,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "What the streets are wearing right now.",
     seoTitle: "Trending Sarees & Indian Fashion Online",
     seoDescription:
-      "Explore trending sarees and Indian fashion at Hyra Fashion. Shop georgette sarees, festive styles and daily wear online with COD and 7-day returns.",
+      "Explore trending sarees and Indian fashion at HyraLuxe. Shop georgette sarees, festive styles and daily wear online with COD and 7-day returns.",
   },
   limited: {
     api: "limited",
@@ -48,7 +48,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "Proven favourites, restocked while we can.",
     seoTitle: "Best Selling Sarees & Indian Fashion Online",
     seoDescription:
-      "Shop best selling sarees, kurtis and Indian fashion online at Hyra Fashion. Popular styles with honest pricing, COD, UPI and 7-day returns.",
+      "Shop best selling sarees, kurtis and Indian fashion online at HyraLuxe. Popular styles with honest pricing, COD, UPI and 7-day returns.",
   },
   "georgette-sarees": {
     filters: { category: "sarees", fabrics: ["Georgette"] },
@@ -85,7 +85,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "Statement sarees for birthdays, receptions, dinners and evening occasions.",
     seoTitle: "Party Wear Sarees Online - Georgette & Sequin Sarees",
     seoDescription:
-      "Shop party wear sarees online at Hyra Fashion. Georgette, sequin and evening sarees with blouse piece, COD, UPI and easy 7-day returns.",
+      "Shop party wear sarees online at HyraLuxe. Georgette, sequin and evening sarees with blouse piece, COD, UPI and easy 7-day returns.",
   },
   "daily-wear-sarees": {
     filters: { category: "sarees", occasions: ["Daily"] },
@@ -94,7 +94,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "Lightweight sarees that are easy to drape, repeat and wear through the day.",
     seoTitle: "Daily Wear Sarees Online - Lightweight Sarees for Women",
     seoDescription:
-      "Shop daily wear sarees online at Hyra Fashion. Lightweight, easy-drape sarees for women with honest pricing, COD and 7-day returns.",
+      "Shop daily wear sarees online at HyraLuxe. Lightweight, easy-drape sarees for women with honest pricing, COD and 7-day returns.",
   },
   "office-wear-sarees": {
     filters: { category: "sarees", occasions: ["Office"] },
@@ -103,7 +103,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "Refined sarees for office days, work events and understated celebrations.",
     seoTitle: "Office Wear Sarees Online - Elegant Sarees for Work",
     seoDescription:
-      "Buy office wear sarees online at Hyra Fashion. Elegant, lightweight sarees for work and formal days with COD, UPI and 7-day returns.",
+      "Buy office wear sarees online at HyraLuxe. Elegant, lightweight sarees for work and formal days with COD, UPI and 7-day returns.",
   },
 };
 

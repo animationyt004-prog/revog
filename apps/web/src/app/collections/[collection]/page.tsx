@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // or shared links lose their preview card.
     openGraph: {
       type: "website",
-      title: `${title} | Hyra Fashion`,
+      title: `${title} | HyraLuxe`,
       description,
       url: `/collections/${collection}`,
-      images: [{ url: "/og-logo.png", width: 1200, height: 630, alt: "Hyra Fashion" }],
+      images: [{ url: "/og-logo.png", width: 1200, height: 630, alt: "HyraLuxe" }],
     },
   };
 }

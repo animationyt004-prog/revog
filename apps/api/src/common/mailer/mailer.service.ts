@@ -22,7 +22,7 @@ export class MailerService {
     // configuring it means every real customer gets a 403 while the store
     // looks healthy to whoever is testing it, so it is treated as a
     // misconfiguration rather than honoured.
-    const VERIFIED_SENDER = 'Hyra Fashion <login@hyrafashions.com>';
+    const VERIFIED_SENDER = 'HyraLuxe <login@hyrafashions.com>';
     const configured = config.get<string>('OTP_FROM_EMAIL');
     if (configured?.includes('onboarding@resend.dev')) {
       this.logger.warn(
@@ -98,8 +98,8 @@ export class MailerService {
   <p style="font-size:13px;color:#63635d;margin:0 0 4px">Valid for 10 minutes. Never share this code with anyone.</p>
   <p style="font-size:13px;color:#63635d;margin:0">If you didn't request this, you can safely ignore this email.</p>
   <hr style="border:none;border-top:1px solid #e9e9e4;margin:24px 0" />
-  <p style="font-size:11px;color:#9a9a92;margin:0">Hyra Fashion — Indian fashion, all in one place.</p>
+  <p style="font-size:11px;color:#9a9a92;margin:0">HyraLuxe — Indian fashion, all in one place.</p>
 </div>`.trim();
-    await this.send(to, `${code} is your Hyra Fashion login code`, html);
+    await this.send(to, `${code} is your HyraLuxe login code`, html);
   }
 }

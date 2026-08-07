@@ -5,7 +5,7 @@ import { BUSINESS } from "@/lib/business";
 export const metadata: Metadata = {
   title: "Shipping Policy",
   description:
-    "Hyra Fashion ships across India. Free shipping above ₹999, dispatch in 1–2 business days, delivery in 3–7 business days, Cash on Delivery available.",
+    "HyraLuxe ships across India. Free shipping above ₹999, dispatch in 1–2 business days, delivery in 3–7 business days, Cash on Delivery available.",
   alternates: { canonical: "/policies/shipping" },
 };
 
