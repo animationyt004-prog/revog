@@ -26,8 +26,23 @@ export function MetaPixel() {
   if (!PIXEL_ID) return null;
 
   return (
-    <Script id="meta-pixel" strategy="afterInteractive">
-      {`
+    <>
+      {/* Meta's own fallback for visitors running without JavaScript. It is a
+          plain <img> on purpose: next/image would rewrite the URL through the
+          optimizer and the request would never reach Facebook. Only ever fires
+          on the server-rendered HTML, which is exactly when fbq cannot. */}
+      <noscript>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          height="1"
+          width="1"
+          style={{ display: "none" }}
+          alt=""
+          src={`https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1`}
+        />
+      </noscript>
+      <Script id="meta-pixel" strategy="afterInteractive">
+        {`
         !function(f,b,e,v,n,t,s)
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -39,6 +54,7 @@ export function MetaPixel() {
         fbq('init', '${PIXEL_ID}');
         fbq('track', 'PageView');
       `}
-    </Script>
+      </Script>
+    </>
   );
 }
