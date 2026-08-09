@@ -1,113 +1,148 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  ArrowRight,
   Check,
-  ChevronRight,
   Heart,
   Loader2,
   LogOut,
+  MapPin,
   Package,
   Pencil,
   RotateCcw,
-  User,
   X,
 } from "lucide-react";
-import { Footer } from "@/components/layout/footer";
+import { AccountTabs } from "@/components/account/account-tabs";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { authedFetch, useAuth } from "@/lib/auth-store";
-import { formatPrice } from "@/lib/format";
+import { cn, formatPrice } from "@/lib/format";
 import type { OrderData } from "@/lib/types";
 
 interface AccountReturn {
   id: string;
   status: string;
-  refundAmount: number | null;
 }
 
-const ACCOUNT_LINKS = [
+const STATUS_STYLE: Record<string, string> = {
+  CONFIRMED: "border-volt/40 bg-volt/10 text-volt",
+  PACKED: "border-volt/40 bg-volt/10 text-volt",
+  SHIPPED: "border-paper/20 bg-ink-2 text-paper",
+  DELIVERED: "border-paper/20 bg-ink-2 text-paper",
+  CANCELLED: "border-blood/40 bg-blood/10 text-blood",
+  RETURN_REQUESTED: "border-volt/40 bg-volt/10 text-volt",
+};
+
+const LINKS = [
   {
     icon: Package,
-    label: "Orders",
-    blurb: "Track deliveries and order history",
+    label: "All orders",
+    detail: "History and delivery tracking",
     href: "/account/orders",
   },
   {
     icon: RotateCcw,
     label: "Returns",
-    blurb: "Follow requests and refunds",
+    detail: "Requests and refund progress",
     href: "/account/returns",
   },
   {
     icon: Heart,
     label: "Wishlist",
-    blurb: "Your saved sarees",
+    detail: "Sarees saved for later",
     href: "/wishlist",
+  },
+  {
+    icon: MapPin,
+    label: "Saved addresses",
+    detail: "Delivery details for checkout",
+    href: "/account/addresses",
   },
 ];
 
 export default function AccountPage() {
   const router = useRouter();
-  const { status, user, bootstrap, logout, updateProfile } = useAuth();
+  // Subscribed field by field, the way every other store consumer here does
+  // it. Destructuring the whole store hands the component a fresh object on
+  // every unrelated change and makes what it re-renders on much harder to
+  // reason about — and this screen's whole job is reacting to one of them.
+  const status = useAuth((s) => s.status);
+  const user = useAuth((s) => s.user);
+  const bootstrap = useAuth((s) => s.bootstrap);
+  const logout = useAuth((s) => s.logout);
+  const updateProfile = useAuth((s) => s.updateProfile);
   const [orders, setOrders] = useState<OrderData[] | null>(null);
   const [returns, setReturns] = useState<AccountReturn[] | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [slowSession, setSlowSession] = useState(false);
+  const [sessionFailed, setSessionFailed] = useState(false);
 
-  // Exactly the condition the spinner below renders on. These two used to
-  // disagree: the spinner showed whenever there was no usable session, but the
-  // escape hatch was armed only while status was literally "loading". A
-  // session that came back "authed" with no user therefore span forever with
-  // no buttons and no redirect — the state this page was reported stuck in.
   const sessionPending = status !== "authed" || !user;
 
   useEffect(() => {
     if (!sessionPending) {
-      setSlowSession(false);
+      setSessionFailed(false);
       return;
     }
-    const timer = window.setTimeout(() => setSlowSession(true), 4_000);
-    return () => window.clearTimeout(timer);
-  }, [sessionPending]);
+    const deadline = window.setTimeout(() => {
+      if (useAuth.getState().status === "loading") {
+        setSessionFailed(true);
+        router.replace("/login?next=/account");
+      }
+    }, 10_000);
+    return () => {
+      window.clearTimeout(deadline);
+    };
+  }, [router, sessionPending]);
 
-  // Kept apart from the data fetch below so it depends on whether there is a
-  // user at all, not on that user's name. Folded together, a session that lost
-  // its user without changing the name would never re-run this and the page
-  // would sit on the spinner instead of bouncing to sign-in.
+  useEffect(() => {
+    if (status === "loading") void bootstrap();
+  }, [bootstrap, status]);
+
   useEffect(() => {
     if (status === "loading") return;
-    // "authed" without a user is not a session anyone can use; treat it the
-    // same as being signed out rather than waiting on a user that will
-    // never arrive.
     if (status === "guest" || !user) router.replace("/login?next=/account");
   }, [router, status, user]);
 
-  // Depends on the two facts it actually uses rather than the user object, so
-  // a re-issued token with identical details does not refetch the lists.
   const hasSession = status === "authed" && Boolean(user);
   const userName = user?.name ?? "";
 
   useEffect(() => {
     if (!hasSession) return;
     setName(userName);
-    void Promise.all([
-      authedFetch("/orders").then((res) => (res.ok ? res.json() : [])),
-      authedFetch("/returns").then((res) => (res.ok ? res.json() : [])),
-    ])
-      .then(([orderData, returnData]) => {
-        setOrders(orderData as OrderData[]);
-        setReturns(returnData as AccountReturn[]);
+    let active = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10_000);
+
+    void authedFetch("/orders", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : []))
+      .then((data: OrderData[]) => {
+        if (active) setOrders(data);
       })
       .catch(() => {
-        setOrders([]);
-        setReturns([]);
+        if (active) setOrders([]);
       });
+
+    void authedFetch("/returns", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : []))
+      .then((data: AccountReturn[]) => {
+        if (active) setReturns(data);
+      })
+      .catch(() => {
+        if (active) setReturns([]);
+      });
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [hasSession, userName]);
 
   async function saveName() {
@@ -131,33 +166,41 @@ export default function AccountPage() {
 
   if (status !== "authed" || !user) {
     return (
-      <main className="grid min-h-svh place-items-center px-5 text-center">
+      <main className="grid min-h-svh place-items-center bg-ink px-5 text-center">
         <div>
-          <Loader2 size={28} className="mx-auto animate-spin text-volt" />
-          <p className="mt-4 text-sm font-semibold">Opening your account...</p>
-          <p className="mt-1 text-xs text-paper-dim">
-            Restoring your secure session.
+          <p className="display text-2xl">
+            HYRALUXE<span className="text-volt">.</span>
           </p>
-          {slowSession && (
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSlowSession(false);
-                  void bootstrap();
-                }}
-                className="h-10 bg-volt px-4 text-sm font-semibold text-white"
-              >
-                Try again
-              </button>
-              <Link
-                href="/login?next=/account"
-                className="flex h-10 items-center border border-paper/20 px-4 text-sm font-semibold"
-              >
-                Sign in again
-              </Link>
-            </div>
+          {!sessionFailed && (
+            <Loader2
+              size={24}
+              className="mx-auto mt-6 animate-spin text-volt"
+            />
           )}
+          <p className="mt-4 text-sm font-semibold">
+            {sessionFailed
+              ? "Session could not be restored"
+              : "Opening your account"}
+          </p>
+          <p className="mt-1 text-xs text-paper-dim">
+            {sessionFailed
+              ? "Please sign in again to continue."
+              : "Restoring your secure session."}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <a
+              href="/account"
+              className="flex h-10 items-center bg-volt px-4 text-sm font-semibold text-white"
+            >
+              Reload account
+            </a>
+            <a
+              href="/login?next=/account"
+              className="flex h-10 items-center border border-paper/20 px-4 text-sm font-semibold"
+            >
+              Sign in again
+            </a>
+          </div>
         </div>
       </main>
     );
@@ -174,142 +217,267 @@ export default function AccountPage() {
   const openReturns =
     returns?.filter((item) => !["REFUNDED", "REJECTED"].includes(item.status))
       .length ?? 0;
+  const displayName = user.name?.trim() || "HyraLuxe Member";
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <>
       <PromoTicker />
       <Navbar />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
-        <div className="flex flex-wrap items-start justify-between gap-5 border-b border-paper/10 pb-8">
-          <div className="flex min-w-0 items-center gap-4">
-            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-volt text-white">
-              <User size={25} />
-            </span>
-            <div className="min-w-0">
-              {editingName ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    autoFocus
-                    value={name}
-                    maxLength={80}
-                    onChange={(event) => {
-                      setName(event.target.value);
-                      setProfileError(null);
-                    }}
-                    className="h-10 w-56 border border-paper/25 bg-white px-3 text-sm outline-none focus:border-volt"
-                    aria-label="Your name"
-                    placeholder="Your name"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void saveName()}
-                    disabled={saving}
-                    aria-label="Save name"
-                    title="Save name"
-                    className="grid h-10 w-10 place-items-center bg-volt text-white disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Check size={17} />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingName(false);
-                      setName(user.name ?? "");
-                      setProfileError(null);
-                    }}
-                    aria-label="Cancel editing"
-                    title="Cancel"
-                    className="grid h-10 w-10 place-items-center border border-paper/20 text-paper-dim hover:text-paper"
-                  >
-                    <X size={17} />
-                  </button>
+
+      <main className="flex-1 bg-ink">
+        <section className="bg-night text-white">
+          <div className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 sm:pt-14">
+            <p className="text-xs font-semibold uppercase text-white/55">
+              Private member account
+            </p>
+            <div className="mt-5 flex flex-wrap items-start justify-between gap-6">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="display grid h-16 w-16 shrink-0 place-items-center rounded-full border border-white/20 bg-white/10 text-2xl">
+                  {initial}
+                </span>
+                <div className="min-w-0">
+                  {editingName ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        autoFocus
+                        value={name}
+                        maxLength={80}
+                        onChange={(event) => {
+                          setName(event.target.value);
+                          setProfileError(null);
+                        }}
+                        className="h-11 w-56 border border-white/25 bg-white px-3 text-sm text-paper outline-none focus:border-volt"
+                        aria-label="Your name"
+                        placeholder="Your name"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void saveName()}
+                        disabled={saving}
+                        aria-label="Save name"
+                        title="Save name"
+                        className="grid h-11 w-11 place-items-center bg-volt text-white disabled:opacity-50"
+                      >
+                        {saving ? (
+                          <Loader2 size={17} className="animate-spin" />
+                        ) : (
+                          <Check size={18} />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingName(false);
+                          setName(user.name ?? "");
+                          setProfileError(null);
+                        }}
+                        aria-label="Cancel editing"
+                        title="Cancel"
+                        className="grid h-11 w-11 place-items-center border border-white/20 text-white/65 hover:text-white"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h1 className="display truncate text-3xl sm:text-5xl">
+                        {displayName}
+                        <span className="text-volt">.</span>
+                      </h1>
+                      <button
+                        type="button"
+                        onClick={() => setEditingName(true)}
+                        aria-label="Edit name"
+                        title="Edit name"
+                        className="grid h-9 w-9 shrink-0 place-items-center text-white/55 hover:text-white"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                    </div>
+                  )}
+                  <p className="mt-1 truncate text-sm text-white/60">
+                    {user.email ?? user.phone}
+                  </p>
+                  {profileError && (
+                    <p className="mt-1 text-xs text-red-300" role="alert">
+                      {profileError}
+                    </p>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <h1 className="display truncate text-3xl sm:text-4xl">
-                    {user.name ?? "Add your name"}
-                    <span className="text-volt">.</span>
-                  </h1>
-                  <button
-                    type="button"
-                    onClick={() => setEditingName(true)}
-                    aria-label="Edit name"
-                    title="Edit name"
-                    className="grid h-8 w-8 shrink-0 place-items-center text-paper-dim hover:text-volt"
-                  >
-                    <Pencil size={15} />
-                  </button>
+              </div>
+              <button
+                onClick={() => void logout().then(() => router.replace("/"))}
+                className="flex h-10 items-center gap-2 border border-white/20 px-4 text-sm text-white/65 transition-colors hover:border-white/50 hover:text-white"
+              >
+                <LogOut size={15} /> Sign out
+              </button>
+            </div>
+
+            <div className="mt-10 grid border-t border-white/10 sm:grid-cols-3">
+              {[
+                ["Active orders", orders === null ? "-" : String(activeOrders)],
+                ["Open returns", returns === null ? "-" : String(openReturns)],
+                [
+                  "Order value",
+                  orders === null ? "-" : formatPrice(totalSpent),
+                ],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="border-b border-white/10 py-5 sm:border-b-0 sm:border-r sm:px-6 sm:first:pl-0 sm:last:border-r-0"
+                >
+                  <p className="text-xs text-white/50">{label}</p>
+                  <p className="display mt-1 text-3xl">{value}</p>
                 </div>
-              )}
-              <p className="truncate text-sm text-paper-dim">
-                {user.email ?? user.phone}
-              </p>
-              {profileError && (
-                <p className="mt-1 text-xs text-blood" role="alert">
-                  {profileError}
-                </p>
-              )}
+              ))}
             </div>
           </div>
-          <button
-            onClick={() => void logout().then(() => router.replace("/"))}
-            className="flex h-10 items-center gap-2 border border-paper/20 px-4 text-sm text-paper-dim transition-colors hover:border-blood hover:text-blood"
-          >
-            <LogOut size={15} /> Sign out
-          </button>
-        </div>
-
-        <section className="grid border-b border-paper/10 sm:grid-cols-3">
-          <div className="border-b border-paper/10 py-5 sm:border-b-0 sm:border-r sm:px-5 sm:first:pl-0">
-            <p className="text-xs text-paper-dim">Active orders</p>
-            <p className="display mt-1 text-3xl">
-              {orders === null ? "-" : activeOrders}
-            </p>
-          </div>
-          <div className="border-b border-paper/10 py-5 sm:border-b-0 sm:border-r sm:px-5">
-            <p className="text-xs text-paper-dim">Open returns</p>
-            <p className="display mt-1 text-3xl">
-              {returns === null ? "-" : openReturns}
-            </p>
-          </div>
-          <div className="py-5 sm:px-5">
-            <p className="text-xs text-paper-dim">Order value</p>
-            <p className="display mt-1 text-3xl">
-              {orders === null ? "-" : formatPrice(totalSpent)}
-            </p>
-          </div>
         </section>
 
-        <section className="mt-9">
-          <h2 className="display text-2xl">Your account</h2>
-          <div className="mt-4 grid gap-px border border-paper/10 bg-paper/10 md:grid-cols-3">
-            {ACCOUNT_LINKS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="group flex min-h-32 flex-col bg-ink p-5 transition-colors hover:bg-ink-2"
-              >
-                <item.icon size={21} className="text-volt" />
-                <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-                  <div>
-                    <h3 className="display text-xl">{item.label}</h3>
-                    <p className="mt-1 text-xs text-paper-dim">{item.blurb}</p>
-                  </div>
-                  <ChevronRight
-                    size={17}
-                    className="shrink-0 text-paper-dim transition-transform group-hover:translate-x-1 group-hover:text-volt"
-                  />
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <AccountTabs />
+          <div className="grid gap-10 py-9 lg:grid-cols-[1.55fr_0.8fr] lg:py-12">
+            <section>
+              <div className="flex items-end justify-between gap-4 border-b border-paper/10 pb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-volt">
+                    Purchase history
+                  </p>
+                  <h2 className="display mt-1 text-3xl">Recent orders</h2>
                 </div>
-              </Link>
-            ))}
+                <Link
+                  href="/account/orders"
+                  className="flex items-center gap-1 text-xs font-semibold text-paper-dim hover:text-volt"
+                >
+                  View all <ArrowRight size={14} />
+                </Link>
+              </div>
+
+              {orders === null ? (
+                <div className="grid place-items-center py-16">
+                  <Loader2 size={23} className="animate-spin text-volt" />
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="py-16 text-center">
+                  <Package
+                    size={38}
+                    strokeWidth={1.2}
+                    className="mx-auto text-paper-dim"
+                  />
+                  <p className="display mt-4 text-2xl">
+                    Your first order awaits.
+                  </p>
+                  <Link
+                    href="/collections/sarees"
+                    className="mt-4 inline-flex h-11 items-center bg-volt px-5 text-sm font-semibold text-white"
+                  >
+                    Explore sarees
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  {orders.slice(0, 3).map((order) => (
+                    <Link
+                      key={order.id}
+                      href={`/order/${order.orderNumber}?email=${encodeURIComponent(user.email ?? "")}`}
+                      className="group grid grid-cols-[52px_1fr_auto] items-center gap-3 border-b border-paper/10 py-4"
+                    >
+                      <div className="relative aspect-[3/4] w-13 overflow-hidden bg-ink-2">
+                        {order.items[0]?.image && (
+                          <Image
+                            src={order.items[0].image}
+                            alt=""
+                            fill
+                            sizes="52px"
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold group-hover:text-volt">
+                          {order.orderNumber}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-paper-dim">
+                          {new Date(order.placedAt).toLocaleDateString(
+                            "en-IN",
+                            { day: "numeric", month: "short", year: "numeric" },
+                          )}{" "}
+                          · {order.items.length} item
+                          {order.items.length === 1 ? "" : "s"}
+                        </p>
+                        <span
+                          className={cn(
+                            "mt-1.5 inline-block border px-2 py-0.5 text-[10px] font-semibold",
+                            STATUS_STYLE[order.status] ??
+                              "border-paper/20 text-paper-dim",
+                          )}
+                        >
+                          {order.status.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">
+                          {formatPrice(order.total)}
+                        </p>
+                        <ArrowRight
+                          size={15}
+                          className="ml-auto mt-2 text-paper-dim transition-transform group-hover:translate-x-1 group-hover:text-volt"
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <aside>
+              <p className="text-xs font-semibold uppercase text-volt">
+                Member services
+              </p>
+              <h2 className="display mt-1 border-b border-paper/10 pb-3 text-3xl">
+                Your account
+              </h2>
+              <div>
+                {LINKS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group flex items-center gap-3 border-b border-paper/10 py-4"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center bg-ink-2 text-volt">
+                      <item.icon size={18} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold group-hover:text-volt">
+                        {item.label}
+                      </span>
+                      <span className="block truncate text-xs text-paper-dim">
+                        {item.detail}
+                      </span>
+                    </span>
+                    <ArrowRight
+                      size={15}
+                      className="text-paper-dim transition-transform group-hover:translate-x-1 group-hover:text-volt"
+                    />
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-7 border-l-2 border-volt bg-ink-2 px-4 py-3">
+                <p className="text-xs font-semibold">
+                  Need help with an order?
+                </p>
+                <Link
+                  href="/contact"
+                  className="mt-1 inline-flex items-center gap-1 text-xs text-volt hover:text-paper"
+                >
+                  Contact support <ArrowRight size={13} />
+                </Link>
+              </div>
+            </aside>
           </div>
-        </section>
+        </div>
       </main>
-      <Footer />
     </>
   );
 }

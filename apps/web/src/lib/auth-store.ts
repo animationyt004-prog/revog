@@ -39,6 +39,7 @@ type AuthStatus = "loading" | "guest" | "authed";
 // finishes while that older request is still in flight, its eventual 401 must
 // not overwrite the newly authenticated state.
 let authMutationVersion = 0;
+let bootstrapPromise: Promise<void> | null = null;
 
 interface AuthState {
   status: AuthStatus;
@@ -78,55 +79,55 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   }
 }
 
-export const useAuth = create<AuthState>((set, get) => ({
+export const useAuth = create<AuthState>((set) => ({
   status: "loading",
   user: null,
   accessToken: null,
 
   /** On app load: try to resume the session via the refresh cookie. */
-  bootstrap: async () => {
-    /**
-     * True when a login or logout landed while this refresh was in flight.
-     * That newer result wins, so this one must not overwrite it.
-     *
-     * The bail-out used to be a bare `return`, which was the whole bug: on a
-     * fresh load nothing else moves `status` off "loading", so returning
-     * without setting anything left the app spinning forever with no timeout
-     * and no way back. Whatever else happens, the status ends up decided.
-     */
-    const raced = (version: number) => {
-      if (version === authMutationVersion) return false;
-      if (get().status === "loading") {
-        set({ status: "guest", user: null, accessToken: null });
+  bootstrap: () => {
+    // Refresh tokens rotate after every use. Sharing one in-flight request
+    // prevents account widgets or repeated effects from submitting the same
+    // token twice and invalidating an otherwise healthy session.
+    if (bootstrapPromise) return bootstrapPromise;
+
+    const run = async () => {
+      const startedAtVersion = authMutationVersion;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 8_000);
+
+      const raced = () => startedAtVersion !== authMutationVersion;
+
+      try {
+        const res = await post("/auth/refresh", undefined, controller.signal);
+        if (!res.ok) throw new Error();
+        const data = (await res.json()) as {
+          accessToken: string;
+          user: AuthUser;
+        };
+        if (raced()) return;
+        if (!data.user || !data.accessToken) {
+          set({ status: "guest", user: null, accessToken: null });
+          return;
+        }
+        set({
+          status: "authed",
+          user: data.user,
+          accessToken: data.accessToken,
+        });
+      } catch {
+        if (!raced()) {
+          set({ status: "guest", user: null, accessToken: null });
+        }
+      } finally {
+        window.clearTimeout(timeout);
       }
-      return true;
     };
 
-    const startedAtVersion = authMutationVersion;
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12_000);
-    try {
-      const res = await post("/auth/refresh", undefined, controller.signal);
-      if (!res.ok) throw new Error();
-      const data = (await res.json()) as {
-        accessToken: string;
-        user: AuthUser;
-      };
-      if (raced(startedAtVersion)) return;
-      // A 200 without a user is a broken session, not a signed-in one.
-      // Calling it "authed" strands every screen that waits for the user
-      // object on a spinner it can never leave.
-      if (!data.user) {
-        set({ status: "guest", user: null, accessToken: null });
-        return;
-      }
-      set({ status: "authed", user: data.user, accessToken: data.accessToken });
-    } catch {
-      if (raced(startedAtVersion)) return;
-      set({ status: "guest", user: null, accessToken: null });
-    } finally {
-      window.clearTimeout(timeout);
-    }
+    bootstrapPromise = run().finally(() => {
+      bootstrapPromise = null;
+    });
+    return bootstrapPromise;
   },
 
   requestOtp: async (identifier) => {
