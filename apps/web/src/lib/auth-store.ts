@@ -19,7 +19,10 @@ export type OtpChannel = "email" | "phone";
 
 /** What the server can actually deliver on right now. SMS switches off with
  *  its provider key, so the form asks only for what will work. */
-export async function fetchLoginChannels(): Promise<{ email: boolean; sms: boolean }> {
+export async function fetchLoginChannels(): Promise<{
+  email: boolean;
+  sms: boolean;
+}> {
   try {
     const res = await fetch(`${API}/auth/channels`, { credentials: "include" });
     if (!res.ok) throw new Error();
@@ -32,6 +35,11 @@ export async function fetchLoginChannels(): Promise<{ email: boolean; sms: boole
 
 type AuthStatus = "loading" | "guest" | "authed";
 
+// Bootstrap runs in the background on every fresh page load. If an OTP login
+// finishes while that older request is still in flight, its eventual 401 must
+// not overwrite the newly authenticated state.
+let authMutationVersion = 0;
+
 interface AuthState {
   status: AuthStatus;
   user: AuthUser | null;
@@ -41,13 +49,19 @@ interface AuthState {
   /** `identifier` is an email address or a 10-digit Indian mobile. */
   requestOtp: (identifier: string) => Promise<OtpChannel>;
   verifyOtp: (identifier: string, code: string) => Promise<void>;
+  updateProfile: (name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-async function post(path: string, body?: unknown): Promise<Response> {
+async function post(
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<Response> {
   return fetch(`${API}${path}`, {
     method: "POST",
     credentials: "include", // carries the httpOnly refresh cookie
+    signal,
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -56,32 +70,69 @@ async function post(path: string, body?: unknown): Promise<Response> {
 async function errorMessage(res: Response, fallback: string): Promise<string> {
   try {
     const data = (await res.json()) as { message?: string | string[] };
-    return Array.isArray(data.message) ? data.message[0] : (data.message ?? fallback);
+    return Array.isArray(data.message)
+      ? data.message[0]
+      : (data.message ?? fallback);
   } catch {
     return fallback;
   }
 }
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   status: "loading",
   user: null,
   accessToken: null,
 
   /** On app load: try to resume the session via the refresh cookie. */
   bootstrap: async () => {
+    /**
+     * True when a login or logout landed while this refresh was in flight.
+     * That newer result wins, so this one must not overwrite it.
+     *
+     * The bail-out used to be a bare `return`, which was the whole bug: on a
+     * fresh load nothing else moves `status` off "loading", so returning
+     * without setting anything left the app spinning forever with no timeout
+     * and no way back. Whatever else happens, the status ends up decided.
+     */
+    const raced = (version: number) => {
+      if (version === authMutationVersion) return false;
+      if (get().status === "loading") {
+        set({ status: "guest", user: null, accessToken: null });
+      }
+      return true;
+    };
+
+    const startedAtVersion = authMutationVersion;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12_000);
     try {
-      const res = await post("/auth/refresh");
+      const res = await post("/auth/refresh", undefined, controller.signal);
       if (!res.ok) throw new Error();
-      const data = (await res.json()) as { accessToken: string; user: AuthUser };
+      const data = (await res.json()) as {
+        accessToken: string;
+        user: AuthUser;
+      };
+      if (raced(startedAtVersion)) return;
+      // A 200 without a user is a broken session, not a signed-in one.
+      // Calling it "authed" strands every screen that waits for the user
+      // object on a spinner it can never leave.
+      if (!data.user) {
+        set({ status: "guest", user: null, accessToken: null });
+        return;
+      }
       set({ status: "authed", user: data.user, accessToken: data.accessToken });
     } catch {
+      if (raced(startedAtVersion)) return;
       set({ status: "guest", user: null, accessToken: null });
+    } finally {
+      window.clearTimeout(timeout);
     }
   },
 
   requestOtp: async (identifier) => {
     const res = await post("/auth/request-otp", { identifier });
-    if (!res.ok) throw new Error(await errorMessage(res, "Could not send OTP."));
+    if (!res.ok)
+      throw new Error(await errorMessage(res, "Could not send OTP."));
     const data = (await res.json()) as { channel?: OtpChannel };
     return data.channel ?? "email";
   },
@@ -90,18 +141,35 @@ export const useAuth = create<AuthState>((set) => ({
     const res = await post("/auth/verify-otp", { identifier, code });
     if (!res.ok) throw new Error(await errorMessage(res, "Incorrect OTP."));
     const data = (await res.json()) as { accessToken: string; user: AuthUser };
+    authMutationVersion += 1;
     set({ status: "authed", user: data.user, accessToken: data.accessToken });
+  },
+
+  updateProfile: async (name) => {
+    const res = await authedFetch("/auth/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    if (!res.ok)
+      throw new Error(await errorMessage(res, "Could not save your name."));
+    const user = (await res.json()) as AuthUser;
+    set({ user });
   },
 
   logout: async () => {
     await post("/auth/logout").catch(() => undefined);
+    authMutationVersion += 1;
     set({ status: "guest", user: null, accessToken: null });
   },
 }));
 
 /** Fetch an authenticated API route, transparently refreshing an expired
  *  access token once before giving up. */
-export async function authedFetch(path: string, init: RequestInit = {}): Promise<Response> {
+export async function authedFetch(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
   const call = () =>
     fetch(`${API}${path}`, {
       ...init,
