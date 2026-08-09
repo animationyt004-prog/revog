@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HeartOff, Loader2 } from "lucide-react";
-import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { ProductCard } from "@/components/product/product-card";
@@ -73,7 +72,6 @@ export default function WishlistPage() {
           </div>
         )}
       </main>
-      <Footer />
     </>
   );
 }
