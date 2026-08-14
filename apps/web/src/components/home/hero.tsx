@@ -57,7 +57,9 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
   // anyone who has asked the OS to reduce motion.
   const reduced = useRef(false);
   useEffect(() => {
-    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reduced.current = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
   }, []);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="New collection"
-      className="relative isolate overflow-hidden bg-ink-2"
+      className="relative isolate overflow-hidden bg-night"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -116,10 +118,14 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
           something solid behind it while the saree on the right stays rich. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/15"
+        className="absolute inset-0 bg-gradient-to-r from-black/88 via-black/58 to-black/10"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-night/90 to-transparent"
       />
 
-      <div className="relative mx-auto flex h-[320px] max-w-7xl items-center px-4 sm:h-[480px] sm:px-6">
+      <div className="relative mx-auto grid min-h-[420px] max-w-7xl items-center px-4 py-12 sm:min-h-[560px] sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:gap-12">
         <div className="max-w-xl">
           {/* Type goes light here rather than the page's near-black: it sits
               on the photograph, not on the page surface. */}
@@ -127,27 +133,48 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
             {active.eyebrow}
           </p>
 
-          <h1 className="display mt-4 text-[9vw] leading-[1.05] text-white sm:mt-5 sm:text-[5vw] lg:text-[3.9rem]">
+          <h1 className="display mt-4 text-[11vw] leading-[0.98] text-white sm:mt-5 sm:text-[5.8vw] lg:text-[4.8rem]">
             {active.title}
             <span className="block text-gold">{active.accent}</span>
           </h1>
 
-          <span aria-hidden className="mt-5 block h-px w-40 bg-gold/45 sm:w-56" />
-
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-white/80 sm:text-base">
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-white/78 sm:text-base">
             {active.subtitle}
           </p>
 
-          <Link
-            href={active.ctaHref}
-            className="display group mt-6 inline-flex items-center gap-2 rounded-sm bg-gold px-7 py-3 text-base text-paper transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:mt-8 sm:px-9 sm:py-3.5 sm:text-lg"
-          >
-            {active.ctaLabel}
-            <ArrowRight
-              size={18}
-              className="transition-transform duration-300 group-hover:translate-x-1"
-            />
-          </Link>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Link
+              href={active.ctaHref}
+              className="display group inline-flex items-center gap-2 rounded-sm bg-gold px-7 py-3 text-base text-paper transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:px-9 sm:py-3.5 sm:text-lg"
+            >
+              {active.ctaLabel}
+              <ArrowRight
+                size={18}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </Link>
+            <Link
+              href="/category/sarees"
+              className="inline-flex items-center border border-white/25 px-5 py-3 text-sm font-semibold text-white/85 transition-colors hover:border-gold hover:text-gold"
+            >
+              Shop sarees
+            </Link>
+          </div>
+        </div>
+
+        <div className="relative hidden min-h-[420px] lg:block">
+          <div className="absolute right-0 top-1/2 h-[78%] w-[72%] -translate-y-1/2 border border-gold/30" />
+          <div className="absolute bottom-10 left-6 max-w-[15rem] border border-white/15 bg-black/38 p-5 text-white shadow-2xl backdrop-blur-md">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold">
+              HyraLuxe edit
+            </p>
+            <p className="display mt-2 text-2xl">
+              Drape-ready styles for every occasion.
+            </p>
+            <p className="mt-3 text-xs leading-relaxed text-white/68">
+              Sarees with blouse piece, honest pricing, and pan-India delivery.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -156,14 +183,14 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
           <button
             onClick={() => go(index - 1)}
             aria-label="Previous slide"
-            className="absolute left-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-black/25 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold sm:grid sm:left-4"
+            className="absolute bottom-4 right-40 hidden h-11 w-11 place-items-center rounded-full border border-white/35 bg-black/35 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold sm:grid"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={() => go(index + 1)}
             aria-label="Next slide"
-            className="absolute right-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/35 bg-black/25 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold sm:grid sm:right-4"
+            className="absolute bottom-4 right-24 hidden h-11 w-11 place-items-center rounded-full border border-white/35 bg-black/35 text-white backdrop-blur-sm transition-colors hover:border-gold hover:text-gold sm:grid"
           >
             <ChevronRight size={18} />
           </button>
@@ -177,7 +204,9 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
                 aria-current={i === index}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
-                  i === index ? "w-6 bg-gold" : "w-2 bg-white/45 hover:bg-white/75",
+                  i === index
+                    ? "w-6 bg-gold"
+                    : "w-2 bg-white/45 hover:bg-white/75",
                 )}
               />
             ))}

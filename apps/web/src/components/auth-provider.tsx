@@ -13,8 +13,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hydrateWishlist = useWishlist((s) => s.hydrate);
 
   useEffect(() => {
-    hydrateWishlist();
+    // Session recovery is the critical path. Start it before any optional
+    // device-local hydration so account access cannot be blocked by storage.
     void bootstrap().then(fetchCart);
+    hydrateWishlist();
   }, [bootstrap, fetchCart, hydrateWishlist]);
 
   return children;

@@ -13,14 +13,29 @@ const LEGACY_HOSTS = new Set([
   "hyrafashions.com",
 ]);
 
+const LEGACY_PATHS = new Map([
+  [
+    "/products/apple-womaniya-35-traditional-wear-bhagalpuri-silk-saree-collection",
+    "/category/sarees",
+  ],
+]);
+
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host")?.toLowerCase() ?? "";
-  if (!LEGACY_HOSTS.has(host)) return NextResponse.next();
+  const legacyDestination = LEGACY_PATHS.get(request.nextUrl.pathname);
+  const legacyHost = LEGACY_HOSTS.has(host);
+  if (!legacyDestination && !legacyHost) return NextResponse.next();
 
   const url = new URL(request.url);
-  url.protocol = "https:";
-  url.host = CANONICAL_HOST;
-  url.port = "";
+  if (legacyDestination) {
+    url.pathname = legacyDestination;
+    url.search = "";
+  }
+  if (legacyHost) {
+    url.protocol = "https:";
+    url.host = CANONICAL_HOST;
+    url.port = "";
+  }
 
   // 301: permanent, so search engines move ranking to the new domain.
   return NextResponse.redirect(url, 301);

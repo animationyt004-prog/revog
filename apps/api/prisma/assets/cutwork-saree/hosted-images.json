@@ -1,0 +1,56 @@
+{
+  "lilac": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/lilac-01-main-df740d.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/lilac-02-back-ed4a25.jpg"
+    }
+  ],
+  "sage": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/sage-01-main-d3235d.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/sage-02-back-fe86a8.jpg"
+    }
+  ],
+  "mehendi": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/mehendi-01-main-8cb676.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/mehendi-02-back-5afdc7.jpg"
+    }
+  ],
+  "blue": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/blue-01-main-0d2398.jpg"
+    },
+    {
+      "file": "02-side.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/blue-02-side-e226de.jpg"
+    },
+    {
+      "file": "03-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/blue-03-back-4b05f1.jpg"
+    }
+  ],
+  "coral": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/coral-01-main-3bddc1.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-cutwork-embroidered-border-georgette-saree/coral-02-back-294e25.jpg"
+    }
+  ]
+}

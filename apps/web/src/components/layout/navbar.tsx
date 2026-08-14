@@ -8,6 +8,7 @@ import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
 import { useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
+import { pixelTrack } from "@/lib/pixel";
 import { useWishlist } from "@/lib/wishlist-store";
 import { MegaMenu } from "./mega-menu";
 import { Wordmark } from "./wordmark";
@@ -17,7 +18,10 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 /** New In is always populated — it is just the newest of whatever exists.
  *  Best Sellers depends on the data and is only added once it has stock. */
 const NEW_IN = { label: "New In", href: "/collections/new-arrivals" };
-const BEST_SELLERS = { label: "Best Sellers", href: "/collections/bestsellers" };
+const BEST_SELLERS = {
+  label: "Best Sellers",
+  href: "/collections/bestsellers",
+};
 
 /** Sticky navbar. Full mega menu lands in Phase 2 — this is the frame. */
 export function Navbar() {
@@ -53,6 +57,7 @@ export function Navbar() {
     const q = query.trim();
     if (!q) return;
     setOpen(false);
+    pixelTrack("Search", { search_string: q });
     router.push(`/search?q=${encodeURIComponent(q)}`);
   }
 
@@ -122,21 +127,26 @@ export function Navbar() {
           </form>
         </div>
 
-        <Link href="/" aria-label="HyraLuxe — home" className="justify-self-center">
+        <Link
+          href="/"
+          aria-label="HyraLuxe — home"
+          className="justify-self-center"
+        >
           <Wordmark size="sm" className="items-center" />
         </Link>
 
         <div className="flex items-center justify-end gap-4 sm:gap-5">
-          <Link
+          <a
             href={authed ? "/account" : "/login"}
-            aria-label={authed ? "Account" : "Login"}
-            className="relative hidden transition-colors hover:text-volt sm:block"
+            aria-label={authed ? "Customer account" : "Login"}
+            title={authed ? "Customer account" : "Login"}
+            className="relative z-10 grid h-10 w-10 shrink-0 place-items-center transition-colors hover:text-volt"
           >
             <User size={20} />
             {authed && (
-              <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-volt" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-volt" />
             )}
-          </Link>
+          </a>
           <Link
             href="/wishlist"
             aria-label={`Wishlist, ${wishCount} items`}
@@ -166,7 +176,10 @@ export function Navbar() {
 
       {/* Row two: the category rail. Desktop only — on a phone these live in
           the drawer, where they have room to be tapped. */}
-      <nav aria-label="Categories" className="hidden border-t border-paper/10 md:block">
+      <nav
+        aria-label="Categories"
+        className="hidden border-t border-paper/10 md:block"
+      >
         <ul className="mx-auto flex max-w-7xl items-center justify-center gap-8 px-6 py-3">
           <MegaMenu />
           {navLinks.map((l) => (
@@ -213,13 +226,12 @@ export function Navbar() {
               </li>
             ))}
             <li>
-              <Link
+              <a
                 href={authed ? "/account" : "/login"}
-                onClick={() => setOpen(false)}
                 className="display block py-2.5 text-2xl text-paper transition-colors hover:text-volt"
               >
                 {authed ? "Account" : "Login"}
-              </Link>
+              </a>
             </li>
             <li>
               <Link

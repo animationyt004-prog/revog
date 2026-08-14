@@ -54,6 +54,9 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     filters: { category: "sarees", fabrics: ["Georgette"] },
     title: "Georgette",
     accent: "Sarees",
+    seoTitle: "Georgette Sarees Online - Party & Festive Styles",
+    seoDescription:
+      "Buy georgette sarees online at HyraLuxe. Shop lightweight embroidered, sequin and party wear sarees with COD and easy 7-day returns.",
     blurb:
       "Light, flowing georgette sarees that drape easily and carry all day — " +
       "embroidered, sequinned and zari-bordered.",
@@ -62,6 +65,9 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     filters: { category: "sarees", fabrics: ["Cotton Silk", "Cotton Tissue"] },
     title: "Cotton",
     accent: "Sarees",
+    seoTitle: "Cotton Sarees Online - Comfortable Everyday Styles",
+    seoDescription:
+      "Shop cotton and cotton-blend sarees online at HyraLuxe for office, daily and festive wear. COD, UPI and easy 7-day returns.",
     blurb:
       "Breathable cotton and cotton-blend sarees for long wear — soft, " +
       "comfortable and easy to manage.",
@@ -70,11 +76,17 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     filters: { category: "sarees", occasions: ["Festive"] },
     title: "Festive",
     accent: "Sarees",
+    seoTitle: "Festive Sarees Online - Wedding & Puja Sarees",
+    seoDescription:
+      "Shop festive sarees online at HyraLuxe. Explore zari, embroidered and occasion-ready sarees for weddings, pujas and celebrations.",
     blurb: "Sarees picked for weddings, poojas and festive evenings.",
   },
   "sarees-under-999": {
     filters: { category: "sarees", maxPrice: 99900 },
     title: "Sarees Under",
+    seoTitle: "Sarees Under Rs.999 Online - Affordable Sarees",
+    seoDescription:
+      "Shop sarees under Rs.999 online at HyraLuxe. Explore affordable daily, festive and party styles with COD and 7-day returns.",
     accent: "₹999",
     blurb: "Everything in the saree edit priced under ₹999.",
   },

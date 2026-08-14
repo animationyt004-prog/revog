@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}" class="antialiased">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="{{ settings.color_ink }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    {{ page_title }}
+    {%- if page_description -%}
+      <meta name="description" content="{{ page_description | escape }}">
+    {%- endif -%}
+
+    {{ content_for_header }}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    {{ 'theme.css' | asset_url | stylesheet_tag }}
+
+    <style>
+      :root {
+        --color-ink: {{ settings.color_ink }};
+        --color-ink-2: {{ settings.color_ink_2 }};
+        --color-ink-3: {{ settings.color_ink_3 }};
+        --color-paper: {{ settings.color_paper }};
+        --color-paper-dim: {{ settings.color_paper_dim }};
+        --color-volt: {{ settings.color_volt }};
+        --color-blood: {{ settings.color_blood }};
+        --color-gold: {{ settings.color_gold }};
+        --color-night: {{ settings.color_night }};
+        --color-night-2: {{ settings.color_night_2 }};
+        --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+        --font-sans: "Inter", system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body class="min-h-full">
+    <a class="visually-hidden" href="#MainContent">Skip to content</a>
+
+    {% section 'promo-ticker' %}
+    {% section 'header' %}
+
+    <main id="MainContent">
+      {{ content_for_layout }}
+    </main>
+
+    {% section 'footer' %}
+    {% section 'cart-drawer' %}
+
+    {{ 'theme.js' | asset_url | script_tag }}
+    {{ 'product-card.js' | asset_url | script_tag }}
+  </body>
+</html>

@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import { useAuth } from "./auth-store";
-import { pixelTrack } from "./pixel";
 import type { CartView } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
@@ -44,7 +43,7 @@ interface CartState {
   removeCoupon: () => Promise<void>;
 }
 
-export const useCart = create<CartState>((set, get) => {
+export const useCart = create<CartState>((set) => {
   /** Run a mutating cart call and swap in the returned cart view. */
   async function mutate(path: string, init: RequestInit, fallbackError: string) {
     set({ busy: true });
@@ -80,12 +79,9 @@ export const useCart = create<CartState>((set, get) => {
         { method: "POST", body: JSON.stringify({ variantId, quantity }) },
         "Could not add to cart.",
       );
-      pixelTrack("AddToCart", {
-        content_ids: [variantId],
-        content_type: "product",
-        value: (get().cart?.summary.subtotal ?? 0) / 100,
-        currency: "INR",
-      });
+      // AddToCart is reported by the caller via track(), which pairs the
+      // browser and Conversions API copies under one event id and quotes the
+      // variant SKU. Firing an id-less duplicate here double-counted it.
       set({ drawerOpen: true });
     },
 

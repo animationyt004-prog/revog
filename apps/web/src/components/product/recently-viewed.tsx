@@ -18,7 +18,17 @@ interface ViewedItem {
 
 function readList(): ViewedItem[] {
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "[]") as ViewedItem[];
+    const parsed = JSON.parse(localStorage.getItem(KEY) ?? "[]") as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is ViewedItem =>
+        Boolean(item) &&
+        typeof item === "object" &&
+        typeof (item as ViewedItem).slug === "string" &&
+        typeof (item as ViewedItem).name === "string" &&
+        typeof (item as ViewedItem).price === "number" &&
+        typeof (item as ViewedItem).mrp === "number",
+    );
   } catch {
     return [];
   }
@@ -29,12 +39,16 @@ export function RecentlyViewed({ current }: { current: ViewedItem }) {
   const [items, setItems] = useState<ViewedItem[]>([]);
 
   useEffect(() => {
-    const previous = readList().filter((i) => i.slug !== current.slug);
-    setItems(previous.slice(0, 6));
-    localStorage.setItem(
-      KEY,
-      JSON.stringify([current, ...previous].slice(0, MAX)),
-    );
+    try {
+      const previous = readList().filter((item) => item.slug !== current.slug);
+      setItems(previous.slice(0, 6));
+      localStorage.setItem(
+        KEY,
+        JSON.stringify([current, ...previous].slice(0, MAX)),
+      );
+    } catch {
+      setItems([]);
+    }
   }, [current]);
 
   if (items.length === 0) return null;
@@ -66,7 +80,9 @@ export function RecentlyViewed({ current }: { current: ViewedItem }) {
             <p className="text-xs">
               <span className="font-semibold">{formatPrice(item.price)}</span>{" "}
               {item.mrp > item.price && (
-                <span className="text-paper-dim line-through">{formatPrice(item.mrp)}</span>
+                <span className="text-paper-dim line-through">
+                  {formatPrice(item.mrp)}
+                </span>
               )}
             </p>
           </Link>

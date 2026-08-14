@@ -35,9 +35,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isAdmin = status === "authed" && user?.role === "ADMIN";
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     else if (status === "authed" && user?.role !== "ADMIN") router.replace("/");
-  }, [status, user?.role, router]);
+  }, [pathname, status, user?.role, router]);
 
   if (!isAdmin) {
     return (
@@ -48,18 +48,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-svh">
-      {/* Sidebar */}
-      <aside className="flex w-16 shrink-0 flex-col border-r border-paper/10 bg-ink-2 sm:w-56">
-        <Link href="/admin" className="display border-b border-paper/10 p-4 text-xl leading-none">
-          <span className="hidden sm:inline">HYRA</span>
-          <span className="sm:hidden">H</span>
+    <div className="min-h-svh sm:flex">
+      <aside className="sticky top-0 z-40 flex w-full shrink-0 border-b border-paper/10 bg-ink-2 sm:h-svh sm:w-56 sm:flex-col sm:border-b-0 sm:border-r">
+        <Link href="/admin" className="display flex shrink-0 items-center border-r border-paper/10 px-4 py-3 text-xl leading-none sm:block sm:border-b sm:border-r-0 sm:p-4">
+          <span>HYRA</span>
           <span className="text-volt">.</span>
           <span className="mt-1 hidden text-[10px] tracking-[0.3em] text-paper-dim sm:block">
             CONTROL ROOM
           </span>
         </Link>
-        <nav className="flex-1 py-3">
+        <nav className="no-scrollbar flex min-w-0 flex-1 overflow-x-auto sm:block sm:overflow-visible sm:py-3">
           {NAV.map((item) => {
             const active =
               item.href === "/admin"
@@ -70,21 +68,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-5 py-2.5 text-sm transition-colors",
+                  "flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs transition-colors sm:gap-3 sm:border-b-0 sm:px-5 sm:py-2.5 sm:text-sm",
                   active
-                    ? "border-r-2 border-volt bg-volt/10 font-semibold text-volt"
-                    : "text-paper-dim hover:bg-ink-3 hover:text-paper",
+                    ? "border-volt bg-volt/10 font-semibold text-volt sm:border-r-2"
+                    : "border-transparent text-paper-dim hover:bg-ink-3 hover:text-paper",
                 )}
               >
                 <item.icon size={17} className="shrink-0" />
-                <span className="hidden sm:inline">{item.label}</span>
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
         <Link
           href="/"
-          className="flex items-center gap-2 border-t border-paper/10 px-5 py-3.5 text-xs text-paper-dim hover:text-paper"
+          className="hidden items-center gap-2 border-t border-paper/10 px-5 py-3.5 text-xs text-paper-dim hover:text-paper sm:flex"
         >
           <ArrowLeft size={14} />
           <span className="hidden sm:inline">Back to store</span>
@@ -93,12 +91,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between border-b border-paper/10 px-5 py-3">
+        <header className="hidden items-center justify-between border-b border-paper/10 px-5 py-3 sm:flex">
           <p className="text-xs text-paper-dim">
             Signed in as <strong className="text-paper">{user?.email}</strong> · ADMIN
           </p>
         </header>
-        <main className="p-5 sm:p-7">{children}</main>
+        <main className="p-4 sm:p-7">{children}</main>
       </div>
     </div>
   );

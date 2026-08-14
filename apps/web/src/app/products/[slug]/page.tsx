@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
@@ -8,15 +9,21 @@ import { ProductView } from "@/components/product/product-view";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { ReviewsSection } from "@/components/product/reviews-section";
 import { getProduct, getRelated } from "@/lib/api";
-import { SITE_URL } from "@/lib/site";
+import { merchantReturnPolicyLd, organizationLd } from "@/lib/business";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ color?: string | string[] }>;
 }
+
+// Metadata and the page body both need the same product. Sharing the request
+// avoids two simultaneous API calls when a customer opens a product page.
+const getProductForPage = cache(getProduct);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const product = await getProductForPage(slug);
   // notFound() here (before streaming starts) yields a real 404 status;
   // from the page body the shell has already flushed a 200 (soft 404).
   if (!product) notFound();
@@ -41,13 +48,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const [product, related] = await Promise.all([
-    getProduct(slug),
-    getRelated(slug),
-  ]);
+  const requestedColor = (await searchParams).color;
+  const product = await getProductForPage(slug);
   if (!product) notFound();
+  const related = await getRelated(slug);
 
   const inStock = product.variants.some((v) => v.stock > 0);
   const productLd = {
@@ -57,7 +63,7 @@ export default async function ProductPage({ params }: Props) {
     description: product.description,
     image: product.images.map((i) => i.url),
     sku: product.variants[0]?.sku ?? product.slug,
-    brand: { "@type": "Brand", name: product.brand },
+    brand: { "@type": "Brand", name: SITE_NAME },
     ...(product.ratingCount > 0
       ? {
           aggregateRating: {
@@ -76,15 +82,8 @@ export default async function ProductPage({ params }: Props) {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
-      seller: { "@type": "Organization", name: "HyraLuxe" },
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        applicableCountry: "IN",
-        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-        merchantReturnDays: 7,
-        returnMethod: "https://schema.org/ReturnByMail",
-        returnFees: "https://schema.org/FreeReturn",
-      },
+      seller: organizationLd(),
+      hasMerchantReturnPolicy: merchantReturnPolicyLd,
       shippingDetails: {
         "@type": "OfferShippingDetails",
         shippingDestination: {
@@ -148,7 +147,10 @@ export default async function ProductPage({ params }: Props) {
       <PromoTicker />
       <Navbar />
       <main>
-        <ProductView product={product} />
+        <ProductView
+          product={product}
+          initialColor={typeof requestedColor === "string" ? requestedColor : undefined}
+        />
         <ReviewsSection slug={product.slug} />
         <ProductSection
           title="Pairs"

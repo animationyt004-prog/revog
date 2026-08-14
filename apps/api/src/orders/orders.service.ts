@@ -10,10 +10,16 @@ import {
   PaymentStatus,
   Prisma,
 } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import { CartService } from '../cart/cart.service';
+import {
+  toMetaAttribution,
+  type MetaAttribution,
+} from '../events/meta-attribution';
 import { PaymentsService } from '../payments/payments.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { orderTokenMatches, orderViewToken } from './order-token';
 
 export interface ShippingAddress {
   fullName: string;
@@ -25,19 +31,44 @@ export interface ShippingAddress {
   pincode: string;
 }
 
+/** Attribution is written for the Conversions API to read on the way out, not
+ *  for the storefront. Nothing on the buyer's side has any use for their own
+ *  IP and user agent coming back to them, so it does not ride along. */
+function withoutMetaAttribution<T extends { metaAttribution?: unknown }>(
+  order: T,
+): Omit<T, 'metaAttribution'> {
+  const rest = { ...order };
+  delete (rest as { metaAttribution?: unknown }).metaAttribution;
+  return rest;
+}
+
 const ORDER_INCLUDE = {
-  items: true,
+  // The variant SKU is the id the product feeds publish, so the receipt page
+  // can report the Purchase against the right catalog items.
+  items: { include: { variant: { select: { sku: true } } } },
   payment: { select: { method: true, status: true, amount: true } },
   events: { orderBy: { createdAt: 'asc' as const } },
 };
 
 @Injectable()
 export class OrdersService {
+  private readonly tokenSecret: string;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cart: CartService,
     private readonly payments: PaymentsService,
-  ) {}
+    config: ConfigService,
+  ) {
+    this.tokenSecret =
+      config.get<string>('ORDER_TOKEN_SECRET') ||
+      config.getOrThrow<string>('JWT_ACCESS_SECRET');
+  }
+
+  /** Key the storefront puts in order links instead of the buyer's email. */
+  viewToken(orderNumber: string): string {
+    return orderViewToken(orderNumber, this.tokenSecret);
+  }
 
   private newOrderNumber(): string {
     // HY-<base36 minute stamp>-<3 random digits> — short, sortable, unguessable enough.
@@ -56,6 +87,8 @@ export class OrdersService {
     email: string;
     address: ShippingAddress;
     paymentMethod: PaymentMethod;
+    /** Meta's view of the buyer's browser, frozen for the later Purchase. */
+    meta?: MetaAttribution;
   }) {
     const raw = await this.cart.findRaw(opts.cartToken);
     if (!raw || raw.items.length === 0) {
@@ -71,6 +104,9 @@ export class OrdersService {
     const prepaidSaving = isCod ? 0 : summary.prepaidSaving;
     const payable = summary.total - prepaidSaving;
     const orderNumber = this.newOrderNumber();
+    const metaAttribution = opts.meta
+      ? toMetaAttribution(opts.meta)
+      : undefined;
     // Gateway order first: if Razorpay is down we fail before touching stock.
     // An orphaned (never-paid) gateway order is harmless.
     const razorpayOrderId = isCod
@@ -137,6 +173,9 @@ export class OrdersService {
             total: payable,
             couponCode: summary.couponCode,
             addressSnapshot: opts.address as unknown as Prisma.InputJsonValue,
+            metaAttribution: metaAttribution
+              ? (metaAttribution as Prisma.InputJsonValue)
+              : Prisma.DbNull,
             items: {
               create: view.items.map((i) => ({
                 variantId: i.variantId,
@@ -185,8 +224,13 @@ export class OrdersService {
       { timeout: 20_000, maxWait: 5_000 },
     );
 
+    if (isCod) {
+      await this.payments.sendPurchase(order.id).catch(() => undefined);
+    }
+
     return {
-      ...order,
+      ...withoutMetaAttribution(order),
+      viewToken: this.viewToken(order.orderNumber),
       // Frontend opens the Razorpay modal with this (null for COD).
       razorpay: razorpayOrderId
         ? {
@@ -204,17 +248,25 @@ export class OrdersService {
   }
 
   async listForUser(userId: string) {
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: { userId },
       orderBy: { placedAt: 'desc' },
       include: { items: true },
     });
+    return orders.map((o) => ({
+      ...withoutMetaAttribution(o),
+      viewToken: this.viewToken(o.orderNumber),
+    }));
   }
 
-  /** Fetch one order. Owners fetch by number; guests must also match email. */
+  /**
+   * Fetch one order. Owners fetch by number; everyone else must prove they are
+   * entitled to it — either with the order's view token (what storefront links
+   * now carry) or, for links sent before tokens existed, the buyer's email.
+   */
   async findByNumber(
     orderNumber: string,
-    viewer: { userId?: string; email?: string },
+    viewer: { userId?: string; email?: string; token?: string },
   ) {
     const order = await this.prisma.order.findUnique({
       where: { orderNumber },
@@ -223,11 +275,19 @@ export class OrdersService {
     if (!order) throw new NotFoundException('Order not found.');
 
     const ownsIt = viewer.userId && order.userId === viewer.userId;
+    const tokenMatches = orderTokenMatches(
+      orderNumber,
+      this.tokenSecret,
+      viewer.token,
+    );
     const emailMatches =
       viewer.email && order.email === viewer.email.toLowerCase();
-    if (!ownsIt && !emailMatches) {
+    if (!ownsIt && !tokenMatches && !emailMatches) {
       throw new ForbiddenException('Not allowed to view this order.');
     }
-    return order;
+    return {
+      ...withoutMetaAttribution(order),
+      viewToken: this.viewToken(orderNumber),
+    };
   }
 }

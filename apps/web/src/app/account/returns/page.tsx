@@ -13,6 +13,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { authedFetch } from "@/lib/auth-store";
 import { cn, formatPrice } from "@/lib/format";
+import { orderHref } from "@/lib/order-link";
 
 interface CustomerReturn {
   id: string;
@@ -20,7 +21,7 @@ interface CustomerReturn {
   status: string;
   refundAmount: number | null;
   createdAt: string;
-  order: { orderNumber: string; email: string; total: number };
+  order: { orderNumber: string; email: string; total: number; viewToken?: string };
   orderItem: {
     productName: string;
     variantLabel: string;
@@ -136,7 +137,7 @@ export default function AccountReturnsPage() {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
-                          href={`/order/${item.order.orderNumber}?email=${encodeURIComponent(item.order.email)}`}
+                          href={orderHref(item.order, item.order.email)}
                           className="text-sm font-semibold hover:text-volt"
                         >
                           {item.order.orderNumber}

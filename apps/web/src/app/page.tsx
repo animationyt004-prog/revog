@@ -7,6 +7,11 @@ import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { getCategories, getProducts, getTestimonials } from "@/lib/api";
+import {
+  BUSINESS,
+  merchantReturnPolicyLd,
+  organizationLd,
+} from "@/lib/business";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 // Organization + WebSite graph. WebSite's SearchAction enables Google's
@@ -15,8 +20,8 @@ const SITE_JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
+      ...organizationLd(),
       name: SITE_NAME,
       url: SITE_URL,
       // Google uses this for the brand logo in search results / knowledge panel.
@@ -31,6 +36,8 @@ const SITE_JSON_LD = {
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",
+        email: BUSINESS.email,
+        telephone: `+${BUSINESS.phone}`,
         areaServed: "IN",
         availableLanguage: ["en", "hi"],
       },
@@ -44,14 +51,7 @@ const SITE_JSON_LD = {
       areaServed: "IN",
       paymentAccepted: ["Cash on Delivery", "UPI", "Cards"],
       currenciesAccepted: "INR",
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        applicableCountry: "IN",
-        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-        merchantReturnDays: 7,
-        returnMethod: "https://schema.org/ReturnByMail",
-        returnFees: "https://schema.org/FreeReturn",
-      },
+      hasMerchantReturnPolicy: merchantReturnPolicyLd,
     },
     {
       "@type": "WebSite",
@@ -72,13 +72,14 @@ const SITE_JSON_LD = {
 };
 
 export default async function HomePage() {
-  const [newDrops, bestSellers, trending, categories, testimonials] = await Promise.all([
-    getProducts({ collection: "new", take: 8 }),
-    getProducts({ collection: "bestsellers", take: 8 }),
-    getProducts({ collection: "trending", take: 4 }),
-    getCategories(),
-    getTestimonials(6),
-  ]);
+  const [newDrops, bestSellers, trending, categories, testimonials] =
+    await Promise.all([
+      getProducts({ collection: "new", take: 8 }),
+      getProducts({ collection: "bestsellers", take: 8 }),
+      getProducts({ collection: "trending", take: 4 }),
+      getCategories(),
+      getTestimonials(6),
+    ]);
 
   return (
     <>
@@ -108,6 +109,7 @@ export default async function HomePage() {
           accent="Sellers"
           href="/collections/bestsellers"
           products={bestSellers}
+          tone="soft"
         />
         <ProductSection
           title="Trending"

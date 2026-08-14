@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { StorageService } from '../common/storage/storage.service';
 
 /** Reviewer display name when the account has none: never show the raw
  *  handle. "streetwear@gmail.com" -> "stre***", "9924575799" -> "99245***". */
@@ -16,7 +17,10 @@ function maskHandle(email: string | null, phone: string | null): string {
 
 @Injectable()
 export class ReviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   private async productBySlug(slug: string) {
     const product = await this.prisma.product.findUnique({
@@ -40,6 +44,7 @@ export class ReviewsService {
       rating: r.rating,
       title: r.title,
       body: r.body,
+      photoUrl: r.photoUrl,
       isVerifiedPurchase: r.isVerifiedPurchase,
       createdAt: r.createdAt,
       // Never leak the full handle: "str…@gmail.com" -> "str***", and for
@@ -75,6 +80,7 @@ export class ReviewsService {
         id: r.id,
         rating: r.rating,
         body: r.body,
+        photoUrl: r.photoUrl,
         createdAt: r.createdAt,
         product: r.product,
         author: r.user.name ?? maskHandle(r.user.email, r.user.phone),
@@ -82,7 +88,10 @@ export class ReviewsService {
   }
 
   /** Has this user received this product? Drives the verified badge. */
-  private async hasDeliveredPurchase(userId: string, productId: string): Promise<boolean> {
+  private async hasDeliveredPurchase(
+    userId: string,
+    productId: string,
+  ): Promise<boolean> {
     const variants = await this.prisma.productVariant.findMany({
       where: { productId },
       select: { id: true },
@@ -97,16 +106,40 @@ export class ReviewsService {
     return count > 0;
   }
 
+  async uploadPhoto(
+    slug: string,
+    userId: string,
+    file: {
+      buffer: Buffer;
+      mimetype: string;
+      size: number;
+      originalname: string;
+    },
+  ) {
+    const product = await this.productBySlug(slug);
+    if (!(await this.hasDeliveredPurchase(userId, product.id))) {
+      throw new BadRequestException(
+        'Review photos are available after delivery.',
+      );
+    }
+    return { url: await this.storage.uploadImage(file, `reviews-${slug}`) };
+  }
+
   async upsert(
     slug: string,
     userId: string,
-    input: { rating: number; title?: string; body?: string },
+    input: { rating: number; title?: string; body?: string; photoUrl?: string },
   ) {
     const product = await this.productBySlug(slug);
     const verified = await this.hasDeliveredPurchase(userId, product.id);
     const existing = await this.prisma.review.findUnique({
       where: { productId_userId: { productId: product.id, userId } },
     });
+    if (input.photoUrl && !this.storage.ownsUrl(input.photoUrl)) {
+      throw new BadRequestException(
+        'Review photo must be uploaded through HyraLuxe.',
+      );
+    }
 
     // Keep the product's aggregate in step (seeded history is the baseline).
     const { ratingAvg, ratingCount } = product;
@@ -114,12 +147,14 @@ export class ReviewsService {
       ? {
           ratingAvg:
             ratingCount > 0
-              ? (ratingAvg * ratingCount - existing.rating + input.rating) / ratingCount
+              ? (ratingAvg * ratingCount - existing.rating + input.rating) /
+                ratingCount
               : input.rating,
           ratingCount,
         }
       : {
-          ratingAvg: (ratingAvg * ratingCount + input.rating) / (ratingCount + 1),
+          ratingAvg:
+            (ratingAvg * ratingCount + input.rating) / (ratingCount + 1),
           ratingCount: ratingCount + 1,
         };
 
@@ -136,12 +171,14 @@ export class ReviewsService {
           rating: input.rating,
           title: input.title,
           body: input.body,
+          photoUrl: input.photoUrl,
           isVerifiedPurchase: verified,
         },
         update: {
           rating: input.rating,
           title: input.title,
           body: input.body,
+          photoUrl: input.photoUrl,
           isVerifiedPurchase: verified,
         },
       }),

@@ -159,7 +159,7 @@ export class AuthService {
     id: Identifier,
     code: string,
     meta: { ip?: string; userAgent?: string },
-  ): Promise<AuthTokens> {
+  ): Promise<AuthTokens & { isNewUser: boolean }> {
     const identifier = id.value;
     const otp = await this.prisma.otpCode.findFirst({
       where: { identifier, consumedAt: null },
@@ -188,6 +188,14 @@ export class AuthService {
       });
       throw new UnauthorizedException('Incorrect OTP.');
     }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where:
+        id.kind === 'email'
+          ? { email: identifier }
+          : { phone: identifier },
+      select: { id: true },
+    });
 
     const [, user] = await this.prisma.$transaction([
       this.prisma.otpCode.update({
@@ -225,7 +233,8 @@ export class AuthService {
 
     // New login = new token family.
     const family = randomBytes(16).toString('hex');
-    return this.issueTokens(user, family, meta);
+    const tokens = await this.issueTokens(user, family, meta);
+    return { ...tokens, isNewUser: !existingUser };
   }
 
   // ------------------------------------------------------- token issuing
@@ -339,5 +348,13 @@ export class AuthService {
     });
     if (!user) throw new UnauthorizedException();
     return user;
+  }
+
+  async updateProfile(userId: string, name: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { name: name.trim() },
+      select: { id: true, email: true, phone: true, name: true, role: true },
+    });
   }
 }

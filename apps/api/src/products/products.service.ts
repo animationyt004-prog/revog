@@ -3,7 +3,8 @@ import { Fit, Prisma, ProductStatus, Size } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 
 export type Collection = 'new' | 'trending' | 'limited' | 'bestsellers';
-export type SortKey = 'newest' | 'popular' | 'price_asc' | 'price_desc' | 'discount' | 'rating';
+export type SortKey =
+  'newest' | 'popular' | 'price_asc' | 'price_desc' | 'discount' | 'rating';
 
 export interface ListFilters {
   q?: string;
@@ -15,12 +16,23 @@ export interface ListFilters {
   fabrics?: string[];
   /** Matches any product whose `occasion` mentions one of these. */
   occasions?: string[];
+  works?: string[];
   minPrice?: number; // paise
   maxPrice?: number; // paise
   sort?: SortKey;
   take?: number;
   skip?: number;
 }
+
+const WORK_TERMS: Record<string, string[]> = {
+  Embroidery: ['embroider'],
+  Zari: ['zari'],
+  Sequins: ['sequin'],
+  Printed: ['print'],
+  Pearl: ['pearl'],
+  Cutwork: ['cutwork'],
+  'Mirror Work': ['mirror'],
+};
 
 const COLLECTION_WHERE: Record<Collection, Prisma.ProductWhereInput> = {
   new: { isNewArrival: true },
@@ -29,7 +41,10 @@ const COLLECTION_WHERE: Record<Collection, Prisma.ProductWhereInput> = {
   bestsellers: { isBestSeller: true },
 };
 
-const SORT_ORDER: Record<Exclude<SortKey, 'discount'>, Prisma.ProductOrderByWithRelationInput> = {
+const SORT_ORDER: Record<
+  Exclude<SortKey, 'discount'>,
+  Prisma.ProductOrderByWithRelationInput
+> = {
   newest: { createdAt: 'desc' },
   popular: { soldCount: 'desc' },
   price_asc: { price: 'asc' },
@@ -41,7 +56,16 @@ const LIST_INCLUDE = {
   category: { select: { name: true, slug: true } },
   images: { orderBy: { sortOrder: 'asc' as const } },
   variants: {
-    select: { id: true, size: true, color: true, colorHex: true, stock: true },
+    select: {
+      id: true,
+      // sku is the id the Google/Meta product feeds publish, so the storefront
+      // needs it to report ad events against the right catalog item.
+      sku: true,
+      size: true,
+      color: true,
+      colorHex: true,
+      stock: true,
+    },
   },
 };
 
@@ -52,6 +76,7 @@ export class ProductsService {
   private buildWhere(f: ListFilters): Prisma.ProductWhereInput {
     const where: Prisma.ProductWhereInput = {
       status: ProductStatus.PUBLISHED,
+      variants: { some: { stock: { gt: 0 } } },
       ...(f.collection ? COLLECTION_WHERE[f.collection] : {}),
       ...(f.category ? { category: { slug: f.category } } : {}),
       ...(f.fits?.length ? { fit: { in: f.fits } } : {}),
@@ -59,18 +84,33 @@ export class ProductsService {
       // `occasion` is a comma-separated label ("Festive, Wedding, Party"), so
       // match on substring. Goes in AND, not OR — the search query below owns
       // `where.OR` and would otherwise overwrite this.
-      ...(f.occasions?.length
-        ? {
-            AND: [
-              {
-                OR: f.occasions.map((o) => ({
-                  occasion: { contains: o, mode: Prisma.QueryMode.insensitive },
-                })),
-              },
-            ],
-          }
-        : {}),
     };
+
+    const and: Prisma.ProductWhereInput[] = [];
+    if (f.occasions?.length) {
+      and.push({
+        OR: f.occasions.map((o) => ({
+          occasion: { contains: o, mode: Prisma.QueryMode.insensitive },
+        })),
+      });
+    }
+    if (f.works?.length) {
+      const terms = f.works.flatMap((work) => WORK_TERMS[work] ?? []);
+      if (terms.length) {
+        and.push({
+          OR: terms.flatMap((term) => [
+            { name: { contains: term, mode: Prisma.QueryMode.insensitive } },
+            {
+              description: {
+                contains: term,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            },
+          ]),
+        });
+      }
+    }
+    if (and.length) where.AND = and;
 
     if (f.q?.trim()) {
       const q = f.q.trim();
@@ -109,7 +149,8 @@ export class ProductsService {
     const take = Math.min(Math.max(f.take ?? 24, 1), 200);
     const skip = Math.max(f.skip ?? 0, 0);
     const where = this.buildWhere(f);
-    const sort = f.sort ?? (f.collection === 'bestsellers' ? 'popular' : 'newest');
+    const sort =
+      f.sort ?? (f.collection === 'bestsellers' ? 'popular' : 'newest');
 
     if (sort === 'discount') {
       // Discount % is computed, not a column — sort the filtered set in JS.
@@ -119,7 +160,7 @@ export class ProductsService {
         this.prisma.product.count({ where }),
       ]);
       const items = all
-        .sort((a, b) => (1 - b.price / b.mrp) - (1 - a.price / a.mrp))
+        .sort((a, b) => 1 - b.price / b.mrp - (1 - a.price / a.mrp))
         .slice(skip, skip + take)
         .map((p) => this.toCard(p));
       return { items, total };
@@ -144,9 +185,12 @@ export class ProductsService {
     const products = await this.prisma.product.findMany({
       where,
       select: {
+        name: true,
+        description: true,
         price: true,
         fit: true,
         fabric: true,
+        occasion: true,
         variants: {
           where: { stock: { gt: 0 } },
           select: { size: true, color: true, colorHex: true },
@@ -158,12 +202,23 @@ export class ProductsService {
     const colors = new Map<string, string>();
     const fits = new Set<string>();
     const fabrics = new Set<string>();
+    const occasions = new Set<string>();
+    const works = new Set<string>();
     let minPrice = Infinity;
     let maxPrice = 0;
 
     for (const p of products) {
       fits.add(p.fit);
       if (p.fabric) fabrics.add(p.fabric);
+      p.occasion
+        ?.split(/[,/]/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .forEach((value) => occasions.add(value));
+      const searchable = `${p.name} ${p.description}`.toLowerCase();
+      for (const [label, terms] of Object.entries(WORK_TERMS)) {
+        if (terms.some((term) => searchable.includes(term))) works.add(label);
+      }
       minPrice = Math.min(minPrice, p.price);
       maxPrice = Math.max(maxPrice, p.price);
       for (const v of p.variants) {
@@ -174,11 +229,18 @@ export class ProductsService {
 
     const SIZE_ORDER = ['FREE_SIZE', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     return {
-      sizes: [...sizes].sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b)),
+      sizes: [...sizes].sort(
+        (a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b),
+      ),
       colors: [...colors].map(([name, hex]) => ({ name, hex })),
       fits: [...fits],
       fabrics: [...fabrics].sort(),
-      priceRange: products.length ? { min: minPrice, max: maxPrice } : { min: 0, max: 0 },
+      occasions: [...occasions].sort(),
+      works: [...works],
+      inStockCount: products.length,
+      priceRange: products.length
+        ? { min: minPrice, max: maxPrice }
+        : { min: 0, max: 0 },
     };
   }
 
@@ -192,6 +254,9 @@ export class ProductsService {
       },
     });
     if (!product || product.status !== ProductStatus.PUBLISHED) {
+      throw new NotFoundException(`Product "${slug}" not found`);
+    }
+    if (!product.variants.some((v) => v.stock > 0)) {
       throw new NotFoundException(`Product "${slug}" not found`);
     }
     return product;
@@ -208,6 +273,7 @@ export class ProductsService {
     const products = await this.prisma.product.findMany({
       where: {
         status: ProductStatus.PUBLISHED,
+        variants: { some: { stock: { gt: 0 } } },
         id: { not: product.id },
         ...(product.categoryId ? { categoryId: product.categoryId } : {}),
       },
@@ -227,7 +293,16 @@ export class ProductsService {
         slug: true,
         description: true,
         image: true,
-        _count: { select: { products: { where: { status: 'PUBLISHED' } } } },
+        _count: {
+          select: {
+            products: {
+              where: {
+                status: 'PUBLISHED',
+                variants: { some: { stock: { gt: 0 } } },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -242,7 +317,9 @@ export class ProductsService {
     }
 
     // Curated pincodes: use their (possibly better) ETA/COD data.
-    const pin = await this.prisma.pincode.findUnique({ where: { pincode: code } });
+    const pin = await this.prisma.pincode.findUnique({
+      where: { pincode: code },
+    });
     if (pin) {
       return {
         serviceable: true as const,
@@ -302,12 +379,32 @@ export class ProductsService {
   /** Shape a product for grid/card rendering: primary + hover image, distinct
    *  colors, aggregate stock. Prices stay in paise — the client formats. */
   private toCard(p: {
-    id: string; name: string; slug: string; mrp: number; price: number;
-    fit: string; badges: string[]; ratingAvg: number; ratingCount: number;
+    id: string;
+    name: string;
+    slug: string;
+    mrp: number;
+    price: number;
+    fit: string;
+    badges: string[];
+    ratingAvg: number;
+    ratingCount: number;
     soldCount: number;
     category: { name: string; slug: string } | null;
-    images: { url: string; alt: string | null; color: string | null; isPrimary: boolean; sortOrder: number }[];
-    variants: { id: string; size: string; color: string; colorHex: string; stock: number }[];
+    images: {
+      url: string;
+      alt: string | null;
+      color: string | null;
+      isPrimary: boolean;
+      sortOrder: number;
+    }[];
+    variants: {
+      id: string;
+      sku: string;
+      size: string;
+      color: string;
+      colorHex: string;
+      stock: number;
+    }[];
   }) {
     const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
     const hover =
@@ -326,7 +423,8 @@ export class ProductsService {
       slug: p.slug,
       mrp: p.mrp,
       price: p.price,
-      discountPercent: p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0,
+      discountPercent:
+        p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0,
       fit: p.fit,
       badges: p.badges,
       ratingAvg: p.ratingAvg,
@@ -338,13 +436,18 @@ export class ProductsService {
       // Minimal variant list so cards can offer size-picking Quick Add.
       variants: p.variants.map((v) => ({
         id: v.id,
+        sku: v.sku,
         size: v.size,
         color: v.color,
         stock: v.stock,
       })),
       totalStock,
       stockLabel:
-        totalStock === 0 ? 'SOLD_OUT' : totalStock < 12 ? 'LOW_STOCK' : 'IN_STOCK',
+        totalStock === 0
+          ? 'SOLD_OUT'
+          : totalStock < 12
+            ? 'LOW_STOCK'
+            : 'IN_STOCK',
     };
   }
 }

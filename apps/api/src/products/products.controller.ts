@@ -18,7 +18,10 @@ import type { Collection, SortKey } from './products.service';
 const csv = () =>
   Transform(({ value }: { value: unknown }) =>
     typeof value === 'string'
-      ? value.split(',').map((s) => s.trim()).filter(Boolean)
+      ? value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : value,
   );
 
@@ -64,6 +67,12 @@ class ListProductsQuery {
   @IsArray()
   @IsString({ each: true })
   occasions?: string[];
+
+  @IsOptional()
+  @csv()
+  @IsArray()
+  @IsString({ each: true })
+  works?: string[];
 
   @IsOptional()
   @IsInt()

@@ -1,0 +1,65 @@
+{%- comment -%} Ports apps/web/src/app/about/page.tsx {%- endcomment -%}
+<div class="page-shell">
+  <h1>About {{ shop.name }}<span class="accent">.</span></h1>
+  <p class="page-shell__intro">Indian fashion — ethnic and casual — curated and delivered across the country.</p>
+
+  <div class="page-shell__body">
+    <div class="policy-section">
+      <h2>Who we are</h2>
+      <div>
+        <p>{{ shop.name }} is an India-based online clothing store. We started with a simple idea: buying clothes online should be straightforward — clear photos, an honest description of the fabric, a price without games, and the option to pay only when the parcel reaches your door.</p>
+      </div>
+    </div>
+
+    <div class="policy-section">
+      <h2>Business details</h2>
+      <div>
+        <ul style="padding-left:1.25rem;list-style:disc;display:grid;gap:.375rem;">
+          <li>Brand: {{ shop.name }}</li>
+          {%- if settings.business_name != blank %}<li>Registered entity: {{ settings.business_name }}</li>{% endif -%}
+          <li>Email: {{ settings.business_email }}</li>
+          {%- if settings.business_phone != blank %}<li>Phone: +{{ settings.business_phone }}</li>{% endif -%}
+          {%- if settings.business_address != blank %}<li>Registered address: {{ settings.business_address }}</li>{% endif -%}
+        </ul>
+      </div>
+    </div>
+
+    <div class="policy-section">
+      <h2>What we sell</h2>
+      <div>
+        <p>Our range spans everyday ethnic and casual wear — kurtis and kurtas, sarees, oversized t-shirts and shirts — chosen for fit, fabric and how a piece actually feels to wear for a full day rather than just how it looks in a photo.</p>
+        <p>We describe each piece as accurately as we can, including what is and isn't included in the box (sarees, for example, ship with an unstitched blouse piece, and a styled blouse in a photo is only for reference). If something isn't what you expected, our returns policy is there for exactly that reason.</p>
+      </div>
+    </div>
+
+    <div class="policy-section">
+      <h2>How we work</h2>
+      <div>
+        <p>We source from established wholesale markets and sell directly to you, which keeps prices reasonable without cutting corners on the fabric. Orders are packed and dispatched quickly, and you can track everything from your order confirmation.</p>
+      </div>
+    </div>
+
+    <div class="policy-section">
+      <h2>Our promises</h2>
+      <div>
+        <ul style="padding-left:1.25rem;list-style:disc;display:grid;gap:.375rem;">
+          <li>Cash on Delivery available across serviceable pincodes in India.</li>
+          <li>Free shipping on orders above ₹999.</li>
+          <li>Easy 7-day returns if a piece isn't right for you.</li>
+          <li>Real photos and honest fabric descriptions — no misleading claims.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="policy-section">
+      <h2>Talk to us</h2>
+      <div>
+        <p>Questions about a product, your order, or a return? Our <a href="{{ routes.root_url }}pages/contact" style="color:var(--color-volt);text-decoration:underline;">contact page</a> has every way to reach us — we usually reply the same day.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{ "name": "About page" }
+{% endschema %}

@@ -3,6 +3,8 @@
 import { BadgePercent } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 
+const EMPTY_TIERS: { minQuantity: number; percent: number }[] = [];
+
 /**
  * The multi-buy ladder, shown on the product page.
  *
@@ -15,7 +17,7 @@ import { useCart } from "@/lib/cart-store";
  * does apply it on quantity alone. Nothing here asks for a code.
  */
 export function AvailableOffers() {
-  const tiers = useCart((s) => s.cart?.summary.bundleTiers ?? []);
+  const tiers = useCart((s) => s.cart?.summary.bundleTiers ?? EMPTY_TIERS);
   const earned = useCart((s) => s.cart?.summary.bundlePercent ?? 0);
 
   if (tiers.length === 0) return null;
@@ -47,10 +49,13 @@ export function AvailableOffers() {
                 className="absolute -right-2 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-ink"
               />
               <p className="text-xs text-paper-dim">
-                {active ? "Applied — no coupon needed" : "Auto applied, no coupon needed"}
+                {active
+                  ? "Applied — no coupon needed"
+                  : "Auto applied, no coupon needed"}
               </p>
               <p className="mt-2 border-t border-dashed border-paper/20 pt-2 text-sm text-paper">
-                <span className="font-bold">Buy {tier.minQuantity}</span> sarees, get{" "}
+                <span className="font-bold">Buy {tier.minQuantity}</span>{" "}
+                sarees, get{" "}
                 <span className="font-bold">{tier.percent}% off</span>
               </p>
             </li>

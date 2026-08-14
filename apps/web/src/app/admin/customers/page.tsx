@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
+import { AdminPageHeader, useAdminLiveRefresh } from "@/components/admin/live-refresh";
 import { cn, formatPrice } from "@/lib/format";
 
 interface Customer {
@@ -19,27 +20,27 @@ interface Customer {
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[] | null>(null);
 
-  useEffect(() => {
-    authedFetch("/admin/customers")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setCustomers)
-      .catch(() => setCustomers([]));
+  const load = useCallback(async () => {
+    const response = await authedFetch("/admin/customers");
+    if (!response.ok) throw new Error("Customers could not be refreshed.");
+    setCustomers((await response.json()) as Customer[]);
   }, []);
+  const live = useAdminLiveRefresh(load, { intervalMs: 20_000 });
 
   if (customers === null) {
     return (
-      <div className="grid place-items-center py-24">
-        <Loader2 size={26} className="animate-spin text-volt" />
+      <div>
+        <AdminPageHeader title="Customers" live={live} />
+        <div className="grid place-items-center py-24">
+          {live.error ? <p className="text-sm text-blood">{live.error}</p> : <Loader2 size={26} className="animate-spin text-volt" />}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="display text-3xl sm:text-4xl">
-        Customers<span className="text-volt">.</span>{" "}
-        <span className="text-base text-paper-dim">({customers.length})</span>
-      </h1>
+      <AdminPageHeader title="Customers" count={customers.length} live={live} />
 
       <div className="mt-6 overflow-x-auto border border-paper/10">
         <table className="w-full min-w-[560px] text-sm">

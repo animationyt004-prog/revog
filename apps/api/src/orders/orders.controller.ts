@@ -19,6 +19,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  Length,
   ValidateNested,
 } from 'class-validator';
 import type { Request } from 'express';
@@ -28,6 +29,7 @@ import {
   type JwtPayload,
 } from '../auth/jwt-auth.guard';
 import { CART_COOKIE } from '../cart/cart.controller';
+import { clientIp } from '../common/client-ip';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CodOtpService } from '../cod-otp/cod-otp.service';
 import { AddressDto } from './addresses.controller';
@@ -56,6 +58,27 @@ class CheckoutDto {
   @IsOptional()
   @IsString()
   codVerifyToken?: string;
+
+  /* Meta attribution, read off the buyer's own cookies while they are still
+   * here. The Purchase that matters is sent from the server later — after a
+   * Razorpay webhook, with no browser attached — so if these are not captured
+   * now, Meta has nothing to tie that sale to an ad click. */
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 128)
+  metaFbp?: string;
+
+  /** `fb.1.<ts>.<fbclid>`, and an fbclid can run to several hundred chars. */
+  @IsOptional()
+  @IsString()
+  @Length(0, 600)
+  metaFbc?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  metaSourceUrl?: string;
 }
 
 @Controller('orders')
@@ -137,6 +160,16 @@ export class OrdersController {
       email,
       address,
       paymentMethod: dto.paymentMethod,
+      meta: {
+        fbp: dto.metaFbp,
+        fbc: dto.metaFbc,
+        sourceUrl: dto.metaSourceUrl,
+        // Taken from this request, not from the later webhook: the webhook
+        // comes from Razorpay's servers, so its IP and user agent describe
+        // Razorpay rather than the buyer.
+        ip: clientIp(req),
+        userAgent: req.headers['user-agent'],
+      },
     });
     return order;
   }
@@ -151,12 +184,14 @@ export class OrdersController {
   async detail(
     @Param('orderNumber') orderNumber: string,
     @Query('email') email: string | undefined,
+    @Query('t') token: string | undefined,
     @Req() req: Request,
   ) {
     const user = await this.optionalUser(req);
     return this.orders.findByNumber(orderNumber, {
       userId: user?.sub,
       email,
+      token,
     });
   }
 }

@@ -1,0 +1,59 @@
+{%- comment -%}
+  Ports apps/web/src/components/home/product-section.tsx — reusable
+  rail/grid of products from a collection. Add multiple instances to
+  templates/index.json for New Arrivals / Best Sellers / Trending.
+{%- endcomment -%}
+{%- liquid
+  assign coll = collections[section.settings.collection]
+  assign products = coll.products
+  if section.settings.in_stock_only
+    assign products = products | where: 'available'
+  endif
+  assign shown = products
+-%}
+{%- if shown.size > 0 -%}
+<section class="{% if section.settings.tone == 'soft' %}section-tone-soft{% endif %}">
+  <div class="section-inner">
+    <div class="section-head">
+      <div>
+        <p class="section-eyebrow">Curated edit</p>
+        <h2 class="section-title display">
+          {{ section.settings.title }}
+          {%- if section.settings.accent != blank %} <span class="accent">{{ section.settings.accent }}</span>{% endif -%}
+        </h2>
+      </div>
+      {%- if coll -%}
+        <a href="{{ coll.url }}" class="section-view-all">
+          View All
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      {%- endif -%}
+    </div>
+
+    <div class="{% if section.settings.layout == 'rail' %}product-rail no-scrollbar{% else %}product-grid{% endif %}">
+      {%- comment -%} limit belongs on the for-loop: Liquid has no array `limit` filter. {%- endcomment -%}
+      {%- for product in shown limit: section.settings.products_to_show -%}
+        {%- render 'product-card', product: product -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Featured collection",
+  "settings": [
+    { "type": "collection", "id": "collection", "label": "Collection" },
+    { "type": "text", "id": "title", "label": "Title", "default": "New" },
+    { "type": "text", "id": "accent", "label": "Accent word", "default": "Arrivals" },
+    { "type": "select", "id": "layout", "label": "Layout", "options": [{ "value": "rail", "label": "Rail (scroll on mobile)" }, { "value": "grid", "label": "Grid" }], "default": "rail" },
+    { "type": "select", "id": "tone", "label": "Background tone", "options": [{ "value": "default", "label": "Default" }, { "value": "soft", "label": "Soft" }], "default": "default" },
+    { "type": "checkbox", "id": "in_stock_only", "label": "Show in-stock products only", "default": true },
+    { "type": "range", "id": "products_to_show", "label": "Products to show", "min": 4, "max": 16, "step": 4, "default": 8 }
+  ],
+  "presets": [
+    { "name": "Featured collection" }
+  ]
+}
+{% endschema %}

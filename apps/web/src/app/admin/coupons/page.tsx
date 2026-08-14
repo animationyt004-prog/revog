@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
+import { AdminPageHeader, useAdminLiveRefresh } from "@/components/admin/live-refresh";
 import { cn, formatPrice } from "@/lib/format";
 
 interface Coupon {
@@ -37,12 +38,10 @@ export default function AdminCouponsPage() {
 
   const load = useCallback(async () => {
     const res = await authedFetch("/admin/coupons");
-    if (res.ok) setCoupons((await res.json()) as Coupon[]);
+    if (!res.ok) throw new Error("Coupons could not be refreshed.");
+    setCoupons((await res.json()) as Coupon[]);
   }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const live = useAdminLiveRefresh(load, { intervalMs: 20_000 });
 
   async function create() {
     setBusy(true);
@@ -69,7 +68,7 @@ export default function AdminCouponsPage() {
       }
       setShowForm(false);
       setForm({ code: "", description: "", type: "PERCENT", value: "", minCart: "", maxDiscount: "", usageLimit: "" });
-      await load();
+      await live.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create coupon.");
     } finally {
@@ -79,30 +78,28 @@ export default function AdminCouponsPage() {
 
   async function toggle(id: string) {
     await authedFetch(`/admin/coupons/${id}/toggle`, { method: "PATCH" });
-    await load();
+    await live.refresh();
   }
 
   if (coupons === null) {
     return (
-      <div className="grid place-items-center py-24">
-        <Loader2 size={26} className="animate-spin text-volt" />
+      <div>
+        <AdminPageHeader title="Coupons" live={live} />
+        <div className="grid place-items-center py-24">
+          {live.error ? <p className="text-sm text-blood">{live.error}</p> : <Loader2 size={26} className="animate-spin text-volt" />}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="display text-3xl sm:text-4xl">
-          Coupons<span className="text-volt">.</span>
-        </h1>
-        <button
+      <AdminPageHeader title="Coupons" count={coupons.length} live={live} actions={<button
           onClick={() => setShowForm((v) => !v)}
-          className="display flex items-center gap-1.5 bg-volt px-4 py-2.5 text-base text-ink"
+          className="flex h-9 items-center gap-1.5 bg-volt px-3 text-sm font-semibold text-ink"
         >
           <Plus size={16} /> New Coupon
-        </button>
-      </div>
+        </button>} />
 
       {/* Create form */}
       {showForm && (

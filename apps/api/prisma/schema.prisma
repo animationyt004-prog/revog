@@ -115,11 +115,15 @@ enum NotificationType {
 // ---------------------------------------------------------------------------
 
 model User {
-  id String @id @default(cuid())
-  /** Null for accounts created by SMS login that never supplied an email. */
+  id            String   @id @default(cuid())
+  /**
+   * Null for accounts created by SMS login that never supplied an email.
+   */
   email         String?  @unique
   name          String?
-  /** Bare 10-digit Indian mobile. Unique so SMS-OTP login can upsert by phone. */
+  /**
+   * Bare 10-digit Indian mobile. Unique so SMS-OTP login can upsert by phone.
+   */
   phone         String?  @unique
   role          Role     @default(CUSTOMER)
   emailVerified Boolean  @default(false)
@@ -141,8 +145,10 @@ model User {
 
 // One-time passwords for login. Codes are stored HASHED, never plain.
 model OtpCode {
-  id String @id @default(cuid())
-  /** Email address, or a bare 10-digit mobile when the code went out by SMS. */
+  id         String    @id @default(cuid())
+  /**
+   * Email address, or a bare 10-digit mobile when the code went out by SMS.
+   */
   identifier String
   codeHash   String
   attempts   Int       @default(0)
@@ -218,7 +224,7 @@ model Product {
   name        String
   slug        String        @unique
   description String        @db.Text
-  brand       String        @default("Hyra Fashion")
+  brand       String        @default("HyraLuxe")
   gender      Gender        @default(MEN)
   fit         Fit           @default(OVERSIZED)
   fabric      String?
@@ -358,10 +364,19 @@ model Order {
   couponCode      String?
   addressSnapshot Json // frozen copy of the shipping address at purchase time
 
+  // Meta's browser and click ids (_fbp/_fbc) plus the IP and user agent of the
+  // request that placed the order. The server-side Purchase is sent minutes to
+  // hours later — from a Razorpay webhook, with no shopper on the line — so
+  // this is the only place that context still exists when it is needed.
+  metaAttribution Json?
+
   // Shipment / tracking — set by admin when the order is marked SHIPPED.
-  courier        String?
-  trackingNumber String?
-  trackingUrl    String?
+  courier             String?
+  trackingNumber      String?
+  trackingUrl         String?
+  estimatedDeliveryAt DateTime?
+  revisedDeliveryAt   DateTime?
+  shipmentUpdatedAt   DateTime?
 
   placedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -459,6 +474,7 @@ model Review {
   rating             Int // 1-5
   title              String?
   body               String?  @db.Text
+  photoUrl           String?
   isVerifiedPurchase Boolean  @default(false)
   createdAt          DateTime @default(now())
 
@@ -546,6 +562,9 @@ enum AnalyticsEventType {
   PAGE_VIEW
   PRODUCT_VIEW
   ADD_TO_CART
+  INITIATE_CHECKOUT
+  ADD_PAYMENT_INFO
+  LEAD
 }
 
 model AnalyticsEvent {

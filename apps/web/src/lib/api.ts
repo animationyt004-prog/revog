@@ -44,12 +44,7 @@ async function get<T>(path: string, fallback: T): Promise<T> {
 
 export type Collection = "new" | "trending" | "limited" | "bestsellers";
 export type SortKey =
-  | "newest"
-  | "popular"
-  | "price_asc"
-  | "price_desc"
-  | "discount"
-  | "rating";
+  "newest" | "popular" | "price_asc" | "price_desc" | "discount" | "rating";
 
 export interface ProductFilters {
   q?: string;
@@ -60,6 +55,7 @@ export interface ProductFilters {
   fits?: string[];
   fabrics?: string[];
   occasions?: string[];
+  works?: string[];
   minPrice?: number; // paise
   maxPrice?: number; // paise
   sort?: SortKey;
@@ -77,6 +73,9 @@ export interface Facets {
   colors: { name: string; hex: string }[];
   fits: string[];
   fabrics: string[];
+  occasions: string[];
+  works: string[];
+  inStockCount: number;
   priceRange: { min: number; max: number };
 }
 
@@ -90,6 +89,7 @@ function filterParams(opts: ProductFilters): URLSearchParams {
   if (opts.fits?.length) params.set("fits", opts.fits.join(","));
   if (opts.fabrics?.length) params.set("fabrics", opts.fabrics.join(","));
   if (opts.occasions?.length) params.set("occasions", opts.occasions.join(","));
+  if (opts.works?.length) params.set("works", opts.works.join(","));
   if (opts.minPrice != null) params.set("minPrice", String(opts.minPrice));
   if (opts.maxPrice != null) params.set("maxPrice", String(opts.maxPrice));
   if (opts.sort) params.set("sort", opts.sort);
@@ -98,17 +98,21 @@ function filterParams(opts: ProductFilters): URLSearchParams {
   return params;
 }
 
-export async function getProducts(opts: ProductFilters = {}): Promise<ProductCardData[]> {
+export async function getProducts(
+  opts: ProductFilters = {},
+): Promise<ProductCardData[]> {
   return (await getProductList(opts)).items;
 }
 
-export function getProductList(opts: ProductFilters = {}): Promise<ProductList> {
+export function getProductList(
+  opts: ProductFilters = {},
+): Promise<ProductList> {
   const params = filterParams(opts);
   const qs = params.size ? `?${params}` : "";
   return get<ProductList>(`/products${qs}`, { items: [], total: 0 });
 }
 
-export function getFacets(scope: {
+export async function getFacets(scope: {
   category?: string;
   collection?: Collection;
 }): Promise<Facets> {
@@ -116,17 +120,30 @@ export function getFacets(scope: {
   if (scope.category) params.set("category", scope.category);
   if (scope.collection) params.set("collection", scope.collection);
   const qs = params.size ? `?${params}` : "";
-  return get<Facets>(`/products/facets${qs}`, {
+  const facets = await get<Facets>(`/products/facets${qs}`, {
     sizes: [],
     colors: [],
     fits: [],
     fabrics: [],
+    occasions: [],
+    works: [],
+    inStockCount: 0,
     priceRange: { min: 0, max: 0 },
   });
+  return {
+    ...facets,
+    occasions: facets.occasions ?? [],
+    works: facets.works ?? [],
+    inStockCount: facets.inStockCount ?? 0,
+  };
 }
 
 export function getRelated(slug: string): Promise<ProductCardData[]> {
-  return get<ProductCardData[]>(`/products/${slug}/related`, []);
+  // Recommendations are optional. A transient failure here must never take
+  // down the product page or block its primary purchase action.
+  return get<ProductCardData[]>(`/products/${slug}/related`, []).catch(
+    () => [],
+  );
 }
 
 export interface PincodeResult {
@@ -151,6 +168,7 @@ export interface Testimonial {
   id: string;
   rating: number;
   body: string | null;
+  photoUrl: string | null;
   createdAt: string;
   product: { name: string; slug: string };
   author: string;

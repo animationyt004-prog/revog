@@ -3,8 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OrderStatus, ReturnStatus } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { orderViewToken } from '../orders/order-token';
 
 export const RETURN_REASONS = [
   'Size too small',
@@ -18,7 +20,16 @@ export const RETURN_REASONS = [
 
 @Injectable()
 export class ReturnsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly tokenSecret: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    config: ConfigService,
+  ) {
+    this.tokenSecret =
+      config.get<string>('ORDER_TOKEN_SECRET') ||
+      config.getOrThrow<string>('JWT_ACCESS_SECRET');
+  }
 
   async create(
     userId: string,
@@ -32,7 +43,9 @@ export class ReturnsService {
       throw new NotFoundException('Order not found.');
     }
     if (order.status !== OrderStatus.DELIVERED) {
-      throw new BadRequestException('Returns are available once an order is delivered.');
+      throw new BadRequestException(
+        'Returns are available once an order is delivered.',
+      );
     }
     if (order.returns.some((r) => r.status !== ReturnStatus.REJECTED)) {
       throw new BadRequestException('A return is already open for this order.');
@@ -71,15 +84,25 @@ export class ReturnsService {
     return request;
   }
 
-  listForUser(userId: string) {
-    return this.prisma.returnRequest.findMany({
+  async listForUser(userId: string) {
+    const requests = await this.prisma.returnRequest.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
-        order: { select: { orderNumber: true, total: true } },
-        orderItem: { select: { productName: true, variantLabel: true, image: true } },
+        order: { select: { orderNumber: true, email: true, total: true } },
+        orderItem: {
+          select: { productName: true, variantLabel: true, image: true },
+        },
       },
     });
+    // viewToken lets the "view order" link drop the buyer's email from the URL.
+    return requests.map((r) => ({
+      ...r,
+      order: {
+        ...r.order,
+        viewToken: orderViewToken(r.order.orderNumber, this.tokenSecret),
+      },
+    }));
   }
 
   // ------------------------------------------------------------- admin
@@ -88,7 +111,14 @@ export class ReturnsService {
     return this.prisma.returnRequest.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        order: { select: { orderNumber: true, email: true, total: true, paymentMethod: true } },
+        order: {
+          select: {
+            orderNumber: true,
+            email: true,
+            total: true,
+            paymentMethod: true,
+          },
+        },
         orderItem: { select: { productName: true, variantLabel: true } },
         user: { select: { email: true } },
       },
@@ -111,64 +141,75 @@ export class ReturnsService {
       REFUNDED: [],
     };
     if (!allowed[request.status].includes(status)) {
-      throw new BadRequestException(`Cannot move return from ${request.status} to ${status}.`);
+      throw new BadRequestException(
+        `Cannot move return from ${request.status} to ${status}.`,
+      );
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.returnRequest.update({
-        where: { id },
-        data: {
-          status,
-          resolvedAt:
-            status === ReturnStatus.REJECTED || status === ReturnStatus.REFUNDED
-              ? new Date()
-              : null,
-        },
-      });
-
-      if (status === ReturnStatus.REJECTED) {
-        // Order goes back to its delivered life.
-        await tx.order.update({
-          where: { id: request.orderId },
+    return this.prisma.$transaction(
+      async (tx) => {
+        const updated = await tx.returnRequest.update({
+          where: { id },
           data: {
-            status: OrderStatus.DELIVERED,
-            events: { create: { status: OrderStatus.DELIVERED, note: 'Return rejected' } },
+            status,
+            resolvedAt:
+              status === ReturnStatus.REJECTED ||
+              status === ReturnStatus.REFUNDED
+                ? new Date()
+                : null,
           },
         });
-      }
 
-      if (status === ReturnStatus.RECEIVED) {
-        // Item is back — restock it.
-        const items = request.orderItemId
-          ? request.order.items.filter((i) => i.id === request.orderItemId)
-          : request.order.items;
-        for (const item of items) {
-          if (!item.variantId) continue;
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { increment: item.quantity } },
-          });
-        }
-      }
-
-      if (status === ReturnStatus.REFUNDED) {
-        await tx.order.update({
-          where: { id: request.orderId },
-          data: {
-            status: OrderStatus.RETURNED,
-            paymentStatus: 'REFUNDED',
-            payment: { update: { status: 'REFUNDED' } },
-            events: {
-              create: {
-                status: OrderStatus.RETURNED,
-                note: `Refund of ₹${((request.refundAmount ?? 0) / 100).toFixed(0)} processed`,
+        if (status === ReturnStatus.REJECTED) {
+          // Order goes back to its delivered life.
+          await tx.order.update({
+            where: { id: request.orderId },
+            data: {
+              status: OrderStatus.DELIVERED,
+              events: {
+                create: {
+                  status: OrderStatus.DELIVERED,
+                  note: 'Return rejected',
+                },
               },
             },
-          },
-        });
-      }
+          });
+        }
 
-      return updated;
-    }, { timeout: 15_000 });
+        if (status === ReturnStatus.RECEIVED) {
+          // Item is back — restock it.
+          const items = request.orderItemId
+            ? request.order.items.filter((i) => i.id === request.orderItemId)
+            : request.order.items;
+          for (const item of items) {
+            if (!item.variantId) continue;
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
+        }
+
+        if (status === ReturnStatus.REFUNDED) {
+          await tx.order.update({
+            where: { id: request.orderId },
+            data: {
+              status: OrderStatus.RETURNED,
+              paymentStatus: 'REFUNDED',
+              payment: { update: { status: 'REFUNDED' } },
+              events: {
+                create: {
+                  status: OrderStatus.RETURNED,
+                  note: `Refund of ₹${((request.refundAmount ?? 0) / 100).toFixed(0)} processed`,
+                },
+              },
+            },
+          });
+        }
+
+        return updated;
+      },
+      { timeout: 15_000 },
+    );
   }
 }

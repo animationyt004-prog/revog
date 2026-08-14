@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { PageShell, PolicySection } from "@/components/layout/page-shell";
+import { MetaContactLink } from "@/components/meta-contact-link";
 import {
   BUSINESS,
   HAS_ADDRESS,
@@ -26,8 +27,11 @@ export default function ContactPage() {
     >
       <div className="grid gap-3 sm:grid-cols-2">
         {HAS_PHONE && (
-          <a
-            href={whatsappLink("Hi HyraLuxe! I have a question about my order.")}
+          <MetaContactLink
+            method="whatsapp"
+            href={whatsappLink(
+              "Hi HyraLuxe! I have a question about my order.",
+            )}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
@@ -37,10 +41,11 @@ export default function ContactPage() {
               <span className="block font-semibold text-paper">WhatsApp</span>
               <span className="text-xs">Fastest — chat with us</span>
             </span>
-          </a>
+          </MetaContactLink>
         )}
 
-        <a
+        <MetaContactLink
+          method="email"
           href={`mailto:${BUSINESS.email}`}
           className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
         >
@@ -49,10 +54,11 @@ export default function ContactPage() {
             <span className="block font-semibold text-paper">Email</span>
             <span className="text-xs break-all">{BUSINESS.email}</span>
           </span>
-        </a>
+        </MetaContactLink>
 
         {HAS_PHONE && (
-          <a
+          <MetaContactLink
+            method="phone"
             href={`tel:+${BUSINESS.phone}`}
             className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4 transition-colors hover:border-volt"
           >
@@ -61,13 +67,15 @@ export default function ContactPage() {
               <span className="block font-semibold text-paper">Phone</span>
               <span className="text-xs">{formattedPhone()}</span>
             </span>
-          </a>
+          </MetaContactLink>
         )}
 
         <div className="flex items-start gap-3 border border-paper/10 bg-ink-2 p-4">
           <Clock size={18} className="mt-0.5 shrink-0 text-volt" />
           <span>
-            <span className="block font-semibold text-paper">Support hours</span>
+            <span className="block font-semibold text-paper">
+              Support hours
+            </span>
             <span className="text-xs">{BUSINESS.hours}</span>
           </span>
         </div>
@@ -78,7 +86,7 @@ export default function ContactPage() {
           <p className="flex items-start gap-2">
             <MapPin size={16} className="mt-0.5 shrink-0 text-volt" />
             <span>
-              {BUSINESS.legalName}
+              {BUSINESS.legalName ?? BUSINESS.name}
               <br />
               {formattedAddress()}
             </span>
@@ -88,11 +96,15 @@ export default function ContactPage() {
 
       <PolicySection heading="Order & return help">
         <p>
-          For anything about an existing order, please include your <strong>order number</strong>{" "}
-          (it&apos;s on your confirmation page and email) so we can help faster. Return requests can
-          also be raised directly from your order page within{" "}
+          For anything about an existing order, please include your{" "}
+          <strong>order number</strong> (it&apos;s on your confirmation page and
+          email) so we can help faster. Return requests can also be raised
+          directly from your order page within{" "}
           {BUSINESS.policy.returnWindowDays} days of delivery — see our{" "}
-          <a href="/policies/returns" className="text-volt underline underline-offset-2">
+          <a
+            href="/policies/returns"
+            className="text-volt underline underline-offset-2"
+          >
             returns policy
           </a>
           .
@@ -101,8 +113,9 @@ export default function ContactPage() {
 
       <PolicySection heading="Response time">
         <p>
-          We reply to WhatsApp and email during support hours, usually the same day. Messages
-          received on Sundays or public holidays are answered on the next working day.
+          We reply to WhatsApp and email during support hours, usually the same
+          day. Messages received on Sundays or public holidays are answered on
+          the next working day.
         </p>
       </PolicySection>
     </PageShell>

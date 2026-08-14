@@ -1,0 +1,31 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "general": {
+    "search": {
+      "placeholder": "Search for products…"
+    },
+    "404": {
+      "title": "Page not found"
+    }
+  },
+  "products": {
+    "product": {
+      "sold_out": "Sold Out",
+      "add_to_cart": "Add To Cart",
+      "select_size": "Select A Size"
+    }
+  },
+  "cart": {
+    "general": {
+      "title": "Your Cart"
+    }
+  }
+}

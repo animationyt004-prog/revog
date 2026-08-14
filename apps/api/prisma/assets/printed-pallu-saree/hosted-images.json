@@ -1,0 +1,46 @@
+{
+  "mustard": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/mustard-01-main-95f9ea.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/mustard-02-back-16e41b.jpg"
+    },
+    {
+      "file": "x-collage-1.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/mustard-x-collage-1-0271a9.jpg"
+    }
+  ],
+  "khaki": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/khaki-01-main-a4dbe1.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/khaki-02-back-b42e25.jpg"
+    }
+  ],
+  "maroon": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/maroon-01-main-2574e3.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/maroon-02-back-01a907.jpg"
+    }
+  ],
+  "teal": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/teal-01-main-7b3782.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-printed-pallu-embroidered-buti-saree/teal-02-back-66ff54.jpg"
+    }
+  ]
+}

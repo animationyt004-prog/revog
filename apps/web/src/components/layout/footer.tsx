@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { MetaContactLink } from "@/components/meta-contact-link";
+import {
+  BUSINESS,
+  HAS_ADDRESS,
+  formattedAddress,
+  formattedPhone,
+} from "@/lib/business";
 import { COLLECTIONS, stockedCollectionSlugs } from "@/lib/collections";
 import { Wordmark } from "./wordmark";
 
@@ -63,33 +70,66 @@ export async function Footer() {
   ];
 
   return (
-    <footer className="mt-auto bg-night text-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
+    <footer className="mt-auto bg-black text-white">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
+        <div className="md:grid md:grid-cols-[2fr_1fr_1fr_1fr_1fr] md:gap-10">
           <div>
             <Wordmark size="lg" tone="dark" />
+            <div className="mt-4 space-y-1 text-xs leading-relaxed text-white/55">
+              <p>{BUSINESS.legalName ?? BUSINESS.name}</p>
+              <p>
+                <MetaContactLink
+                  method="email"
+                  href={`mailto:${BUSINESS.email}`}
+                  className="hover:text-gold"
+                >
+                  {BUSINESS.email}
+                </MetaContactLink>
+                {" · "}
+                <MetaContactLink
+                  method="phone"
+                  href={`tel:+${BUSINESS.phone}`}
+                  className="hover:text-gold"
+                >
+                  {formattedPhone()}
+                </MetaContactLink>
+              </p>
+              {HAS_ADDRESS ? <p>{formattedAddress()}</p> : null}
+            </div>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/65">
               Indian fashion for every day — ethnic and casual, curated in India
               with honest pricing and delivery across the country.
             </p>
           </div>
-          {COLUMNS.map((col) => (
-            <div key={col.heading}>
-              <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">{col.heading}</h4>
-              <ul className="space-y-2">
-                {col.links.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-sm text-white/65 transition-colors hover:text-gold"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Phones get two flowing columns rather than five stacked ones —
+              stacking put the footer at over a screen and a half. Multi-column
+              rather than a grid because the lists are uneven (Shop can hold a
+              single stocked link), and a grid row leaves the short one a hole.
+              `md:contents` dissolves this wrapper so the desktop grid still
+              receives the columns as its own children. */}
+          <div className="mt-9 columns-2 gap-x-6 md:mt-0 md:contents">
+            {COLUMNS.map((col) => (
+              <div key={col.heading} className="mb-8 break-inside-avoid md:mb-0">
+                <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">
+                  {col.heading}
+                </h4>
+                <ul className="space-y-1 md:space-y-2">
+                  {col.links.map((l) => (
+                    <li key={l.href}>
+                      {/* py-3 puts the touch area at the 44px minimum on a
+                          phone; the desktop rhythm is left as it was. */}
+                      <Link
+                        href={l.href}
+                        className="inline-block py-3 text-sm text-white/65 transition-colors hover:text-gold md:py-0"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/12 pt-6 text-xs text-white/55 sm:flex-row">
           <p>© {new Date().getFullYear()} HyraLuxe. All rights reserved.</p>

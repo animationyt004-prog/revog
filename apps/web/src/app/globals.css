@@ -69,7 +69,8 @@ body {
 /* Outlined "ghost" text for oversized background type. */
 .text-outline {
   color: transparent;
-  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--color-paper) 22%, transparent);
+  -webkit-text-stroke: 1.5px
+    color-mix(in srgb, var(--color-paper) 22%, transparent);
 }
 
 /* Hero headline reveal — pure CSS so the LCP element paints with SSR HTML
@@ -123,5 +124,22 @@ body {
   scrollbar-width: none;
 }
 .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keep support reachable without covering the sticky purchase action. */
+body:has(.product-sticky-buy) .whatsapp-button {
+  bottom: 5.5rem;
+}
+
+@media (max-width: 639px) {
+  body:has(.product-sticky-buy) .whatsapp-button {
+    bottom: 7rem;
+  }
+}
+
+/* Keep authentication focused and prevent the floating support action from
+   covering the OTP controls or legal links on short mobile screens. */
+body:has([data-auth-page]) .whatsapp-button {
   display: none;
 }

@@ -13,8 +13,9 @@ export const ADS_IDS = (
   .map((id) => id.trim())
   .filter(Boolean);
 
-/** GA4 measurement id (G-XXXXXXXXXX) — set once a GA4 property exists. */
-export const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
+/** GA4 property for HyraLuxe. The env var can replace it without a code edit. */
+export const GA4_ID =
+  process.env.NEXT_PUBLIC_GA4_ID ?? "G-R8P5R37MYF";
 
 /**
  * Resolve a conversion label into a full gtag `send_to`.

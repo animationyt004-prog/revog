@@ -49,7 +49,7 @@ interface AuthState {
   bootstrap: () => Promise<void>;
   /** `identifier` is an email address or a 10-digit Indian mobile. */
   requestOtp: (identifier: string) => Promise<OtpChannel>;
-  verifyOtp: (identifier: string, code: string) => Promise<void>;
+  verifyOtp: (identifier: string, code: string) => Promise<boolean>;
   updateProfile: (name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -141,9 +141,14 @@ export const useAuth = create<AuthState>((set) => ({
   verifyOtp: async (identifier, code) => {
     const res = await post("/auth/verify-otp", { identifier, code });
     if (!res.ok) throw new Error(await errorMessage(res, "Incorrect OTP."));
-    const data = (await res.json()) as { accessToken: string; user: AuthUser };
+    const data = (await res.json()) as {
+      accessToken: string;
+      user: AuthUser;
+      isNewUser?: boolean;
+    };
     authMutationVersion += 1;
     set({ status: "authed", user: data.user, accessToken: data.accessToken });
+    return data.isNewUser === true;
   },
 
   updateProfile: async (name) => {

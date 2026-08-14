@@ -14,6 +14,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { authedFetch } from "@/lib/auth-store";
 import { cn, formatPrice } from "@/lib/format";
+import { orderHref } from "@/lib/order-link";
 import type { OrderData } from "@/lib/types";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -114,7 +115,7 @@ export function OrdersView() {
                     transition={{ delay: index * 0.04, duration: 0.3 }}
                   >
                     <Link
-                      href={`/order/${order.orderNumber}?email=${encodeURIComponent(user?.email ?? "")}`}
+                      href={orderHref(order, user?.email)}
                       className="group grid grid-cols-[64px_1fr_auto] items-center gap-4 border-b border-paper/10 py-5 transition-colors hover:border-volt/50 sm:grid-cols-[76px_1fr_150px_auto]"
                     >
                       <div className="relative aspect-[3/4] w-16 overflow-hidden bg-ink-2 sm:w-[76px]">

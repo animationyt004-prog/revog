@@ -17,10 +17,12 @@ import {
   X,
 } from "lucide-react";
 import { AccountTabs } from "@/components/account/account-tabs";
+import { AccountLoadingScreen } from "@/components/account/account-session";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { authedFetch, useAuth } from "@/lib/auth-store";
 import { cn, formatPrice } from "@/lib/format";
+import { orderHref } from "@/lib/order-link";
 import type { OrderData } from "@/lib/types";
 
 interface AccountReturn {
@@ -165,45 +167,7 @@ export default function AccountPage() {
   }
 
   if (status !== "authed" || !user) {
-    return (
-      <main className="grid min-h-svh place-items-center bg-ink px-5 text-center">
-        <div>
-          <p className="display text-2xl">
-            HYRALUXE<span className="text-volt">.</span>
-          </p>
-          {!sessionFailed && (
-            <Loader2
-              size={24}
-              className="mx-auto mt-6 animate-spin text-volt"
-            />
-          )}
-          <p className="mt-4 text-sm font-semibold">
-            {sessionFailed
-              ? "Session could not be restored"
-              : "Opening your account"}
-          </p>
-          <p className="mt-1 text-xs text-paper-dim">
-            {sessionFailed
-              ? "Please sign in again to continue."
-              : "Restoring your secure session."}
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <a
-              href="/account"
-              className="flex h-10 items-center bg-volt px-4 text-sm font-semibold text-white"
-            >
-              Reload account
-            </a>
-            <a
-              href="/login?next=/account"
-              className="flex h-10 items-center border border-paper/20 px-4 text-sm font-semibold"
-            >
-              Sign in again
-            </a>
-          </div>
-        </div>
-      </main>
-    );
+    return <AccountLoadingScreen nextPath="/account" failed={sessionFailed} />;
   }
 
   const activeOrders =
@@ -228,12 +192,12 @@ export default function AccountPage() {
       <main className="flex-1 bg-ink">
         <section className="bg-night text-white">
           <div className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 sm:pt-14">
-            <p className="text-xs font-semibold uppercase text-white/55">
+            <p className="text-xs font-semibold uppercase text-gold">
               Private member account
             </p>
             <div className="mt-5 flex flex-wrap items-start justify-between gap-6">
               <div className="flex min-w-0 items-center gap-4">
-                <span className="display grid h-16 w-16 shrink-0 place-items-center rounded-full border border-white/20 bg-white/10 text-2xl">
+                <span className="display grid h-16 w-16 shrink-0 place-items-center rounded-full border border-gold/40 bg-white/10 text-2xl">
                   {initial}
                 </span>
                 <div className="min-w-0">
@@ -380,7 +344,7 @@ export default function AccountPage() {
                   {orders.slice(0, 3).map((order) => (
                     <Link
                       key={order.id}
-                      href={`/order/${order.orderNumber}?email=${encodeURIComponent(user.email ?? "")}`}
+                      href={orderHref(order, user.email)}
                       className="group grid grid-cols-[52px_1fr_auto] items-center gap-3 border-b border-paper/10 py-4"
                     >
                       <div className="relative aspect-[3/4] w-13 overflow-hidden bg-ink-2">

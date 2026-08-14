@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Check, Copy, X } from "lucide-react";
 import { cn } from "@/lib/format";
+import { track } from "@/lib/track";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 const SEEN_KEY = "revog_welcome_v1";
@@ -62,6 +63,10 @@ export function WelcomePopup() {
       const d = (await res.json().catch(() => ({}))) as { code?: string; message?: string };
       if (!res.ok || !d.code) throw new Error(d.message ?? "Something went wrong.");
       setCode(d.code);
+      // A shopper who hands over an email is the clearest intent signal on the
+      // site short of a sale, and it was going nowhere near Meta. Reported
+      // through track(), so the Conversions API copy goes out with it.
+      track("LEAD", { contentName: "Welcome popup signup" });
       try {
         localStorage.setItem(SEEN_KEY, "1");
       } catch {

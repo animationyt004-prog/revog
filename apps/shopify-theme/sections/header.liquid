@@ -1,0 +1,75 @@
+{%- comment -%} Ports apps/web/src/components/layout/navbar.tsx {%- endcomment -%}
+<header class="site-header" data-site-header>
+  <div class="site-header__row1">
+    <div class="site-header__start">
+      <button class="site-header__menu-btn" data-menu-toggle aria-label="Open menu" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-icon-menu><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-icon-close style="display:none"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <form action="{{ routes.search_url }}" method="get" role="search" class="site-header__search">
+        <label class="site-header__search-field">
+          <span class="visually-hidden">Search products</span>
+          <svg class="site-header__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input class="site-header__search-input" type="search" name="q" placeholder="Search for products…" autocomplete="off">
+          <input type="hidden" name="type" value="product">
+        </label>
+      </form>
+    </div>
+
+    <a href="{{ routes.root_url }}" aria-label="{{ shop.name }} — home" class="site-header__brand">
+      {%- render 'wordmark', size: 'sm' -%}
+    </a>
+
+    <div class="site-header__actions">
+      <a href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}"
+         aria-label="{% if customer %}Customer account{% else %}Login{% endif %}"
+         class="site-header__icon-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+        {%- if customer -%}<span class="site-header__dot"></span>{%- endif -%}
+      </a>
+      <a href="{{ routes.root_url }}pages/wishlist" aria-label="Wishlist" class="site-header__icon-link site-header__icon-link--wishlist" data-wishlist-link>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A5.5 5.5 0 0 0 12 5a5.5 5.5 0 0 0-10 3.5C2 10.6 3.5 12.5 5 14l7 7Z"/></svg>
+        <span class="site-header__badge" data-wishlist-count hidden>0</span>
+      </a>
+      <button aria-label="Cart" class="site-header__icon-link" data-cart-open>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="site-header__badge" data-cart-count{% if cart.item_count == 0 %} hidden{% endif %}>{{ cart.item_count }}</span>
+      </button>
+    </div>
+  </div>
+
+  <nav aria-label="Categories" class="site-header__row2">
+    <ul class="site-header__nav-list">
+      {%- for link in section.settings.menu.links -%}
+        <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+      {%- endfor -%}
+    </ul>
+  </nav>
+
+  <div class="site-header__drawer" data-mobile-drawer>
+    <form action="{{ routes.search_url }}" method="get" role="search">
+      <label class="site-header__search-field" style="display:block">
+        <span class="visually-hidden">Search products</span>
+        <input class="site-header__drawer-input" type="search" name="q" placeholder="Search products" autocomplete="off">
+        <input type="hidden" name="type" value="product">
+      </label>
+    </form>
+    <ul class="site-header__drawer-list">
+      {%- for link in section.settings.menu.links -%}
+        <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+      {%- endfor -%}
+      <li><a href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}">{% if customer %}Account{% else %}Login{% endif %}</a></li>
+      <li><a href="{{ routes.root_url }}pages/wishlist">Wishlist</a></li>
+    </ul>
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    { "type": "link_list", "id": "menu", "label": "Category rail menu", "default": "main-menu" }
+  ]
+}
+{% endschema %}

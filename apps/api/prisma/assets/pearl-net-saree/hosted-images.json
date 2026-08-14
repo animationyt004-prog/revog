@@ -1,0 +1,52 @@
+{
+  "baby-pink": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/baby-pink-01-main-4328f4.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/baby-pink-02-back-1ccc28.jpg"
+    }
+  ],
+  "powder-blue": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/powder-blue-01-main-878e6f.jpg"
+    },
+    {
+      "file": "x-collage-1.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/powder-blue-x-collage-1-ae91bf.jpg"
+    }
+  ],
+  "white": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/white-01-main-f6f175.jpg"
+    },
+    {
+      "file": "x-collage-1.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/white-x-collage-1-64c9d1.jpg"
+    }
+  ],
+  "lavender": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/lavender-01-main-e8c16b.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/lavender-02-back-3a44ed.jpg"
+    }
+  ],
+  "pista-green": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/pista-green-01-main-332081.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-pearl-sequin-embellished-net-saree/pista-green-02-back-5aba76.jpg"
+    }
+  ]
+}

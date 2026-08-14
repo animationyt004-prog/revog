@@ -70,6 +70,14 @@ export default function ReturnsPolicyPage() {
         </ul>
       </PolicySection>
 
+      <PolicySection heading="Return pickup and fees">
+        <p>
+          For a normal return, the customer pays any return shipping or pickup fee shown during the
+          return confirmation. If the item is damaged, defective, or different from what you ordered,
+          we cover the return pickup and refund the full eligible amount.
+        </p>
+      </PolicySection>
+
       <PolicySection heading="Damaged, defective or wrong item">
         <p>
           If your parcel arrives damaged, defective, or with the wrong product, contact us within{" "}

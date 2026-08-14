@@ -16,7 +16,8 @@ declare global {
 // this to the whole "AW-XXXXXXXXX/AbCdEf..." from the conversion snippet — a
 // bare label is also accepted but then it has to belong to the first account.
 const PURCHASE_SEND_TO = sendTo(
-  process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL,
+  process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL ??
+    "AW-18325515272/NrZBCK-v1t8cEIjYpKJE",
 );
 
 /** Report a purchase conversion to Google Ads once per order. */

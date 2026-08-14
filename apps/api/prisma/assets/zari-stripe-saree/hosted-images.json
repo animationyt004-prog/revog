@@ -1,0 +1,52 @@
+{
+  "olive": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/olive-01-main-086885.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/olive-02-back-313710.jpg"
+    }
+  ],
+  "green": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/green-01-main-fc75a3.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/green-02-back-20c4b6.jpg"
+    }
+  ],
+  "maroon": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/maroon-01-main-39a824.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/maroon-02-back-b99508.jpg"
+    }
+  ],
+  "navy": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/navy-01-main-80adc0.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/navy-02-back-ed0b8a.jpg"
+    }
+  ],
+  "purple": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/purple-01-main-f22e17.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-metallic-zari-striped-cutwork-border-saree/purple-02-back-a055d1.jpg"
+    }
+  ]
+}

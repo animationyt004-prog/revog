@@ -1,4 +1,10 @@
-import { BadgeIndianRupee, MessageCircle, PackageCheck, RotateCcw, Truck } from "lucide-react";
+import {
+  BadgeIndianRupee,
+  MessageCircle,
+  PackageCheck,
+  RotateCcw,
+  Truck,
+} from "lucide-react";
 
 /**
  * The five things a first-time buyer checks before trusting a small store:
@@ -27,7 +33,7 @@ const SIGNALS = [
   {
     icon: RotateCcw,
     title: "7-day returns",
-    detail: "Easy returns & exchanges, no questions asked",
+    detail: "Unused items with tags, as per policy",
   },
   {
     icon: PackageCheck,
@@ -45,14 +51,29 @@ const SIGNALS = [
 
 export function TrustStrip() {
   return (
-    <section aria-label="Why shop with us" className="border-y border-paper/10 bg-ink-2">
-      <ul className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-5 px-4 py-7 sm:px-6 md:grid-cols-3 lg:grid-cols-5">
+    <section
+      aria-label="Why shop with us"
+      className="border-y border-paper/10 bg-ink"
+    >
+      <ul className="mx-auto grid max-w-7xl grid-cols-2 px-4 py-6 sm:px-6 md:grid-cols-3 lg:grid-cols-5">
         {SIGNALS.map(({ icon: Icon, title, detail }) => (
-          <li key={title} className="flex items-start gap-3">
-            <Icon size={20} className="mt-0.5 shrink-0 text-volt" aria-hidden />
+          <li
+            key={title}
+            className="flex items-start gap-3 border-paper/12 px-2 py-4 odd:border-r even:pl-4 last:col-span-2 last:border-r-0 last:justify-center md:col-span-1 md:border-r md:odd:border-r md:last:col-span-1 md:last:justify-start lg:px-5 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0"
+          >
+            <Icon
+              size={18}
+              strokeWidth={1.6}
+              className="mt-0.5 shrink-0 text-volt"
+              aria-hidden
+            />
             <div>
-              <p className="text-sm font-semibold leading-snug text-paper">{title}</p>
-              <p className="mt-0.5 text-xs leading-snug text-paper-dim">{detail}</p>
+              <p className="text-sm font-semibold leading-snug text-paper">
+                {title}
+              </p>
+              <p className="mt-0.5 text-xs leading-snug text-paper-dim">
+                {detail}
+              </p>
             </div>
           </li>
         ))}

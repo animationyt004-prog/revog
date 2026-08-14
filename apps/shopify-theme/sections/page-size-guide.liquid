@@ -1,0 +1,12 @@
+{%- comment -%} Ports apps/web/src/app/size-guide/page.tsx {%- endcomment -%}
+<div class="page-shell">
+  <h1>Size Guide<span class="accent">.</span></h1>
+  <p class="page-shell__intro">Sarees are free size. For everything else, here are our garment-flat measurements.</p>
+  <div class="page-shell__body">
+    {%- render 'size-guide-content' -%}
+  </div>
+</div>
+
+{% schema %}
+{ "name": "Size guide page" }
+{% endschema %}

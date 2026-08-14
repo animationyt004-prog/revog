@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -16,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import {
   Badge,
   Fit,
+  Gender,
   OrderStatus,
   ProductStatus,
   ReturnStatus,
@@ -88,9 +90,42 @@ class AdvanceOrderDto {
   trackingNumber?: string;
 
   @IsOptional()
+  @IsUrl({ require_protocol: true, protocols: ['https'] })
+  trackingUrl?: string | null;
+
+  @IsOptional()
+  @IsISO8601()
+  estimatedDeliveryAt?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  revisedDeliveryAt?: string | null;
+}
+
+class UpdateShipmentDto {
+  @IsString()
+  @Length(2, 60)
+  courier!: string;
+
+  @IsString()
+  @Length(2, 80)
+  trackingNumber!: string;
+
+  @IsOptional()
+  @IsUrl({ require_protocol: true, protocols: ['https'] })
+  trackingUrl?: string | null;
+
+  @IsISO8601()
+  estimatedDeliveryAt!: string;
+
+  @IsOptional()
+  @IsISO8601()
+  revisedDeliveryAt?: string | null;
+
+  @IsOptional()
   @IsString()
   @Length(0, 300)
-  trackingUrl?: string;
+  note?: string;
 }
 
 class UpdateProductDto {
@@ -130,6 +165,18 @@ class ColorDto {
   hex!: string;
 }
 
+class ProductImageDto {
+  @IsUrl({ require_protocol: true })
+  url!: string;
+
+  /** Which colour this photo shows. Ad feeds publish one entry per variant, so
+   *  an untagged gallery makes every colour advertise the same picture. */
+  @IsOptional()
+  @IsString()
+  @Length(2, 40)
+  color?: string;
+}
+
 class CreateProductDto {
   @IsString()
   @Length(2, 100)
@@ -154,6 +201,12 @@ class CreateProductDto {
   @IsEnum(Fit)
   fit!: Fit;
 
+  /** Drives g:gender in the product feeds. Defaults to WOMEN, which is what
+   *  this catalogue is; a wrong value here misrepresents the item in ads. */
+  @IsOptional()
+  @IsEnum(Gender)
+  gender?: Gender;
+
   @IsOptional()
   @IsString()
   @Length(0, 120)
@@ -161,8 +214,9 @@ class CreateProductDto {
 
   @IsArray()
   @ArrayNotEmpty()
-  @IsUrl({ require_protocol: true }, { each: true })
-  images!: string[];
+  @ValidateNested({ each: true })
+  @Type(() => ProductImageDto)
+  images!: ProductImageDto[];
 
   @IsArray()
   @ArrayNotEmpty()
@@ -282,7 +336,17 @@ export class AdminController {
       courier: dto.courier,
       trackingNumber: dto.trackingNumber,
       trackingUrl: dto.trackingUrl,
+      estimatedDeliveryAt: dto.estimatedDeliveryAt,
+      revisedDeliveryAt: dto.revisedDeliveryAt,
     });
+  }
+
+  @Patch('orders/:orderNumber/shipment')
+  updateShipment(
+    @Param('orderNumber') orderNumber: string,
+    @Body() dto: UpdateShipmentDto,
+  ) {
+    return this.admin.updateShipment(orderNumber, dto);
   }
 
   // Products
@@ -305,6 +369,11 @@ export class AdminController {
   @Patch('products/:id')
   updateProduct(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.admin.updateProduct(id, dto);
+  }
+
+  @Delete('products/:id')
+  deleteProduct(@Param('id') id: string) {
+    return this.admin.deleteProduct(id);
   }
 
   @Patch('variants/:id/stock')

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
+import { AdminPageHeader, useAdminLiveRefresh } from "@/components/admin/live-refresh";
 import { cn, formatPrice } from "@/lib/format";
 
 interface AdminReturn {
@@ -34,25 +35,28 @@ const STYLE: Record<string, string> = {
 export default function AdminReturnsPage() {
   const [items, setItems] = useState<AdminReturn[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await authedFetch("/admin/returns");
-    if (res.ok) setItems((await res.json()) as AdminReturn[]);
+    if (!res.ok) throw new Error("Returns could not be refreshed.");
+    setItems((await res.json()) as AdminReturn[]);
   }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const live = useAdminLiveRefresh(load);
 
   async function resolve(id: string, status: string) {
     setBusy(true);
+    setActionError(null);
     try {
-      await authedFetch(`/admin/returns/${id}`, {
+      const response = await authedFetch(`/admin/returns/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      await load();
+      if (!response.ok) throw new Error("Return status could not be updated.");
+      await live.refresh();
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "Return update failed.");
     } finally {
       setBusy(false);
     }
@@ -60,18 +64,19 @@ export default function AdminReturnsPage() {
 
   if (items === null) {
     return (
-      <div className="grid place-items-center py-24">
-        <Loader2 size={26} className="animate-spin text-volt" />
+      <div>
+        <AdminPageHeader title="Returns" live={live} />
+        <div className="grid place-items-center py-24">
+          {live.error ? <p className="text-sm text-blood">{live.error}</p> : <Loader2 size={26} className="animate-spin text-volt" />}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="display text-3xl sm:text-4xl">
-        Returns<span className="text-volt">.</span>{" "}
-        <span className="text-base text-paper-dim">({items.length})</span>
-      </h1>
+      <AdminPageHeader title="Returns" count={items.length} live={live} />
+      {actionError && <p className="mt-3 border-l-2 border-blood bg-blood/5 px-3 py-2 text-sm text-blood" role="alert">{actionError}</p>}
 
       {items.length === 0 ? (
         <p className="py-20 text-center text-sm text-paper-dim">No return requests. 🎉</p>

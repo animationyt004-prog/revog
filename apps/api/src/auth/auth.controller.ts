@@ -4,6 +4,8 @@ import {
   Get,
   HttpCode,
   Ip,
+  Logger,
+  Patch,
   Post,
   Req,
   Res,
@@ -49,10 +51,18 @@ class VerifyOtpDto {
   code!: string;
 }
 
+class UpdateProfileDto {
+  @IsString()
+  @Length(2, 80)
+  name!: string;
+}
+
 function requireIdentifier(raw: string | undefined): Identifier {
   const id = raw ? parseIdentifier(raw) : null;
   if (!id) {
-    throw new BadRequestException('Enter a valid email address or 10-digit mobile number.');
+    throw new BadRequestException(
+      'Enter a valid email address or 10-digit mobile number.',
+    );
   }
   return id;
 }
@@ -62,6 +72,7 @@ const REFRESH_COOKIE = 'nc_refresh';
 @Controller('auth')
 export class AuthController {
   private readonly isProd: boolean;
+  private readonly logger = new Logger(AuthController.name);
 
   constructor(
     private readonly auth: AuthService,
@@ -75,9 +86,9 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
       secure: this.isProd,
-      // Storefront and API live on different domains in prod, so the cookie
-      // must be SameSite=None (requires Secure) to ride cross-site fetches.
-      sameSite: this.isProd ? 'none' : 'lax',
+      // Storefront and API are HTTPS subdomains of the same site. Lax works
+      // with credentialed API calls and survives stricter cookie policies.
+      sameSite: 'lax',
       // Sent only to auth endpoints — never rides along on product requests.
       path: '/api/auth',
       maxAge: 30 * 86_400_000,
@@ -100,7 +111,10 @@ export class AuthController {
     return {
       ok: true,
       channel: id.kind,
-      message: id.kind === 'phone' ? 'OTP sent by SMS.' : 'OTP sent. Check your email.',
+      message:
+        id.kind === 'phone'
+          ? 'OTP sent by SMS.'
+          : 'OTP sent. Check your email.',
     };
   }
 
@@ -112,15 +126,33 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.auth.verifyOtp(requireIdentifier(dto.identifier ?? dto.email), dto.code, {
-      ip,
-      userAgent: req.headers['user-agent'],
-    });
+    const tokens = await this.auth.verifyOtp(
+      requireIdentifier(dto.identifier ?? dto.email),
+      dto.code,
+      {
+        ip,
+        userAgent: req.headers['user-agent'],
+      },
+    );
     // Fold any guest cart into the account so nothing is lost at login.
-    const guestCartToken = (req.cookies as Record<string, string> | undefined)?.[CART_COOKIE];
-    await this.cart.mergeGuestIntoUser(guestCartToken, tokens.user.id);
+    const guestCartToken = (
+      req.cookies as Record<string, string> | undefined
+    )?.[CART_COOKIE];
+    // Cart recovery is useful but must never invalidate a successful login.
+    // A stale guest cart or a transient database conflict can be retried when
+    // the authenticated cart loads; the OTP has already been consumed here.
+    await this.cart
+      .mergeGuestIntoUser(guestCartToken, tokens.user.id)
+      .catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Guest cart merge skipped after login: ${reason}`);
+      });
     this.setRefreshCookie(res, tokens.refreshToken);
-    return { accessToken: tokens.accessToken, user: tokens.user };
+    return {
+      accessToken: tokens.accessToken,
+      user: tokens.user,
+      isNewUser: tokens.isNewUser,
+    };
   }
 
   @Post('refresh')
@@ -130,7 +162,9 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE] ?? '';
+    const raw =
+      (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE] ??
+      '';
     const tokens = await this.auth.refresh(raw, {
       ip,
       userAgent: req.headers['user-agent'],
@@ -142,13 +176,15 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE];
+    const raw = (req.cookies as Record<string, string> | undefined)?.[
+      REFRESH_COOKIE
+    ];
     await this.auth.logout(raw);
     res.clearCookie(REFRESH_COOKIE, {
       path: '/api/auth',
       httpOnly: true,
       secure: this.isProd,
-      sameSite: this.isProd ? 'none' : 'lax',
+      sameSite: 'lax',
     });
     return { ok: true };
   }
@@ -157,5 +193,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: JwtPayload) {
     return this.auth.me(user.sub);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  updateMe(@CurrentUser() user: JwtPayload, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(user.sub, dto.name);
   }
 }

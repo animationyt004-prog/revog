@@ -14,6 +14,8 @@ import {
   SHIPPING_FEE,
 } from '../cart/cart.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { readMetaAttribution } from '../events/meta-attribution';
+import { MetaConversionsService } from '../events/meta-conversions.service';
 
 @Injectable()
 export class PaymentsService {
@@ -21,12 +23,17 @@ export class PaymentsService {
   private readonly client: Razorpay;
   private readonly keySecret: string;
   private readonly webhookSecret: string | undefined;
+  private readonly siteUrl: string;
   readonly keyId: string;
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly meta: MetaConversionsService,
     config: ConfigService,
   ) {
+    this.siteUrl = (
+      config.get<string>('SITE_URL') || 'https://www.hyrafashions.com'
+    ).replace(/\/$/, '');
     this.keyId = config.getOrThrow<string>('RAZORPAY_KEY_ID');
     this.keySecret = config.getOrThrow<string>('RAZORPAY_KEY_SECRET');
     this.webhookSecret =
@@ -120,6 +127,7 @@ export class PaymentsService {
         },
       },
     });
+    await this.sendPurchase(updated.id);
     return {
       ok: true,
       orderNumber: updated.orderNumber,
@@ -291,7 +299,64 @@ export class PaymentsService {
         },
       },
     });
+    await this.sendPurchase(order.id);
     this.logger.log(`Order ${order.orderNumber} confirmed via webhook`);
+  }
+
+  async sendPurchase(orderId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: { include: { variant: { select: { sku: true } } } } },
+    });
+    if (!order) return;
+
+    // Ids must be the ones in the product feed (g:id is the variant SKU),
+    // otherwise Meta cannot tie the sale back to a catalog item.
+    const catalogItems = order.items.flatMap((item) => {
+      const id = item.variant?.sku?.trim();
+      return id
+        ? [
+            {
+              id,
+              quantity: item.quantity,
+              item_price: item.unitPrice / 100,
+            },
+          ]
+        : [];
+    });
+    const contentIds = catalogItems.map((item) => item.id);
+
+    // Captured when the order was placed. This call usually runs from a
+    // Razorpay webhook, so there is no request here to read a browser id, an
+    // IP or a user agent from — and without them Meta has an email hash and
+    // nothing else to match the sale against the ad click that produced it.
+    const attribution = readMetaAttribution(order.metaAttribution);
+
+    await this.meta.send({
+      eventName: 'Purchase',
+      eventId: `purchase:${order.orderNumber}`,
+      eventSourceUrl: `${this.siteUrl}/order/${order.orderNumber}`,
+      userData: {
+        email: order.email,
+        phone: order.phone ?? undefined,
+        fbp: attribution.fbp,
+        fbc: attribution.fbc,
+        clientIpAddress: attribution.ip,
+        clientUserAgent: attribution.userAgent,
+      },
+      customData: {
+        currency: 'INR',
+        value: order.total / 100,
+        order_id: order.orderNumber,
+        ...(contentIds.length
+          ? {
+              content_type: 'product',
+              content_ids: contentIds,
+              contents: catalogItems,
+            }
+          : {}),
+      },
+    });
   }
 
   /**

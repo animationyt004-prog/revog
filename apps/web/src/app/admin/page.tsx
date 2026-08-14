@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { AlertTriangle, IndianRupee, Loader2, ShoppingCart, Sunrise, Users } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
+import { AdminPageHeader, useAdminLiveRefresh } from "@/components/admin/live-refresh";
 import { cn, formatPrice } from "@/lib/format";
 
 interface Dashboard {
@@ -44,17 +45,20 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminDashboard() {
   const [data, setData] = useState<Dashboard | null>(null);
 
-  useEffect(() => {
-    authedFetch("/admin/dashboard")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setData)
-      .catch(() => setData(null));
+  const load = useCallback(async () => {
+    const response = await authedFetch("/admin/dashboard");
+    if (!response.ok) throw new Error("Dashboard could not be refreshed.");
+    setData((await response.json()) as Dashboard);
   }, []);
+  const live = useAdminLiveRefresh(load);
 
   if (!data) {
     return (
-      <div className="grid place-items-center py-24">
-        <Loader2 size={26} className="animate-spin text-volt" />
+      <div>
+        <AdminPageHeader title="Dashboard" live={live} />
+        <div className="grid place-items-center py-24">
+          {live.error ? <p className="text-sm text-blood">{live.error}</p> : <Loader2 size={26} className="animate-spin text-volt" />}
+        </div>
       </div>
     );
   }
@@ -68,9 +72,7 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="display text-3xl sm:text-4xl">
-        Dashboard<span className="text-volt">.</span>
-      </h1>
+      <AdminPageHeader title="Dashboard" live={live} />
 
       {/* Stat cards */}
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

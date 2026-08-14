@@ -1,11 +1,6 @@
+import Link from "next/link";
 import type { ProductDetail } from "@/lib/types";
 
-/**
- * The spec sheet buyers scan before adding to cart — length, whether a blouse
- * is included, how to wash it, and whether the fabric is see-through. Every
- * row is optional: only what the product actually declares is rendered, so a
- * product without these values shows nothing rather than blank rows.
- */
 export function ProductSpecs({ product }: { product: ProductDetail }) {
   const rows: { label: string; value: string }[] = [
     { label: "Saree length", value: product.sareeLength ?? "" },
@@ -33,8 +28,13 @@ export function ProductSpecs({ product }: { product: ProductDetail }) {
         ))}
       </dl>
       <p className="mt-3 text-xs text-paper-dim/70">
-        Easy 7-day returns &amp; exchanges · Cash on Delivery available · Dispatched in 1–2 working
-        days
+        7-day returns · Easy pickup · Full refund for damaged/wrong item ·{" "}
+        <Link
+          href="/policies/returns"
+          className="underline underline-offset-2 hover:text-volt"
+        >
+          Read full policy
+        </Link>
       </p>
     </div>
   );

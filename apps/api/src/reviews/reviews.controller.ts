@@ -1,6 +1,30 @@
-import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
-import { IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
-import { CurrentUser, JwtAuthGuard, type JwtPayload } from '../auth/jwt-auth.guard';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  type JwtPayload,
+} from '../auth/jwt-auth.guard';
 import { ReviewsService } from './reviews.service';
 
 class CreateReviewDto {
@@ -18,6 +42,10 @@ class CreateReviewDto {
   @IsString()
   @Length(0, 2000)
   body?: string;
+
+  @IsOptional()
+  @IsUrl({ require_protocol: true })
+  photoUrl?: string;
 }
 
 @Controller('products/:slug/reviews')
@@ -38,5 +66,21 @@ export class ReviewsController {
     @Body() dto: CreateReviewDto,
   ) {
     return this.reviews.upsert(slug, user.sub, dto);
+  }
+
+  @Post('photo')
+  @HttpCode(201)
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  uploadPhoto(
+    @Param('slug') slug: string,
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile()
+    file:
+      | { buffer: Buffer; mimetype: string; size: number; originalname: string }
+      | undefined,
+  ) {
+    if (!file) throw new BadRequestException('Choose a photo to upload.');
+    return this.reviews.uploadPhoto(slug, user.sub, file);
   }
 }

@@ -3,14 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Banknote, ChevronLeft, CreditCard, Loader2, Lock, MapPin } from "lucide-react";
+import {
+  Banknote,
+  ChevronLeft,
+  CreditCard,
+  Loader2,
+  Lock,
+  MapPin,
+} from "lucide-react";
 import { PromoTicker } from "@/components/layout/promo-ticker";
 import { authedFetch, useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
 import { cn, formatPrice } from "@/lib/format";
-import { pixelTrack } from "@/lib/pixel";
+import { metaAttribution, track } from "@/lib/track";
 import { openRazorpay, type RazorpaySession } from "@/lib/razorpay";
 import type { AddressData } from "@/lib/types";
 
@@ -36,9 +43,18 @@ const EMPTY_ADDRESS: AddressForm = {
   pincode: "",
 };
 
-const FIELDS: { key: keyof AddressForm; label: string; span?: boolean; hint?: string }[] = [
+const FIELDS: {
+  key: keyof AddressForm;
+  label: string;
+  span?: boolean;
+  hint?: string;
+}[] = [
   { key: "fullName", label: "Full Name", span: true },
-  { key: "phone", label: "Mobile Number", hint: "10-digit, for delivery updates" },
+  {
+    key: "phone",
+    label: "Mobile Number",
+    hint: "10-digit, for delivery updates",
+  },
   { key: "pincode", label: "Pincode" },
   { key: "line1", label: "Address (house no, street)", span: true },
   { key: "line2", label: "Landmark (optional)", span: true },
@@ -55,7 +71,8 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
   const [saved, setSaved] = useState<AddressData[]>([]);
   // Online payment stays hidden until it's been tested and switched on.
-  const onlinePaymentEnabled = process.env.NEXT_PUBLIC_ENABLE_ONLINE_PAYMENT === "true";
+  const onlinePaymentEnabled =
+    process.env.NEXT_PUBLIC_ENABLE_ONLINE_PAYMENT === "true";
   const [method, setMethod] = useState<"COD" | "RAZORPAY">("COD");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +138,10 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: address.phone, code: otpCode }),
       });
-      const d = (await res.json().catch(() => ({}))) as { token?: string; message?: string };
+      const d = (await res.json().catch(() => ({}))) as {
+        token?: string;
+        message?: string;
+      };
       if (!res.ok || !d.token) throw new Error(d.message ?? "Incorrect OTP.");
       setCodToken(d.token);
     } catch (e) {
@@ -131,14 +151,32 @@ export default function CheckoutPage() {
     }
   }
 
-  // Meta Pixel: checkout started (fires once when the cart is known).
+  // Report checkout only after the async cart is available. sessionStorage
+  // prevents a refresh from producing a second browser/server event pair.
   const cartTotal = cart?.summary.total;
+  const cartId = cart?.id;
+  const checkoutTracked = useRef<string | null>(null);
   useEffect(() => {
-    if (cartTotal && cartTotal > 0) {
-      pixelTrack("InitiateCheckout", { value: cartTotal / 100, currency: "INR" });
+    if (!cartTotal || cartTotal <= 0 || !cartId || !cart) return;
+    const key = `${cartId}:${cartTotal}`;
+    if (checkoutTracked.current === key) return;
+    checkoutTracked.current = key;
+    try {
+      const storageKey = `hyraluxe:checkout:${key}`;
+      if (sessionStorage.getItem(storageKey)) return;
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // Storage may be blocked; the in-memory guard still covers this mount.
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once on entry
-  }, []);
+    const contentIds = cart.items
+      .map((item) => item.sku.trim())
+      .filter(Boolean);
+    if (!contentIds.length) return;
+    track("INITIATE_CHECKOUT", {
+      contentIds,
+      value: cartTotal / 100,
+    });
+  }, [cart, cartId, cartTotal]);
 
   // Logged-in users: offer saved addresses.
   useEffect(() => {
@@ -177,9 +215,38 @@ export default function CheckoutPage() {
 
   async function placeOrder() {
     if (!formOk || placing) return;
+    if (cart && summary) {
+      const contentIds = cart.items
+        .map((item) => item.sku.trim())
+        .filter(Boolean);
+      const value =
+        method === "RAZORPAY" ? summary.prepaidTotal : summary.total;
+      const trackingKey = `hyraluxe:payment-info:${cart.id}:${method}:${value}`;
+      let shouldTrack = true;
+      try {
+        shouldTrack = !sessionStorage.getItem(trackingKey);
+        if (shouldTrack) sessionStorage.setItem(trackingKey, "1");
+      } catch {
+        // Storage can be blocked; reporting must not interrupt checkout.
+      }
+      if (shouldTrack) {
+        // Through track(), not the pixel alone: iOS and ad blockers drop the
+        // browser call often enough that a funnel step reported only there is
+        // half missing. The Conversions API copy carries the same event id.
+        track("ADD_PAYMENT_INFO", {
+          contentIds,
+          value: value / 100,
+          paymentMethod: method === "RAZORPAY" ? "online" : "cod",
+        });
+      }
+    }
     setPlacing(true);
     setError(null);
     try {
+      // The sale is reported to Meta from the server, minutes later, off a
+      // Razorpay webhook with no browser attached. These ids only exist here,
+      // so they ride along with the order and are stored against it.
+      const { fbp, fbc } = metaAttribution();
       const res = await fetch(`${API}/orders/checkout`, {
         method: "POST",
         credentials: "include",
@@ -192,23 +259,41 @@ export default function CheckoutPage() {
           email,
           address: { ...address, line2: address.line2 || undefined },
           ...(method === "COD" && codToken ? { codVerifyToken: codToken } : {}),
+          ...(fbp ? { metaFbp: fbp } : {}),
+          ...(fbc ? { metaFbc: fbc } : {}),
+          metaSourceUrl: `${window.location.origin}${window.location.pathname}`,
         }),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string | string[] };
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string | string[];
+        };
         throw new Error(
-          Array.isArray(data.message) ? data.message[0] : (data.message ?? "Could not place order."),
+          Array.isArray(data.message)
+            ? data.message[0]
+            : (data.message ?? "Could not place order."),
         );
       }
       const order = (await res.json()) as {
         orderNumber: string;
+        viewToken?: string;
         razorpay: RazorpaySession | null;
       };
+
+      // `new=1` is what authorises the receipt page to report the Purchase —
+      // without it, revisiting an old order would re-report the sale. The view
+      // token replaces the buyer's email, which used to ride in this URL and
+      // therefore into every analytics and ad beacon fired on the page.
+      const receiptUrl = (o: { orderNumber: string; viewToken?: string }) =>
+        `/order/${o.orderNumber}?${new URLSearchParams({
+          ...(o.viewToken ? { t: o.viewToken } : { email }),
+          new: "1",
+        })}`;
 
       // COD confirms server-side already — straight to the receipt.
       if (method === "COD" || !order.razorpay) {
         await fetchCart();
-        router.replace(`/order/${order.orderNumber}?email=${encodeURIComponent(email)}`);
+        router.replace(receiptUrl(order));
         return;
       }
 
@@ -237,7 +322,7 @@ export default function CheckoutPage() {
           );
         }
         await fetchCart();
-        router.replace(`/order/${order.orderNumber}?email=${encodeURIComponent(email)}`);
+        router.replace(receiptUrl(order));
         return;
       }
 
@@ -249,7 +334,10 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           orderNumber: order.orderNumber,
           email,
-          reason: outcome.kind === "failed" ? outcome.reason : "Payment window closed",
+          reason:
+            outcome.kind === "failed"
+              ? outcome.reason
+              : "Payment window closed",
         }),
       }).catch(() => undefined);
 
@@ -272,8 +360,13 @@ export default function CheckoutPage() {
         <PromoTicker />
         <main className="grid min-h-svh place-items-center px-4 text-center">
           <div>
-            <p className="display text-4xl text-paper-dim">Nothing to check out.</p>
-            <Link href="/" className="display mt-6 inline-block bg-volt px-6 py-3 text-lg text-ink">
+            <p className="display text-4xl text-paper-dim">
+              Nothing to check out.
+            </p>
+            <Link
+              href="/"
+              className="display mt-6 inline-block bg-volt px-6 py-3 text-lg text-ink"
+            >
               Back to the store
             </Link>
           </div>
@@ -287,7 +380,10 @@ export default function CheckoutPage() {
       <PromoTicker />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         <div className="mb-6 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1 text-sm text-paper-dim hover:text-paper">
+          <Link
+            href="/"
+            className="flex items-center gap-1 text-sm text-paper-dim hover:text-paper"
+          >
             <ChevronLeft size={16} /> Continue shopping
           </Link>
           <p className="flex items-center gap-1.5 text-xs text-paper-dim">
@@ -340,7 +436,8 @@ export default function CheckoutPage() {
                       onClick={() => prefill(a)}
                       className={cn(
                         "border p-3 text-left text-xs transition-colors hover:border-volt",
-                        address.line1 === a.line1 && address.pincode === a.pincode
+                        address.line1 === a.line1 &&
+                          address.pincode === a.pincode
                           ? "border-volt bg-volt/10"
                           : "border-paper/20",
                       )}
@@ -348,7 +445,9 @@ export default function CheckoutPage() {
                       <p className="flex items-center gap-1 font-semibold">
                         <MapPin size={12} className="text-volt" />
                         {a.fullName} · {a.type}
-                        {a.isDefault && <span className="text-volt">(default)</span>}
+                        {a.isDefault && (
+                          <span className="text-volt">(default)</span>
+                        )}
                       </p>
                       <p className="mt-1 text-paper-dim">
                         {a.line1}, {a.city} — {a.pincode}
@@ -360,7 +459,10 @@ export default function CheckoutPage() {
 
               <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
                 {FIELDS.map((f) => (
-                  <label key={f.key} className={cn("block", f.span && "sm:col-span-2")}>
+                  <label
+                    key={f.key}
+                    className={cn("block", f.span && "sm:col-span-2")}
+                  >
                     <span className="mb-1 block text-xs font-semibold tracking-wide text-paper-dim">
                       {f.label.toUpperCase()}
                     </span>
@@ -375,10 +477,16 @@ export default function CheckoutPage() {
                               : e.target.value,
                         }))
                       }
-                      maxLength={f.key === "phone" ? 10 : f.key === "pincode" ? 6 : 120}
+                      maxLength={
+                        f.key === "phone" ? 10 : f.key === "pincode" ? 6 : 120
+                      }
                       className="w-full border border-paper/25 bg-ink-2 px-3 py-2.5 text-sm outline-none focus:border-volt"
                     />
-                    {f.hint && <span className="mt-0.5 block text-[11px] text-paper-dim">{f.hint}</span>}
+                    {f.hint && (
+                      <span className="mt-0.5 block text-[11px] text-paper-dim">
+                        {f.hint}
+                      </span>
+                    )}
                   </label>
                 ))}
               </div>
@@ -391,7 +499,9 @@ export default function CheckoutPage() {
                 {onlinePaymentEnabled && (
                   <label
                     className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
-                      method === "RAZORPAY" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
+                      method === "RAZORPAY"
+                        ? "border-volt bg-volt/10"
+                        : "border-paper/15 hover:border-paper/30"
                     }`}
                   >
                     <input
@@ -401,20 +511,29 @@ export default function CheckoutPage() {
                       onChange={() => setMethod("RAZORPAY")}
                       className="accent-volt"
                     />
-                    <CreditCard size={18} className={method === "RAZORPAY" ? "text-volt" : ""} />
-                    <span className="text-sm font-semibold">UPI / Cards / Wallets</span>
+                    <CreditCard
+                      size={18}
+                      className={method === "RAZORPAY" ? "text-volt" : ""}
+                    />
+                    <span className="text-sm font-semibold">
+                      UPI / Cards / Wallets
+                    </span>
                     {cart && cart.summary.prepaidSaving > 0 ? (
                       <span className="ml-auto text-xs font-semibold text-volt">
                         Save {formatPrice(cart.summary.prepaidSaving)}
                       </span>
                     ) : (
-                      <span className="ml-auto text-xs text-paper-dim">Pay now, securely</span>
+                      <span className="ml-auto text-xs text-paper-dim">
+                        Pay now, securely
+                      </span>
                     )}
                   </label>
                 )}
                 <label
                   className={`flex cursor-pointer items-center gap-3 border p-3.5 transition-colors ${
-                    method === "COD" ? "border-volt bg-volt/10" : "border-paper/15 hover:border-paper/30"
+                    method === "COD"
+                      ? "border-volt bg-volt/10"
+                      : "border-paper/15 hover:border-paper/30"
                   }`}
                 >
                   <input
@@ -424,9 +543,16 @@ export default function CheckoutPage() {
                     onChange={() => setMethod("COD")}
                     className="accent-volt"
                   />
-                  <Banknote size={18} className={method === "COD" ? "text-volt" : ""} />
-                  <span className="text-sm font-semibold">Cash on Delivery</span>
-                  <span className="ml-auto text-xs text-paper-dim">Pay at your door</span>
+                  <Banknote
+                    size={18}
+                    className={method === "COD" ? "text-volt" : ""}
+                  />
+                  <span className="text-sm font-semibold">
+                    Cash on Delivery
+                  </span>
+                  <span className="ml-auto text-xs text-paper-dim">
+                    Pay at your door
+                  </span>
                 </label>
               </div>
 
@@ -439,9 +565,12 @@ export default function CheckoutPage() {
                     </p>
                   ) : (
                     <>
-                      <p className="text-sm font-semibold">Verify your mobile for COD</p>
+                      <p className="text-sm font-semibold">
+                        Verify your mobile for COD
+                      </p>
                       <p className="mt-0.5 text-xs text-paper-dim">
-                        We&apos;ll send an OTP to {phoneOk ? `+91 ${address.phone}` : "your number"} to
+                        We&apos;ll send an OTP to{" "}
+                        {phoneOk ? `+91 ${address.phone}` : "your number"} to
                         confirm this order.
                       </p>
                       {!otpSent ? (
@@ -464,7 +593,9 @@ export default function CheckoutPage() {
                             inputMode="numeric"
                             maxLength={6}
                             value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                            onChange={(e) =>
+                              setOtpCode(e.target.value.replace(/\D/g, ""))
+                            }
                             placeholder="Enter OTP"
                             aria-label="OTP"
                             className="w-32 border border-paper/25 bg-ink px-3 py-2 text-sm outline-none focus:border-volt"
@@ -492,7 +623,9 @@ export default function CheckoutPage() {
                           </button>
                         </div>
                       )}
-                      {otpError && <p className="mt-2 text-xs text-blood">{otpError}</p>}
+                      {otpError && (
+                        <p className="mt-2 text-xs text-blood">{otpError}</p>
+                      )}
                     </>
                   )}
                 </div>
@@ -512,7 +645,15 @@ export default function CheckoutPage() {
               {cart?.items.map((i) => (
                 <div key={i.id} className="flex gap-3">
                   <div className="relative aspect-[3/4] w-12 shrink-0 overflow-hidden bg-ink-3">
-                    {i.image && <Image src={i.image} alt="" fill sizes="48px" className="object-cover" />}
+                    {i.image && (
+                      <Image
+                        src={i.image}
+                        alt=""
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1 text-xs">
                     <p className="truncate font-medium">{i.name}</p>
@@ -520,7 +661,9 @@ export default function CheckoutPage() {
                       {i.color} / {i.size} × {i.quantity}
                     </p>
                   </div>
-                  <p className="text-xs font-semibold">{formatPrice(i.lineTotal)}</p>
+                  <p className="text-xs font-semibold">
+                    {formatPrice(i.lineTotal)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -539,7 +682,11 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between">
                   <dt>Shipping</dt>
-                  <dd>{summary.shippingFee === 0 ? "FREE" : formatPrice(summary.shippingFee)}</dd>
+                  <dd>
+                    {summary.shippingFee === 0
+                      ? "FREE"
+                      : formatPrice(summary.shippingFee)}
+                  </dd>
                 </div>
                 <div className="flex justify-between text-xs text-paper-dim">
                   <dt>Includes GST</dt>
@@ -552,10 +699,14 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between border-t border-paper/10 pt-2 text-base font-bold">
-                  <dt>{method === "RAZORPAY" ? "To Pay Online" : "To Pay (COD)"}</dt>
+                  <dt>
+                    {method === "RAZORPAY" ? "To Pay Online" : "To Pay (COD)"}
+                  </dt>
                   <dd>
                     {formatPrice(
-                      method === "RAZORPAY" ? summary.prepaidTotal : summary.total,
+                      method === "RAZORPAY"
+                        ? summary.prepaidTotal
+                        : summary.total,
                     )}
                   </dd>
                 </div>
@@ -575,18 +726,26 @@ export default function CheckoutPage() {
               {placing ? (
                 <Loader2 size={20} className="animate-spin" />
               ) : method === "RAZORPAY" ? (
-                cart ? `Pay ${formatPrice(cart.summary.prepaidTotal)}` : "Pay Now"
+                cart ? (
+                  `Pay ${formatPrice(cart.summary.prepaidTotal)}`
+                ) : (
+                  "Pay Now"
+                )
               ) : (
                 "Place COD Order"
               )}
             </button>
             {error && (
-              <p role="alert" className="mt-3 border border-blood/50 bg-blood/10 px-3 py-2 text-sm text-blood">
+              <p
+                role="alert"
+                className="mt-3 border border-blood/50 bg-blood/10 px-3 py-2 text-sm text-blood"
+              >
                 {error}
               </p>
             )}
             <p className="mt-3 text-center text-[11px] text-paper-dim">
-              By placing this order you agree to our terms & 7-day return policy.
+              By placing this order you agree to our terms & 7-day return
+              policy.
             </p>
           </motion.aside>
         </div>

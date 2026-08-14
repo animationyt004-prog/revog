@@ -295,6 +295,7 @@ export class CartService {
       return {
         id: i.id,
         variantId: i.variantId,
+        sku: i.variant.sku,
         name: i.variant.product.name,
         slug: i.variant.product.slug,
         size: i.variant.size,

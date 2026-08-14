@@ -5,10 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, Loader2, RotateCcw, Star, Truck } from "lucide-react";
+import {
+  ChevronRight,
+  Loader2,
+  PackageCheck,
+  RotateCcw,
+  Star,
+  Truck,
+} from "lucide-react";
 import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
-import { pixelTrack } from "@/lib/pixel";
+import { imagesForColor } from "@/lib/product-images";
 import { track } from "@/lib/track";
 import { AvailableOffers } from "@/components/product/available-offers";
 import { ProductSpecs } from "@/components/product/product-specs";
@@ -20,7 +27,13 @@ import { SizeGuideModal } from "./size-guide";
 const SIZE_ORDER = ["FREE_SIZE", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 const BOTTOM_CATEGORIES = new Set(["cargos", "joggers"]);
 
-export function ProductView({ product }: { product: ProductDetail }) {
+export function ProductView({
+  product,
+  initialColor,
+}: {
+  product: ProductDetail;
+  initialColor?: string;
+}) {
   const colors = useMemo(() => {
     const seen = new Map<string, string>();
     for (const v of product.variants) {
@@ -31,10 +44,17 @@ export function ProductView({ product }: { product: ProductDetail }) {
 
   // Default to the first color that has any stock.
   const [color, setColor] = useState(() => {
+    const requested = initialColor
+      ? colors.find(
+          (c) =>
+            c.name.toLowerCase() === initialColor.toLowerCase() &&
+            product.variants.some((v) => v.color === c.name && v.stock > 0),
+        )
+      : undefined;
     const inStock = colors.find((c) =>
       product.variants.some((v) => v.color === c.name && v.stock > 0),
     );
-    return (inStock ?? colors[0])?.name ?? "";
+    return (requested ?? inStock ?? colors[0])?.name ?? "";
   });
   const [size, setSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
@@ -56,9 +76,11 @@ export function ProductView({ product }: { product: ProductDetail }) {
 
   useEffect(() => {
     const el = addToCartRef.current;
-    if (!el) return;
+    if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
-      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      ([entry]) => {
+        if (entry) setShowStickyBar(!entry.isIntersecting);
+      },
       { rootMargin: "-80px 0px 0px 0px" },
     );
     io.observe(el);
@@ -73,7 +95,11 @@ export function ProductView({ product }: { product: ProductDetail }) {
     setCartError(null);
     addItem(selectedVariant.id)
       .then(() => {
-        track("ADD_TO_CART", { productId: product.id });
+        track("ADD_TO_CART", {
+          productId: product.id,
+          contentId: selectedVariant.sku,
+          value: (selectedVariant.priceOverride ?? product.price) / 100,
+        });
         router.push("/checkout");
       })
       .catch((e) => {
@@ -82,37 +108,62 @@ export function ProductView({ product }: { product: ProductDetail }) {
       });
   }
 
-  // Meta Pixel: product view (for ad retargeting + optimization).
-  useEffect(() => {
-    pixelTrack("ViewContent", {
-      content_ids: [product.slug],
-      content_name: product.name,
-      content_type: "product",
-      value: product.price / 100,
-      currency: "INR",
-    });
-    // First-party analytics: product view.
-    track("PRODUCT_VIEW", { productId: product.id });
-  }, [product.slug, product.name, product.price, product.id]);
+  // The feed publishes one entry per colour variant keyed on SKU. Match the
+  // colour on screen instead of always attributing views to the first variant.
+  const viewedVariant = useMemo(
+    () =>
+      product.variants.find(
+        (variant) =>
+          variant.color === color && variant.stock > 0 && variant.sku.trim(),
+      ),
+    [color, product.variants],
+  );
 
-  const galleryImages = useMemo(() => {
-    const forColor = product.images.filter((i) => i.color === color);
-    return forColor.length > 0 ? forColor : product.images;
-  }, [product.images, color]);
+  // Product view — reported to the pixel, our funnel and the Conversions API
+  // together, under one shared event id.
+  useEffect(() => {
+    // A ViewContent without a feed id lowers catalog match quality. Products
+    // missing a publishable SKU should be fixed in inventory, not reported to
+    // Meta under an internal id or slug that cannot exist in the catalog.
+    if (!viewedVariant) return;
+    track("PRODUCT_VIEW", {
+      productId: product.id,
+      contentId: viewedVariant.sku,
+      contentName: product.name,
+      value: (viewedVariant.priceOverride ?? product.price) / 100,
+    });
+  }, [product.id, product.name, product.price, viewedVariant]);
+
+  const galleryImages = useMemo(
+    () => imagesForColor(product.images, color) ?? product.images,
+    [product.images, color],
+  );
   const [imageIdx, setImageIdx] = useState(0);
-  const activeImage = galleryImages[Math.min(imageIdx, galleryImages.length - 1)];
+  const activeImage =
+    galleryImages[Math.min(imageIdx, galleryImages.length - 1)];
 
   const sizesForColor = useMemo(
     () =>
       product.variants
         .filter((v) => v.color === color)
-        .sort((a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size)),
+        .sort(
+          (a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size),
+        ),
     [product.variants, color],
   );
   const selectedVariant = sizesForColor.find((v) => v.size === size) ?? null;
   const price = selectedVariant?.priceOverride ?? product.price;
   const discount =
     product.mrp > price ? Math.round((1 - price / product.mrp) * 100) : 0;
+  const isSaree =
+    product.category?.slug === "sarees" || Boolean(product.sareeLength);
+  const sareeLength = product.sareeLength ?? "5.5 m";
+  const hasReadyToWearBlouse = /ready[- ]to[- ]wear stitched blouse/i.test(
+    product.blouseDetails ?? "",
+  );
+  const blousePackageText = hasReadyToWearBlouse
+    ? "Ready-to-wear stitched blouse included"
+    : "Unstitched blouse piece included";
 
   // Single-size products (e.g. free-size sarees): pre-select automatically
   // so the customer never has to "choose" a size that isn't a choice.
@@ -140,7 +191,9 @@ export function ProductView({ product }: { product: ProductDetail }) {
             overflow:hidden let it stretch the grid column, which is what was
             pushing the whole page sideways on Android. */}
         <nav className="mb-3 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-paper-dim">
-          <Link href="/" className="shrink-0 hover:text-paper">Home</Link>
+          <Link href="/" className="shrink-0 hover:text-paper">
+            Home
+          </Link>
           {product.category && (
             <>
               <ChevronRight size={12} className="shrink-0" />
@@ -153,7 +206,9 @@ export function ProductView({ product }: { product: ProductDetail }) {
             </>
           )}
           <ChevronRight size={12} className="hidden shrink-0 sm:block" />
-          <span className="hidden min-w-0 truncate text-paper sm:inline">{product.name}</span>
+          <span className="hidden min-w-0 truncate text-paper sm:inline">
+            {product.name}
+          </span>
         </nav>
 
         {/* Edge to edge on phones — the -mx-4 cancels the page padding so the
@@ -199,13 +254,45 @@ export function ProductView({ product }: { product: ProductDetail }) {
                 aria-label={`View image ${i + 1}`}
                 className={cn(
                   "relative aspect-[3/4] w-14 shrink-0 overflow-hidden bg-ink-2 transition-opacity sm:w-20",
-                  i === imageIdx ? "ring-2 ring-volt" : "opacity-60 hover:opacity-100",
+                  i === imageIdx
+                    ? "ring-2 ring-volt"
+                    : "opacity-60 hover:opacity-100",
                 )}
               >
-                <Image src={img.url} alt="" fill sizes="80px" className="object-cover" />
+                <Image
+                  src={img.url}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
               </button>
             ))}
           </div>
+        )}
+
+        {isSaree && (
+          <section
+            className="mt-4 border border-gold/35 bg-gold/8 p-4"
+            aria-labelledby="package-heading"
+          >
+            <div className="flex items-start gap-3">
+              <PackageCheck size={20} className="mt-0.5 shrink-0 text-gold" />
+              <div className="min-w-0 pr-12 sm:pr-0">
+                <h2 id="package-heading" className="display text-lg text-paper">
+                  What exactly you receive
+                </h2>
+                <p className="mt-1 text-sm font-semibold leading-6 text-paper">
+                  Free Size · Saree {sareeLength} · {blousePackageText}.
+                </p>
+                <p className="mt-1 text-xs leading-5 text-paper-dim">
+                  {hasReadyToWearBlouse
+                    ? "The ready-to-wear stitched blouse shown in the product images is included. Accessories are not included unless explicitly stated."
+                    : "The styled blouse and accessories shown on the model are not included unless the product description explicitly says otherwise."}
+                </p>
+              </div>
+            </div>
+          </section>
         )}
       </div>
 
@@ -214,7 +301,9 @@ export function ProductView({ product }: { product: ProductDetail }) {
         <p className="text-xs font-semibold tracking-[0.25em] text-volt">
           {product.brand.toUpperCase()} · {product.fit}
         </p>
-        <h1 className="display mt-2 text-2xl leading-snug sm:text-5xl sm:leading-tight">{product.name}</h1>
+        <h1 className="display mt-2 text-2xl leading-snug sm:text-5xl sm:leading-tight">
+          {product.name}
+        </h1>
 
         {product.ratingCount > 0 && (
           <div className="mt-3 flex items-center gap-2 text-sm">
@@ -222,20 +311,30 @@ export function ProductView({ product }: { product: ProductDetail }) {
               <Star size={13} className="fill-volt text-volt" />
               {product.ratingAvg.toFixed(1)}
             </span>
-            <span className="text-paper-dim">{product.ratingCount} reviews · {product.soldCount}+ sold</span>
+            <span className="text-paper-dim">
+              {product.ratingCount} reviews · {product.soldCount}+ sold
+            </span>
           </div>
         )}
 
         <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:mt-5">
-          <span className="text-2xl font-bold sm:text-3xl">{formatPrice(price)}</span>
+          <span className="text-2xl font-bold sm:text-3xl">
+            {formatPrice(price)}
+          </span>
           {discount > 0 && (
             <>
-              <span className="text-lg text-paper-dim line-through">{formatPrice(product.mrp)}</span>
-              <span className="font-semibold text-blood">({discount}% OFF)</span>
+              <span className="text-lg text-paper-dim line-through">
+                {formatPrice(product.mrp)}
+              </span>
+              <span className="font-semibold text-blood">
+                ({discount}% OFF)
+              </span>
             </>
           )}
         </div>
-        <p className="mt-1 text-xs text-paper-dim">MRP inclusive of all taxes</p>
+        <p className="mt-1 text-xs text-paper-dim">
+          MRP inclusive of all taxes
+        </p>
 
         {/* Color picker */}
         <div className="mt-5 sm:mt-7">
@@ -275,7 +374,10 @@ export function ProductView({ product }: { product: ProductDetail }) {
               <button
                 key={v.id}
                 disabled={v.stock === 0}
-                onClick={() => { setSize(v.size); setAdded(false); }}
+                onClick={() => {
+                  setSize(v.size);
+                  setAdded(false);
+                }}
                 className={cn(
                   "display min-w-12 border px-3 py-2.5 text-base transition-colors",
                   v.size === size
@@ -291,7 +393,8 @@ export function ProductView({ product }: { product: ProductDetail }) {
           </div>
           {selectedVariant && selectedVariant.stock <= 5 && (
             <p className="mt-2 text-xs font-semibold text-blood">
-              Hurry — only {selectedVariant.stock} left in {color} / {sizeLabel(size ?? "")}
+              Hurry — only {selectedVariant.stock} left in {color} /{" "}
+              {sizeLabel(size ?? "")}
             </p>
           )}
         </div>
@@ -305,10 +408,16 @@ export function ProductView({ product }: { product: ProductDetail }) {
             addItem(selectedVariant.id)
               .then(() => {
                 setAdded(true);
-                track("ADD_TO_CART", { productId: product.id });
+                track("ADD_TO_CART", {
+                  productId: product.id,
+                  contentId: selectedVariant.sku,
+                  value: (selectedVariant.priceOverride ?? product.price) / 100,
+                });
               })
               .catch((e) =>
-                setCartError(e instanceof Error ? e.message : "Could not add to cart."),
+                setCartError(
+                  e instanceof Error ? e.message : "Could not add to cart.",
+                ),
               )
               .finally(() => setAdding(false));
           }}
@@ -340,7 +449,15 @@ export function ProductView({ product }: { product: ProductDetail }) {
           </div>
           <div className="flex items-center gap-2 border border-paper/10 p-3">
             <RotateCcw size={16} className="shrink-0 text-volt" />
-            Easy 7-day returns & exchanges
+            <span>
+              7-day returns · Easy pickup · Full refund for damaged/wrong item ·{" "}
+              <Link
+                href="/policies/returns"
+                className="underline underline-offset-2 hover:text-volt"
+              >
+                Policy
+              </Link>
+            </span>
           </div>
         </div>
 
@@ -359,7 +476,11 @@ export function ProductView({ product }: { product: ProductDetail }) {
         <SizeGuideModal
           open={guideOpen}
           onClose={() => setGuideOpen(false)}
-          kind={BOTTOM_CATEGORIES.has(product.category?.slug ?? "") ? "bottom" : "top"}
+          kind={
+            BOTTOM_CATEGORIES.has(product.category?.slug ?? "")
+              ? "bottom"
+              : "top"
+          }
         />
 
         {/* Details */}
@@ -368,12 +489,25 @@ export function ProductView({ product }: { product: ProductDetail }) {
             <h2 className="display mb-1.5 text-lg text-paper">The Story</h2>
             <p>{product.description}</p>
           </div>
-          {product.fabric && (
+          {product.fabric && isSaree && (
             <div>
-              <h2 className="display mb-1.5 text-lg text-paper">Fabric & Fit</h2>
+              <h2 className="display mb-1.5 text-lg text-paper">
+                Fabric & Drape
+              </h2>
               <p>
-                {product.fabric} · {product.fit.charAt(0) + product.fit.slice(1).toLowerCase()} fit ·
-                Model wears size L
+                {product.fabric} · Free Size · Saree {sareeLength} ·{" "}
+                {blousePackageText}
+              </p>
+            </div>
+          )}
+          {product.fabric && !isSaree && (
+            <div>
+              <h2 className="display mb-1.5 text-lg text-paper">
+                Fabric & Fit
+              </h2>
+              <p>
+                {product.fabric} ·{" "}
+                {product.fit.charAt(0) + product.fit.slice(1).toLowerCase()} fit
               </p>
             </div>
           )}
@@ -386,7 +520,7 @@ export function ProductView({ product }: { product: ProductDetail }) {
       {/* Sticky buy bar. Appears once the real Add To Cart has scrolled past,
           so the action is always one tap away on a long product page. */}
       {showStickyBar && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-paper/10 bg-ink/95 backdrop-blur-sm">
+        <div className="product-sticky-buy fixed inset-x-0 bottom-0 z-40 border-t border-paper/10 bg-ink/95 backdrop-blur-sm">
           {prepaidPercent > 0 && (
             <p className="bg-night px-4 py-1.5 text-center text-[11px] font-semibold tracking-wide text-gold sm:text-xs">
               Get {prepaidPercent}% extra off on prepaid orders

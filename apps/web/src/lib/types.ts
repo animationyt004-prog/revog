@@ -19,7 +19,13 @@ export interface ProductCardData {
   image: { url: string; alt: string } | null;
   hoverImage: { url: string; alt: string } | null;
   colors: { name: string; hex: string }[];
-  variants: { id: string; size: string; color: string; stock: number }[];
+  variants: {
+    id: string;
+    sku: string;
+    size: string;
+    color: string;
+    stock: number;
+  }[];
   totalStock: number;
   stockLabel: StockLabel;
 }
@@ -73,6 +79,7 @@ export interface ProductDetail {
 export interface CartItemData {
   id: string;
   variantId: string;
+  sku: string;
   name: string;
   slug: string;
   size: string;
@@ -122,6 +129,9 @@ export interface CartView {
 export interface OrderData {
   id: string;
   orderNumber: string;
+  /** Opaque key that authorises viewing this order. Order links carry it
+   *  instead of the buyer's email, which used to sit in the URL. */
+  viewToken?: string;
   email: string;
   status: string;
   paymentMethod: string;
@@ -135,6 +145,9 @@ export interface OrderData {
   courier?: string | null;
   trackingNumber?: string | null;
   trackingUrl?: string | null;
+  estimatedDeliveryAt?: string | null;
+  revisedDeliveryAt?: string | null;
+  shipmentUpdatedAt?: string | null;
   addressSnapshot: {
     fullName: string;
     phone: string;
@@ -153,8 +166,14 @@ export interface OrderData {
     unitPrice: number;
     quantity: number;
     lineTotal: number;
+    variant?: { sku: string } | null;
   }[];
-  events?: { id: string; status: string; note: string | null; createdAt: string }[];
+  events?: {
+    id: string;
+    status: string;
+    note: string | null;
+    createdAt: string;
+  }[];
 }
 
 export interface AddressData {

@@ -38,7 +38,8 @@ export function CatalogControls({
   const [isPending, startTransition] = useTransition();
 
   const selected = useCallback(
-    (key: string): string[] => search.get(key)?.split(",").filter(Boolean) ?? [],
+    (key: string): string[] =>
+      search.get(key)?.split(",").filter(Boolean) ?? [],
     [search],
   );
 
@@ -95,13 +96,22 @@ export function CatalogControls({
     selected("colors").length +
     selected("fits").length +
     selected("fabrics").length +
+    selected("occasions").length +
+    selected("works").length +
     (search.get("min") || search.get("max") ? 1 : 0);
 
   function clearAll() {
     const params = new URLSearchParams(search.toString());
-    ["sizes", "colors", "fits", "fabrics", "min", "max"].forEach((k) =>
-      params.delete(k),
-    );
+    [
+      "sizes",
+      "colors",
+      "fits",
+      "fabrics",
+      "occasions",
+      "works",
+      "min",
+      "max",
+    ].forEach((k) => params.delete(k));
     startTransition(() => {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
@@ -130,14 +140,24 @@ export function CatalogControls({
         </button>
 
         <div className="flex items-center gap-3">
-          <span className={cn("text-xs text-paper-dim", isPending && "animate-pulse")}>
+          <span
+            className={cn(
+              "text-xs text-paper-dim",
+              isPending && "animate-pulse",
+            )}
+          >
             {total} styles
           </span>
           <label className="relative">
             <span className="sr-only">Sort by</span>
             <select
               value={search.get("sort") ?? "newest"}
-              onChange={(e) => setParam("sort", e.target.value === "newest" ? null : e.target.value)}
+              onChange={(e) =>
+                setParam(
+                  "sort",
+                  e.target.value === "newest" ? null : e.target.value,
+                )
+              }
               className="appearance-none border border-paper/30 bg-ink py-2 pl-3 pr-8 text-sm outline-none focus:border-volt"
             >
               {SORT_OPTIONS.map((o) => (
@@ -218,7 +238,9 @@ export function CatalogControls({
                               className={cn(
                                 "absolute inset-0 m-auto",
                                 // readable check on light swatches
-                                ["Off White", "Sand", "Lavender"].includes(c.name)
+                                ["Off White", "Sand", "Lavender"].includes(
+                                  c.name,
+                                )
                                   ? "text-ink"
                                   : "text-white",
                               )}
@@ -331,6 +353,77 @@ export function CatalogControls({
                   </div>
                 </fieldset>
               )}
+
+              {facets.occasions.length > 0 && (
+                <fieldset className="sm:col-span-2 lg:col-span-2">
+                  <legend className="display mb-2.5 text-lg">Occasion</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {facets.occasions.map((occasion) => {
+                      const active = selected("occasions").includes(occasion);
+                      return (
+                        <button
+                          key={occasion}
+                          onClick={() => toggleValue("occasions", occasion)}
+                          aria-pressed={active}
+                          className={cn(
+                            "border px-3 py-1.5 text-xs transition-colors",
+                            active
+                              ? "border-paper bg-paper text-ink"
+                              : "border-paper/30 hover:border-paper",
+                          )}
+                        >
+                          {occasion}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              )}
+
+              {facets.works.length > 0 && (
+                <fieldset className="sm:col-span-2 lg:col-span-2">
+                  <legend className="display mb-2.5 text-lg">
+                    Work / Embroidery
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {facets.works.map((work) => {
+                      const active = selected("works").includes(work);
+                      return (
+                        <button
+                          key={work}
+                          onClick={() => toggleValue("works", work)}
+                          aria-pressed={active}
+                          className={cn(
+                            "border px-3 py-1.5 text-xs transition-colors",
+                            active
+                              ? "border-paper bg-paper text-ink"
+                              : "border-paper/30 hover:border-paper",
+                          )}
+                        >
+                          {work}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              )}
+
+              <fieldset className="sm:col-span-2 lg:col-span-4">
+                <legend className="display mb-2.5 text-lg">Availability</legend>
+                <label className="inline-flex items-center gap-2 text-sm text-paper">
+                  <input
+                    type="checkbox"
+                    checked
+                    readOnly
+                    disabled
+                    className="accent-volt"
+                  />
+                  In stock only ({facets.inStockCount} styles)
+                </label>
+                <p className="mt-1 text-xs text-paper-dim">
+                  Sold-out styles are automatically hidden.
+                </p>
+              </fieldset>
             </div>
 
             {activeCount > 0 && (

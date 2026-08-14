@@ -1,0 +1,119 @@
+{%- comment -%} Ports apps/web/src/components/layout/footer.tsx {%- endcomment -%}
+<footer class="site-footer">
+  <div class="container site-footer__grid">
+    <div class="site-footer__about">
+      {%- render 'wordmark', size: 'lg', tone: 'dark' -%}
+      <div class="site-footer__contact">
+        <p>{{ settings.business_name }}</p>
+        <p>
+          <a href="mailto:{{ settings.business_email }}">{{ settings.business_email }}</a>
+          {%- if settings.business_phone != blank %} &middot; <a href="tel:+{{ settings.business_phone }}">+{{ settings.business_phone }}</a>{% endif -%}
+        </p>
+        {%- if settings.business_address != blank -%}<p>{{ settings.business_address }}</p>{%- endif -%}
+      </div>
+      <p class="site-footer__blurb">Indian fashion for every day — ethnic and casual, curated in India with honest pricing and delivery across the country.</p>
+    </div>
+
+    {%- comment -%}
+      Each column prefers a merchant-assigned menu. Until those menus exist the
+      column falls back to the link set the original storefront shipped, so the
+      footer is never blank on a fresh install.
+    {%- endcomment -%}
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'link_column' -%}
+        {%- liquid
+          comment
+            Blocks saved before the fallback setting existed carry no value for
+            it, so derive one from the heading rather than rendering an empty
+            column.
+          endcomment
+          assign fb = block.settings.fallback
+          if fb == blank
+            assign heading_key = block.settings.heading | downcase
+            assign fb = 'shop'
+            if heading_key contains 'edit'
+              assign fb = 'edit'
+            elsif heading_key contains 'help'
+              assign fb = 'help'
+            elsif heading_key contains 'company'
+              assign fb = 'company'
+            endif
+          endif
+        -%}
+        <div {{ block.shopify_attributes }}>
+          <h4 class="site-footer__col-heading">{{ block.settings.heading }}</h4>
+          <ul class="site-footer__col-list">
+            {%- if block.settings.menu.links.size > 0 -%}
+              {%- for link in block.settings.menu.links -%}
+                <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+              {%- endfor -%}
+            {%- else -%}
+              {%- case fb -%}
+                {%- when 'shop' -%}
+                  <li><a href="{{ routes.root_url }}collections/new-arrivals">New Drops</a></li>
+                  <li><a href="{{ routes.root_url }}collections/trending">Trending Now</a></li>
+                  <li><a href="{{ routes.root_url }}collections/georgette-sarees">Georgette Sarees</a></li>
+                  <li><a href="{{ routes.root_url }}collections/cotton-sarees">Cotton Sarees</a></li>
+                {%- when 'edit' -%}
+                  <li><a href="{{ routes.root_url }}collections/party-wear-sarees">Party Wear Sarees</a></li>
+                  <li><a href="{{ routes.root_url }}collections/festive-sarees">Festive Sarees</a></li>
+                  <li><a href="{{ routes.root_url }}collections/wedding-sarees">Wedding Sarees</a></li>
+                  <li><a href="{{ routes.root_url }}collections/sarees-under-999">Sarees Under 999</a></li>
+                {%- when 'help' -%}
+                  <li><a href="{{ routes.account_url }}">Track Order</a></li>
+                  <li><a href="{{ shop.policies.refund_policy.url | default: '/policies/refund-policy' }}">Returns &amp; Refunds</a></li>
+                  <li><a href="{{ routes.root_url }}pages/size-guide">Size Guide</a></li>
+                  <li><a href="{{ routes.root_url }}pages/contact">Contact Us</a></li>
+                {%- when 'company' -%}
+                  <li><a href="{{ routes.root_url }}pages/about">About HyraLuxe</a></li>
+                  <li><a href="{{ shop.policies.privacy_policy.url | default: '/policies/privacy-policy' }}">Privacy Policy</a></li>
+                  <li><a href="{{ shop.policies.terms_of_service.url | default: '/policies/terms-of-service' }}">Terms of Service</a></li>
+                  <li><a href="{{ shop.policies.shipping_policy.url | default: '/policies/shipping-policy' }}">Shipping Policy</a></li>
+              {%- endcase -%}
+            {%- endif -%}
+          </ul>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+  <div class="container site-footer__bottom">
+    <p>&copy; {{ 'now' | date: '%Y' }} {{ settings.business_name }}. All rights reserved.</p>
+    <p>Made in India 🇮🇳 &middot; COD &amp; UPI accepted</p>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "blocks": [
+    {
+      "type": "link_column",
+      "name": "Link column",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Shop" },
+        { "type": "link_list", "id": "menu", "label": "Menu", "info": "Leave empty to use the built-in links for the column type below." },
+        {
+          "type": "select",
+          "id": "fallback",
+          "label": "Built-in link set",
+          "options": [
+            { "value": "shop", "label": "Shop" },
+            { "value": "edit", "label": "The Edit" },
+            { "value": "help", "label": "Help" },
+            { "value": "company", "label": "Company" }
+          ],
+          "default": "shop"
+        }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      { "type": "link_column", "settings": { "heading": "Shop", "fallback": "shop" } },
+      { "type": "link_column", "settings": { "heading": "The Edit", "fallback": "edit" } },
+      { "type": "link_column", "settings": { "heading": "Help", "fallback": "help" } },
+      { "type": "link_column", "settings": { "heading": "Company", "fallback": "company" } }
+    ]
+  }
+}
+{% endschema %}

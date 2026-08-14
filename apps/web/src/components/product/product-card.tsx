@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Heart, Loader2, Plus, Star } from "lucide-react";
 import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
+import { pixelTrack } from "@/lib/pixel";
 import { track } from "@/lib/track";
 import { useWishlist } from "@/lib/wishlist-store";
 import type { BadgeType, ProductCardData } from "@/lib/types";
@@ -31,7 +32,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const [quickOpen, setQuickOpen] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   const addItem = useCart((s) => s.addItem);
-  const wished = useWishlist((s) => s.hydrated && s.slugs.includes(product.slug));
+  const wished = useWishlist(
+    (s) => s.hydrated && s.slugs.includes(product.slug),
+  );
   const toggleWish = useWishlist((s) => s.toggle);
   const hydrateWish = useWishlist((s) => s.hydrate);
 
@@ -46,8 +49,17 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
   function quickAdd(variantId: string) {
     setAddingId(variantId);
+    // SKU, not the internal variant id — it is what the product feed publishes.
+    const sku = product.variants.find((v) => v.id === variantId)?.sku;
     addItem(variantId)
-      .then(() => track("ADD_TO_CART", { productId: product.id }))
+      .then(() => {
+        if (!sku?.trim()) return;
+        track("ADD_TO_CART", {
+          productId: product.id,
+          contentId: sku,
+          value: product.price / 100,
+        });
+      })
       .catch(() => undefined)
       .finally(() => {
         setAddingId(null);
@@ -62,7 +74,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       aria-label={product.name}
     >
       {/* Image block */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-ink-2">
+      <div className="relative aspect-[3/4] overflow-hidden bg-ink-2 ring-1 ring-paper/8 transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_18px_44px_rgba(38,22,27,0.14)] group-hover:ring-volt/20">
         {product.image && (
           <Image
             src={product.image.url}
@@ -92,14 +104,25 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         {/* Badges */}
         <div className="absolute left-2 top-2 flex flex-col gap-1.5">
           {product.discountPercent > 0 && !soldOut && (
-            <span className={cn("display px-2 py-0.5 text-xs", BADGE_STYLES.SALE)}>
+            <span
+              className={cn(
+                "display px-2.5 py-1 text-xs shadow-sm",
+                BADGE_STYLES.SALE,
+              )}
+            >
               -{product.discountPercent}%
             </span>
           )}
           {shownBadges
             .filter((b) => b !== "SALE")
             .map((b) => (
-              <span key={b} className={cn("display px-2 py-0.5 text-xs", BADGE_STYLES[b])}>
+              <span
+                key={b}
+                className={cn(
+                  "display px-2.5 py-1 text-xs shadow-sm",
+                  BADGE_STYLES[b],
+                )}
+              >
                 {b}
               </span>
             ))}
@@ -110,12 +133,30 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={wished}
           onMouseEnter={hydrateWish}
-          onClick={(e) => { e.preventDefault(); toggleWish(product.slug); }}
-          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-ink/70 backdrop-blur-sm transition-colors hover:bg-ink"
+          onClick={(e) => {
+            e.preventDefault();
+            if (!wished) {
+              const sku = product.variants.find(
+                (variant) => variant.stock > 0,
+              )?.sku;
+              pixelTrack("AddToWishlist", {
+                content_name: product.name,
+                content_type: "product",
+                ...(sku?.trim() ? { content_ids: [sku.trim()] } : {}),
+                value: product.price / 100,
+                currency: "INR",
+              });
+            }
+            toggleWish(product.slug);
+          }}
+          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-ink/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-ink"
         >
           <Heart
             size={15}
-            className={cn("transition-colors", wished && "fill-blood text-blood")}
+            className={cn(
+              "transition-colors",
+              wished && "fill-blood text-blood",
+            )}
           />
         </button>
 
@@ -140,10 +181,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
                   <button
                     key={v.id}
                     disabled={v.stock === 0 || addingId !== null}
-                    onClick={(e) => { e.preventDefault(); quickAdd(v.id); }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      quickAdd(v.id);
+                    }}
                     className={cn(
                       "display flex-1 py-2.5 text-sm text-ink transition-colors hover:bg-paper hover:text-ink",
-                      v.stock === 0 && "cursor-not-allowed text-ink/30 line-through hover:bg-transparent",
+                      v.stock === 0 &&
+                        "cursor-not-allowed text-ink/30 line-through hover:bg-transparent",
                     )}
                   >
                     {addingId === v.id ? (
@@ -156,7 +201,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               </div>
             ) : (
               <button
-                onClick={(e) => { e.preventDefault(); setQuickOpen(true); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setQuickOpen(true);
+                }}
                 className="display flex w-full items-center justify-center gap-1.5 bg-volt py-2.5 text-sm text-ink"
               >
                 <Plus size={16} /> Quick Add
@@ -167,12 +215,14 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       </div>
 
       {/* Meta */}
-      <div className="mt-2.5 space-y-1 px-0.5">
+      <div className="mt-3.5 space-y-2 px-0.5">
         <div className="flex items-start justify-between gap-2">
           {/* min-w-0 is belt-and-braces: modern engines zero out min-width:auto
               once overflow is hidden, but the Android WebViews our buyers use
               don't, and there the long saree names stretch the whole grid. */}
-          <h3 className="min-w-0 truncate text-sm font-medium text-paper">{product.name}</h3>
+          <h3 className="min-h-10 min-w-0 line-clamp-2 text-sm font-medium leading-5 text-paper transition-colors group-hover:text-volt">
+            {product.name}
+          </h3>
           {product.ratingCount > 0 && (
             <span className="flex shrink-0 items-center gap-1 text-xs text-paper-dim">
               <Star size={11} className="fill-volt text-volt" />
@@ -182,9 +232,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </div>
 
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-semibold text-paper">{formatPrice(product.price)}</span>
+          <span className="font-bold text-paper">
+            {formatPrice(product.price)}
+          </span>
           {product.discountPercent > 0 && (
-            <span className="text-paper-dim line-through">{formatPrice(product.mrp)}</span>
+            <span className="text-paper-dim line-through">
+              {formatPrice(product.mrp)}
+            </span>
           )}
         </div>
 
@@ -199,11 +253,15 @@ export function ProductCard({ product }: { product: ProductCardData }) {
               />
             ))}
             {product.colors.length > 4 && (
-              <span className="text-[10px] text-paper-dim">+{product.colors.length - 4}</span>
+              <span className="text-[10px] text-paper-dim">
+                +{product.colors.length - 4}
+              </span>
             )}
           </div>
           {product.stockLabel === "LOW_STOCK" && (
-            <span className="text-[11px] font-semibold text-blood">Few left</span>
+            <span className="text-[11px] font-semibold text-blood">
+              Few left
+            </span>
           )}
         </div>
       </div>

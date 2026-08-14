@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Eye, Loader2, MousePointerClick, RefreshCw, ShoppingBag, ShoppingCart, Users } from "lucide-react";
 import { authedFetch } from "@/lib/auth-store";
+import { AdminPageHeader, useAdminLiveRefresh } from "@/components/admin/live-refresh";
 import { cn } from "@/lib/format";
 
 interface Funnel {
@@ -30,14 +31,13 @@ export default function AdminAnalytics() {
   const [data, setData] = useState<Funnel | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    authedFetch(`/admin/analytics?days=${days}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    const response = await authedFetch(`/admin/analytics?days=${days}`);
+    if (!response.ok) throw new Error("Traffic data could not be refreshed.");
+    setData((await response.json()) as Funnel);
+    setLoading(false);
   }, [days]);
+  const live = useAdminLiveRefresh(load, { intervalMs: 20_000 });
 
   const stats = data
     ? [
@@ -63,11 +63,8 @@ export default function AdminAnalytics() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="display text-3xl sm:text-4xl">
-          Traffic<span className="text-volt">.</span>
-        </h1>
-        <div className="flex gap-1 border border-paper/15 p-1">
+      <AdminPageHeader title="Traffic" live={live} actions={
+        <div className="flex h-9 gap-1 border border-paper/15 p-1">
           {RANGES.map((r) => (
             <button
               key={r.days}
@@ -81,7 +78,7 @@ export default function AdminAnalytics() {
             </button>
           ))}
         </div>
-      </div>
+      } />
 
       {loading || !data ? (
         <div className="grid place-items-center py-24">

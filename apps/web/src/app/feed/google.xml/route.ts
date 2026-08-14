@@ -1,4 +1,5 @@
 import { getProduct, getProducts } from "@/lib/api";
+import { imagesForColor } from "@/lib/product-images";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { ProductDetail } from "@/lib/types";
 
@@ -38,25 +39,35 @@ const sizeLabel = (size: string) =>
   size === "FREE_SIZE" ? "One Size" : size.replace(/_/g, " ");
 
 function itemsFor(p: ProductDetail): string[] {
-  const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
-  if (!primary) return []; // no image => Merchant Center rejects the item
+  const fallback = p.images.find((i) => i.isPrimary) ?? p.images[0];
+  if (!fallback) return []; // no image => Merchant Center rejects the item
 
-  const extra = p.images.filter((i) => i !== primary).slice(0, 10);
-  const link = `${SITE_URL}/products/${p.slug}`;
-
-  return p.variants.map((v) => {
+  return p.variants.filter((v) => v.stock > 0).map((v) => {
     const price = v.priceOverride ?? p.price;
     const onSale = p.mrp > price;
+    const link = `${SITE_URL}/products/${p.slug}?color=${encodeURIComponent(v.color)}`;
+    const title = `${v.color} ${p.name}`;
+
+    // Images are tagged with the colour they show, and every colour carries its
+    // own primary. Taking the product's first primary for all of them shipped
+    // one colour's photo against every other colour's g:color — a maroon saree
+    // pictured in teal. Untagged shots stay usable as extras for any variant.
+    const matched = imagesForColor(p.images, v.color);
+    const gallery = matched
+      ? [...matched, ...p.images.filter((i) => !i.color)]
+      : p.images;
+    const primary = gallery.find((i) => i.isPrimary) ?? gallery[0] ?? fallback;
+    const extra = gallery.filter((i) => i !== primary).slice(0, 10);
 
     return `    <item>
       <g:id>${esc(v.sku || v.id)}</g:id>
       <g:item_group_id>${esc(p.slug)}</g:item_group_id>
-      <title>${esc(p.name)}</title>
+      <title>${esc(title)}</title>
       <description>${esc(p.description)}</description>
       <link>${esc(link)}</link>
       <g:image_link>${esc(primary.url)}</g:image_link>
 ${extra.map((i) => `      <g:additional_image_link>${esc(i.url)}</g:additional_image_link>`).join("\n")}
-      <g:availability>${v.stock > 0 ? "in_stock" : "out_of_stock"}</g:availability>
+      <g:availability>in_stock</g:availability>
       <g:price>${money(onSale ? p.mrp : price)}</g:price>
 ${onSale ? `      <g:sale_price>${money(price)}</g:sale_price>` : ""}
       <g:brand>${esc(p.brand || SITE_NAME)}</g:brand>
@@ -76,12 +87,33 @@ ${p.fabric ? `      <g:material>${esc(p.fabric)}</g:material>` : ""}
 }
 
 export async function GET() {
-  const list = await getProducts({ take: 200 });
-  const details = await Promise.all(list.map((p) => getProduct(p.slug)));
+  let list: Awaited<ReturnType<typeof getProducts>>;
+  try {
+    list = await getProducts({ take: 200 });
+  } catch {
+    const unavailable = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>${esc(SITE_NAME)}</title>
+    <link>${esc(SITE_URL)}</link>
+    <description>Product feed temporarily unavailable. Please retry.</description>
+  </channel>
+</rss>`;
+
+    return new Response(unavailable, {
+      status: 503,
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Retry-After": "300",
+        "Cache-Control": "public, max-age=0, s-maxage=60",
+      },
+    });
+  }
+
+  const details = await Promise.allSettled(list.map((p) => getProduct(p.slug)));
 
   const items = details
-    .filter((p): p is ProductDetail => p !== null)
-    .flatMap(itemsFor)
+    .flatMap((result) => (result.status === "fulfilled" && result.value ? itemsFor(result.value) : []))
     .join("\n");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

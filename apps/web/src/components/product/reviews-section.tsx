@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { BadgeCheck, Loader2, Star } from "lucide-react";
+import { BadgeCheck, ImagePlus, Loader2, Star, X } from "lucide-react";
 import { authedFetch, useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/format";
 
@@ -16,6 +17,7 @@ interface Review {
   isVerifiedPurchase: boolean;
   createdAt: string;
   author: string;
+  photoUrl: string | null;
 }
 
 function Stars({ value, size = 14 }: { value: number; size?: number }) {
@@ -39,6 +41,8 @@ export function ReviewsSection({ slug }: { slug: string }) {
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +53,31 @@ export function ReviewsSection({ slug }: { slug: string }) {
       .then(setReviews)
       .catch(() => setReviews([]));
   }, [slug]);
+
+  async function uploadPhoto(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await authedFetch(`/products/${slug}/reviews/photo`, {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        message?: string;
+      };
+      if (!res.ok || !data.url)
+        throw new Error(data.message ?? "Could not upload photo.");
+      setPhotoUrl(data.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not upload photo.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   useEffect(load, [load]);
 
@@ -67,12 +96,17 @@ export function ReviewsSection({ slug }: { slug: string }) {
           rating,
           title: title.trim() || undefined,
           body: body.trim() || undefined,
+          photoUrl: photoUrl || undefined,
         }),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { message?: string | string[] };
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string | string[];
+        };
         throw new Error(
-          Array.isArray(data.message) ? data.message[0] : (data.message ?? "Could not post review."),
+          Array.isArray(data.message)
+            ? data.message[0]
+            : (data.message ?? "Could not post review."),
         );
       }
       setDone(true);
@@ -96,18 +130,26 @@ export function ReviewsSection({ slug }: { slug: string }) {
           {status !== "authed" ? (
             <p className="text-sm text-paper-dim">
               Bought this?{" "}
-              <Link href="/login" className="underline hover:text-volt">
+              <Link
+                href={`/login?next=${encodeURIComponent(`/products/${slug}`)}`}
+                className="underline hover:text-volt"
+              >
                 Log in
               </Link>{" "}
-              to leave a review — orders placed with your email count as verified
-              purchases.
+              to leave a review — orders placed with your email count as
+              verified purchases.
             </p>
           ) : done ? (
             <p className="text-sm font-semibold text-volt">
               ✓ Review posted. Thanks for the word.
             </p>
           ) : (
-            <form onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submit();
+              }}
+            >
               <p className="display mb-2 text-lg">Drop your take</p>
               <div
                 className="flex gap-1"
@@ -151,12 +193,59 @@ export function ReviewsSection({ slug }: { slug: string }) {
                 placeholder="Fit, fabric, wash test — the streets want details."
                 className="mt-2 w-full resize-y border border-paper/25 bg-ink px-3 py-2.5 text-sm outline-none focus:border-volt"
               />
+              <div className="mt-3">
+                {photoUrl ? (
+                  <div className="relative aspect-[4/3] w-36 overflow-hidden border border-paper/15">
+                    <Image
+                      src={photoUrl}
+                      alt="Customer review upload"
+                      fill
+                      sizes="144px"
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoUrl(null)}
+                      aria-label="Remove review photo"
+                      className="absolute right-1 top-1 grid h-7 w-7 place-items-center bg-ink/85 text-paper"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="inline-flex cursor-pointer items-center gap-2 border border-paper/25 px-3 py-2 text-xs hover:border-volt">
+                    {uploading ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <ImagePlus size={15} />
+                    )}
+                    Add a real product photo
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      disabled={uploading}
+                      onChange={(event) =>
+                        void uploadPhoto(event.target.files?.[0])
+                      }
+                      className="sr-only"
+                    />
+                  </label>
+                )}
+                <p className="mt-1 text-[11px] text-paper-dim">
+                  Available for delivered orders. JPG, PNG, WebP or AVIF under 8
+                  MB.
+                </p>
+              </div>
               <button
                 type="submit"
                 disabled={busy}
                 className="display mt-3 bg-volt px-6 py-2.5 text-base text-ink disabled:opacity-50"
               >
-                {busy ? <Loader2 size={16} className="animate-spin" /> : "Post Review"}
+                {busy ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  "Post Review"
+                )}
               </button>
               {error && <p className="mt-2 text-xs text-blood">{error}</p>}
             </form>
@@ -191,9 +280,24 @@ export function ReviewsSection({ slug }: { slug: string }) {
                       })}
                     </span>
                   </div>
-                  {r.title && <p className="mt-1.5 text-sm font-semibold">{r.title}</p>}
+                  {r.title && (
+                    <p className="mt-1.5 text-sm font-semibold">{r.title}</p>
+                  )}
                   {r.body && (
-                    <p className="mt-1 text-sm leading-relaxed text-paper-dim">{r.body}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-paper-dim">
+                      {r.body}
+                    </p>
+                  )}
+                  {r.photoUrl && (
+                    <div className="relative mt-3 aspect-[4/3] w-44 overflow-hidden border border-paper/10">
+                      <Image
+                        src={r.photoUrl}
+                        alt={`Photo review by ${r.author}`}
+                        fill
+                        sizes="176px"
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                 </article>
               ))}

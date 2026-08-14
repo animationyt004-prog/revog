@@ -1,0 +1,78 @@
+{
+  "wine": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/wine-01-main-730f39.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/wine-02-back-6eab0f.jpg"
+    },
+    {
+      "file": "03-back2.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/wine-03-back2-5a2e7b.jpg"
+    }
+  ],
+  "olive": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/olive-01-main-b24243.jpg"
+    },
+    {
+      "file": "02-side.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/olive-02-side-657bad.jpg"
+    },
+    {
+      "file": "03-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/olive-03-back-9e5cf9.jpg"
+    }
+  ],
+  "rust": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/rust-01-main-f5a82c.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/rust-02-back-93c568.jpg"
+    }
+  ],
+  "bottle-green": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/bottle-green-01-main-876a6c.jpg"
+    },
+    {
+      "file": "02-side.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/bottle-green-02-side-cd53c6.jpg"
+    },
+    {
+      "file": "03-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/bottle-green-03-back-6c8e6d.jpg"
+    }
+  ],
+  "mustard": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/mustard-01-main-1a8659.jpg"
+    },
+    {
+      "file": "02-side.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/mustard-02-side-7f51e4.jpg"
+    },
+    {
+      "file": "03-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/mustard-03-back-197482.jpg"
+    }
+  ],
+  "grey": [
+    {
+      "file": "01-main.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/grey-01-main-627357.jpg"
+    },
+    {
+      "file": "02-back.jpeg",
+      "url": "https://pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev/products/women-elegant-georgette-mirror-sequin-embroidered-saree/grey-02-back-f72ca8.jpg"
+    }
+  ]
+}

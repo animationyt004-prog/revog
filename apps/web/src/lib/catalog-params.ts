@@ -18,7 +18,10 @@ function str(v: string | string[] | undefined): string | undefined {
 function list(v: string | string[] | undefined): string[] | undefined {
   const s = str(v);
   if (!s) return undefined;
-  const parts = s.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = s
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   return parts.length ? parts : undefined;
 }
 
@@ -33,8 +36,12 @@ export function parseCatalogParams(sp: SearchParams): ProductFilters {
     colors: list(sp.colors),
     fits: list(sp.fits),
     fabrics: list(sp.fabrics),
-    minPrice: Number.isFinite(min) && min > 0 ? Math.round(min * 100) : undefined,
-    maxPrice: Number.isFinite(max) && max > 0 ? Math.round(max * 100) : undefined,
+    occasions: list(sp.occasions),
+    works: list(sp.works),
+    minPrice:
+      Number.isFinite(min) && min > 0 ? Math.round(min * 100) : undefined,
+    maxPrice:
+      Number.isFinite(max) && max > 0 ? Math.round(max * 100) : undefined,
     sort: sort && SORT_KEYS.includes(sort) ? sort : undefined,
   };
 }
@@ -45,6 +52,8 @@ export function countActiveFilters(f: ProductFilters): number {
     (f.colors?.length ?? 0) +
     (f.fits?.length ?? 0) +
     (f.fabrics?.length ?? 0) +
+    (f.occasions?.length ?? 0) +
+    (f.works?.length ?? 0) +
     (f.minPrice != null || f.maxPrice != null ? 1 : 0)
   );
 }

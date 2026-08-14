@@ -12,6 +12,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 const MARKUP = 200;
 
 const FITS = ["OVERSIZED", "REGULAR", "RELAXED", "SLIM", "BAGGY"];
+const GENDERS = ["WOMEN", "MEN", "UNISEX"];
 const SIZES = ["FREE_SIZE", "S", "M", "L", "XL", "XXL"];
 const BADGES = ["NEW", "TRENDING", "LIMITED", "BESTSELLER", "SALE"];
 
@@ -34,7 +35,10 @@ export function AddProductForm({ onCreated, onClose }: Props) {
   const [fit, setFit] = useState("OVERSIZED");
   const [fabric, setFabric] = useState("");
   const [description, setDescription] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  // Each photo carries the colour it shows. The feeds publish one entry per
+  // variant, so an untagged gallery makes every colour advertise one picture.
+  const [images, setImages] = useState<{ url: string; color: string }[]>([]);
+  const [gender, setGender] = useState("WOMEN");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -85,7 +89,9 @@ export function AddProductForm({ onCreated, onClose }: Props) {
           throw new Error(data.message ?? "Upload failed.");
         }
         const { url } = (await res.json()) as { url: string };
-        setImages((prev) => [...prev, url]);
+        // Defaults to the first colour; the picker under each thumbnail is
+        // where a multi-colour product gets its photos sorted out.
+        setImages((prev) => [...prev, { url, color: colors[0]?.name ?? "" }]);
       }
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed.");
@@ -104,6 +110,16 @@ export function AddProductForm({ onCreated, onClose }: Props) {
     if (priceP < 100) return setError("Enter a valid selling price.");
     if (mrpP < priceP) return setError("MRP cannot be below the selling price.");
     if (sizes.length === 0) return setError("Pick at least one size.");
+    const named = colors.filter((c) => c.name.trim());
+    if (named.length === 0) return setError("Name at least one colour.");
+    // Every colour needs a photo, or its variants fall back to another
+    // colour's picture in the gallery and in the ad feeds.
+    const withoutPhoto = named
+      .map((c) => c.name.trim())
+      .filter((n) => !images.some((img) => img.color.trim() === n));
+    if (withoutPhoto.length > 0) {
+      return setError(`Tag at least one photo for: ${withoutPhoto.join(", ")}.`);
+    }
 
     setBusy(true);
     try {
@@ -117,9 +133,13 @@ export function AddProductForm({ onCreated, onClose }: Props) {
           mrp: mrpP,
           description: description.trim() || undefined,
           fit,
+          gender,
           fabric: fabric.trim() || undefined,
-          images,
-          colors,
+          images: images.map((img) => ({
+            url: img.url,
+            color: img.color.trim() || undefined,
+          })),
+          colors: named,
           sizes,
           stock: Number(stock) || 0,
           badges,
@@ -174,6 +194,15 @@ export function AddProductForm({ onCreated, onClose }: Props) {
           </select>
         </label>
 
+        <label className="text-xs">
+          <span className="mb-1 block font-semibold text-paper-dim">
+            GENDER — sent to Google &amp; Meta as g:gender
+          </span>
+          <select value={gender} onChange={(e) => setGender(e.target.value)} className={inputCls}>
+            {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </label>
+
         {/* Pricing — the +₹200 markup engine */}
         <label className="text-xs">
           <span className="mb-1 block font-semibold text-paper-dim">YOUR COST — maxzone ₹</span>
@@ -209,25 +238,52 @@ export function AddProductForm({ onCreated, onClose }: Props) {
         {/* Images — direct upload to R2 */}
         <div className="text-xs sm:col-span-2">
           <span className="mb-1 block font-semibold text-paper-dim">
-            PHOTOS * (upload your own — first one is the main image)
+            PHOTOS * (tag each one with the colour it shows — the first photo of
+            a colour becomes that colour&rsquo;s main image)
           </span>
-          <div className="flex flex-wrap items-center gap-2">
-            {images.map((url, i) => (
-              <div key={url} className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element -- admin preview */}
-                <img src={url} alt="" className="h-24 w-20 border border-paper/15 object-cover" />
-                {i === 0 && (
-                  <span className="absolute left-0 top-0 bg-volt px-1 text-[9px] font-bold text-ink">MAIN</span>
-                )}
-                <button
-                  onClick={() => setImages(images.filter((u) => u !== url))}
-                  className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-blood text-white"
-                  aria-label="Remove image"
-                >
-                  <X size={11} />
-                </button>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-end gap-2">
+            {images.map((img, i) => {
+              const firstOfColor =
+                images.findIndex((o) => o.color === img.color) === i;
+              return (
+                <div key={img.url} className="w-20">
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- admin preview */}
+                    <img src={img.url} alt="" className="h-24 w-20 border border-paper/15 object-cover" />
+                    {firstOfColor && (
+                      <span className="absolute left-0 top-0 bg-volt px-1 text-[9px] font-bold text-ink">MAIN</span>
+                    )}
+                    <button
+                      onClick={() => setImages(images.filter((o) => o.url !== img.url))}
+                      className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-blood text-white"
+                      aria-label="Remove image"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                  <select
+                    value={img.color}
+                    onChange={(e) =>
+                      setImages(
+                        images.map((o, j) =>
+                          j === i ? { ...o, color: e.target.value } : o,
+                        ),
+                      )
+                    }
+                    className="mt-1 w-20 border border-paper/15 bg-ink-2 px-1 py-1 text-[10px]"
+                    aria-label="Colour shown in this photo"
+                  >
+                    {colors
+                      .filter((c) => c.name.trim())
+                      .map((c) => (
+                        <option key={c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              );
+            })}
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
