@@ -1,3 +1,4 @@
+import { BrandStory } from "@/components/home/brand-story";
 import { CategoryTiles } from "@/components/home/category-tiles";
 import { Hero } from "@/components/home/hero";
 import { ProductSection } from "@/components/home/product-section";
@@ -117,6 +118,9 @@ export default async function HomePage() {
           href="/collections/trending"
           products={trending}
         />
+        {/* Story before social proof: say who we are, then let customers
+            back it up. The other way round the reviews arrive unearned. */}
+        <BrandStory />
         <Testimonials reviews={testimonials} />
       </main>
       <Footer />
