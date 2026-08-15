@@ -12,12 +12,6 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start:dev", "--workspace", "apps/api"],
       "port": 3001
-    },
-    {
-      "name": "shopify-theme",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "@shopify/cli", "theme", "dev", "--store", "cw97rt-85.myshopify.com", "--path", "apps/shopify-theme", "--port", "9295"],
-      "port": 9295
     }
   ]
 }
