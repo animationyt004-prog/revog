@@ -1,0 +1,39 @@
+{%- comment -%} Ports apps/web/src/components/layout/promo-ticker.tsx {%- endcomment -%}
+<div class="promo-ticker" data-promo-ticker aria-label="Current offers">
+  <div class="promo-ticker__viewport">
+    {%- for block in section.blocks -%}
+      <p class="promo-ticker__msg{% if forloop.first %} is-active{% endif %}" {{ block.shopify_attributes }}>
+        {{ block.settings.message }}
+      </p>
+    {%- endfor -%}
+  </div>
+  <button class="promo-ticker__close" data-promo-dismiss aria-label="Dismiss offers">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+</div>
+
+{% schema %}
+{
+  "name": "Promo ticker",
+  "settings": [
+    { "type": "range", "id": "hold_ms", "label": "Hold time per message (ms)", "min": 2000, "max": 8000, "step": 500, "default": 4000 }
+  ],
+  "blocks": [
+    {
+      "type": "message",
+      "name": "Message",
+      "settings": [
+        { "type": "text", "id": "message", "label": "Message", "default": "Free shipping on orders above ₹999" }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      { "type": "message", "settings": { "message": "Use code HYRA10 — 10% off orders above ₹999" } },
+      { "type": "message", "settings": { "message": "Free shipping on orders above ₹999" } },
+      { "type": "message", "settings": { "message": "Cash on Delivery available" } },
+      { "type": "message", "settings": { "message": "Easy 7-day returns" } }
+    ]
+  }
+}
+{% endschema %}

@@ -1,0 +1,32 @@
+{%- comment -%}
+  Legal policy pages (Privacy/Terms/Shipping/Refund). Shopify auto-routes
+  /policies/* to this template once the merchant fills them in from
+  Settings > Policies — the theme should not hardcode legal text, so this
+  just applies page-shell styling around whatever body the merchant has set.
+{%- endcomment -%}
+<div class="page-shell">
+  <h1>{{ shop.policies[section.settings.policy].title | default: page_title }}<span class="accent">.</span></h1>
+  <div class="page-shell__body">
+    {{ shop.policies[section.settings.policy].body | default: page_content }}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Policy",
+  "settings": [
+    {
+      "type": "select",
+      "id": "policy",
+      "label": "Policy",
+      "options": [
+        { "value": "privacy_policy", "label": "Privacy policy" },
+        { "value": "refund_policy", "label": "Refund policy" },
+        { "value": "shipping_policy", "label": "Shipping policy" },
+        { "value": "terms_of_service", "label": "Terms of service" }
+      ],
+      "default": "privacy_policy"
+    }
+  ]
+}
+{% endschema %}

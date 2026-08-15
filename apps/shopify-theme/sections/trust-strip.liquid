@@ -1,0 +1,40 @@
+{%- comment -%} Ports apps/web/src/components/home/trust-strip.tsx {%- endcomment -%}
+<section class="trust-strip" aria-label="Why shop with us">
+  <ul class="trust-strip__list">
+    {%- for block in section.blocks -%}
+      <li class="trust-strip__item" {{ block.shopify_attributes }}>
+        {{ block.settings.icon }}
+        <div>
+          <p class="trust-strip__title">{{ block.settings.title }}</p>
+          <p class="trust-strip__detail">{{ block.settings.detail }}</p>
+        </div>
+      </li>
+    {%- endfor -%}
+  </ul>
+</section>
+
+{% schema %}
+{
+  "name": "Trust strip",
+  "blocks": [
+    {
+      "type": "signal",
+      "name": "Signal",
+      "settings": [
+        { "type": "html", "id": "icon", "label": "Icon (inline SVG)", "default": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><circle cx=\"12\" cy=\"12\" r=\"10\"/></svg>" },
+        { "type": "text", "id": "title", "label": "Title" },
+        { "type": "text", "id": "detail", "label": "Detail" }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      { "type": "signal", "settings": { "title": "COD & online payment", "detail": "Cash on Delivery, UPI, cards & wallets", "icon": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><path d=\"M2 10h20\"/></svg>" } },
+      { "type": "signal", "settings": { "title": "Free shipping over ₹999", "detail": "Flat ₹99 below that, delivered pan-India", "icon": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M10 17h4V5H2v12h3\"/><path d=\"M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1\"/><circle cx=\"7.5\" cy=\"17.5\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"17.5\" r=\"2.5\"/></svg>" } },
+      { "type": "signal", "settings": { "title": "7-day returns", "detail": "Unused items with tags, as per policy", "icon": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M3 12a9 9 0 1 0 3-6.7L3 8\"/><path d=\"M3 3v5h5\"/></svg>" } },
+      { "type": "signal", "settings": { "title": "Dispatched in 1–2 days", "detail": "Shipped pan-India on working days", "icon": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M16.5 9.4 7.55 4.24\"/><path d=\"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/></svg>" } },
+      { "type": "signal", "settings": { "title": "WhatsApp support", "detail": "Fabric, sizing or order help — just ask", "icon": "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg>" } }
+    ]
+  }
+}
+{% endschema %}

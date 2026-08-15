@@ -1,0 +1,51 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "HyraLuxe",
+    "theme_version": "0.1.0",
+    "theme_author": "HyraLuxe",
+    "theme_documentation_url": "https://hyrafashions.com",
+    "theme_support_url": "https://hyrafashions.com"
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      { "type": "header", "content": "Surfaces" },
+      { "type": "color", "id": "color_ink", "label": "Ink (page background)", "default": "#fffdfb" },
+      { "type": "color", "id": "color_ink_2", "label": "Ink 2 (cards, inputs)", "default": "#f6f1ec" },
+      { "type": "color", "id": "color_ink_3", "label": "Ink 3 (tertiary surface)", "default": "#ece3da" },
+      { "type": "color", "id": "color_night", "label": "Night (header/footer dark surface)", "default": "#14100f" },
+      { "type": "color", "id": "color_night_2", "label": "Night 2 (secondary dark surface)", "default": "#1f1a18" },
+      { "type": "header", "content": "Text & accents" },
+      { "type": "color", "id": "color_paper", "label": "Paper (primary text)", "default": "#1a1416" },
+      { "type": "color", "id": "color_paper_dim", "label": "Paper dim (secondary text)", "default": "#6b6560" },
+      { "type": "color", "id": "color_volt", "label": "Volt (brand accent)", "default": "#9c1f4a" },
+      { "type": "color", "id": "color_blood", "label": "Blood (sale/discount)", "default": "#c81e3a" },
+      { "type": "color", "id": "color_gold", "label": "Gold (dark-surface accent)", "default": "#b28f3c" }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      { "type": "font_picker", "id": "font_display", "label": "Display / heading font", "default": "playfair_display_n7" },
+      { "type": "font_picker", "id": "font_sans", "label": "Body font", "default": "inter_n4" }
+    ]
+  },
+  {
+    "name": "Business info",
+    "settings": [
+      { "type": "text", "id": "business_name", "label": "Legal name", "default": "HyraLuxe" },
+      { "type": "text", "id": "business_email", "label": "Support email", "default": "support@hyrafashions.com" },
+      { "type": "text", "id": "business_phone", "label": "Support phone (with country code, no +)", "default": "919924575799" },
+      { "type": "text", "id": "business_address", "label": "Registered address" },
+      { "type": "text", "id": "whatsapp_number", "label": "WhatsApp number (with country code, no +)" }
+    ]
+  },
+  {
+    "name": "Cart & shipping",
+    "settings": [
+      { "type": "number", "id": "free_shipping_threshold", "label": "Free shipping threshold (in ₹)", "default": 999 },
+      { "type": "number", "id": "shipping_fee", "label": "Flat shipping fee below threshold (in ₹)", "default": 99 }
+    ]
+  }
+]
