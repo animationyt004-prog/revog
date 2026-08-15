@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Jost, Playfair_Display } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
@@ -8,20 +9,34 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { WelcomePopup } from "@/components/welcome-popup";
 import "./globals.css";
 
-const playfair = {
-  variable: "[--font-serif:Georgia]",
-  weight: ["500", "600", "700", "800"],
+/**
+ * These two were stubs: plain objects whose `variable` was a Tailwind
+ * arbitrary-property class pinning the tokens to Georgia and system-ui. The
+ * comment claimed Playfair swapped in; nothing was ever downloaded. A saree
+ * shop rendered in the OS default reads as a template, so both faces are now
+ * really loaded.
+ *
+ * next/font self-hosts at build time — the browser makes no request to Google,
+ * which keeps the fonts out of the privacy story and off the critical path.
+ */
+const playfair = Playfair_Display({
+  variable: "--font-serif",
   subsets: ["latin"],
-  // Elegant serif for headings — the fashion/ethnic display face. "swap" so
-  // the LCP hero text paints immediately with a serif fallback, then Playfair
-  // swaps in without blocking render.
+  // No `weight`: Playfair Display is variable, so the whole 400-900 axis
+  // comes in one file. A range string ("500 800") is rejected by this
+  // loader — it takes discrete weights, an array, or nothing.
+  // The hero headline is the LCP element. "swap" paints it in the fallback
+  // serif immediately rather than holding the page for the download.
   display: "swap",
-};
+});
 
-const inter = {
-  variable: "[--font-inter:system-ui]",
+/** Geometric sans for body copy — carries the editorial tone better than the
+ *  OS default, and pairs with the Playfair headings rather than fighting them. */
+const jost = Jost({
+  variable: "--font-body",
   subsets: ["latin"],
-};
+  display: "swap",
+});
 
 // Absolute base for canonical + Open Graph URLs. Set NEXT_PUBLIC_SITE_URL to
 // the custom domain once live; falls back to the deployed Render URL (never
@@ -98,7 +113,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${inter.variable} h-full antialiased`}
+      className={`${playfair.variable} ${jost.variable} h-full antialiased`}
     >
       <head>
         <meta name="google-site-verification" content={GOOGLE_SITE_VERIFICATION} />
