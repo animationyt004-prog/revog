@@ -72,7 +72,7 @@ export function RecentlyViewed({ current }: { current: ViewedItem }) {
                   alt={item.name}
                   fill
                   sizes="176px"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                 />
               )}
             </div>

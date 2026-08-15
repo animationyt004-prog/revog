@@ -118,7 +118,7 @@ export function CartDrawer() {
                         className="relative aspect-[3/4] w-20 shrink-0 overflow-hidden bg-ink-2"
                       >
                         {item.image && (
-                          <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
+                          <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover object-top" />
                         )}
                       </Link>
                       <div className="flex min-w-0 flex-1 flex-col">

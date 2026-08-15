@@ -234,7 +234,11 @@ export function ProductView({
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
+                // Anchored to the top for the same reason as the card grid: the
+                // box is 3/4 and the tallest supplier photos are 0.42, so a
+                // centred crop cuts the model's head off the hero shot. Full
+                // frame is still one tap away in the zoom view.
+                className="object-cover object-top"
               />
             </button>
           )}

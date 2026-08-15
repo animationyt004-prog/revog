@@ -73,7 +73,19 @@ export function ProductCard({ product }: { product: ProductCardData }) {
       className="group block select-none"
       aria-label={product.name}
     >
-      {/* Image block */}
+      {/*
+       * Image block.
+       *
+       * `object-top` matters more than it looks. The card is a fixed 3/4 box and
+       * supplier photos arrive at anything from 0.42 to 0.81, so `object-cover`
+       * throws away up to 43% of the tallest ones. Cropping from the centre took
+       * that out of both ends and decapitated the model; anchoring to the top
+       * spends the whole loss on the hem instead, which the product page still
+       * shows in full. It is a no-op on the photos that are already 3/4, and on
+       * wider-than-3/4 photos the overflow is horizontal, so the crop stays
+       * centred there. Strictly better in every case — but it is a rescue, not a
+       * fix: the real repair is re-shooting or re-cropping the odd-sized assets.
+       */}
       <div className="relative aspect-[3/4] overflow-hidden bg-ink-2 ring-1 ring-paper/8 transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_18px_44px_rgba(38,22,27,0.14)] group-hover:ring-volt/20">
         {product.image && (
           <Image
@@ -82,7 +94,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={cn(
-              "object-cover transition-all duration-500",
+              "object-cover object-top transition-all duration-500",
               product.hoverImage && "group-hover:opacity-0",
               soldOut && "opacity-40 grayscale",
             )}
@@ -95,7 +107,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={cn(
-              "scale-105 object-cover opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100",
+              "scale-105 object-cover object-top opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100",
               soldOut && "grayscale",
             )}
           />
