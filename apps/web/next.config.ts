@@ -11,12 +11,26 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname, "../.."),
   },
   images: {
-    // Serve images straight from Cloudflare R2's CDN instead of running them
-    // through Next's optimizer. Our photos are already web-sized (~150 KB) and
-    // R2 is a fast global CDN, so this removes all optimize load from the
-    // (free-tier, single-instance) Render box — which was timing out under a
-    // full product grid and leaving some images blank on cold starts.
-    unoptimized: true,
+    // Optimisation was off because the free-tier Render box timed out
+    // generating variants under a full product grid and left images blank on
+    // cold starts. That box is gone; the site runs on Railway now.
+    //
+    // The originals are not "already web-sized". Measured on the live
+    // homepage: 17 files, 2.85 MB, averaging 172 KB at 1086x1448 — for card
+    // boxes that render 221x294 CSS px. Resized to the card and re-encoded as
+    // WebP the same four sample files drop 86%, taking the homepage from
+    // 2.85 MB to roughly 0.40 MB.
+    //
+    // The ladder below is deliberately short. Every width listed is a variant
+    // the server may have to encode, and this catalogue only ever renders
+    // product shots into a grid cell, a 50vw product hero, or a thumbnail —
+    // the stock ladder's 2048 and 3840 entries would only ever be work.
+    qualities: [75],
+    deviceSizes: [640, 828, 1080, 1920],
+    imageSizes: [96, 128, 256, 384],
+    // R2 filenames carry a content hash, so a re-uploaded photo arrives under
+    // a new URL and a long TTL can never serve a stale one.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       // Real product photos live in Cloudflare R2 (public bucket).
       { protocol: "https", hostname: "pub-1c439aae24bd4239bd4c425d68d03bfc.r2.dev" },
