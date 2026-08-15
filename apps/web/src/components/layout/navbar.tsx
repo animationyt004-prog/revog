@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/format";
 import { useAuth } from "@/lib/auth-store";
@@ -29,6 +29,12 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Phones had no way to search without first opening the menu and reading
+  // past the nav links. The header icon opens the same drawer and drops the
+  // cursor in the field, so search is one tap instead of three. The drawer
+  // only mounts while open, so the focus has to wait for that render.
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const [focusSearch, setFocusSearch] = useState(false);
   // Category links come from the catalog so the nav can never point at an
   // empty category (which used to happen whenever the range changed).
   const [navLinks, setNavLinks] = useState([NEW_IN]);
@@ -51,6 +57,14 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Runs the render after the search icon opened the drawer, which is the
+  // first moment the field exists to be focused.
+  useEffect(() => {
+    if (!open || !focusSearch) return;
+    mobileSearchRef.current?.focus();
+    setFocusSearch(false);
+  }, [open, focusSearch]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,6 +122,17 @@ export function Navbar() {
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+
+          <button
+            className="p-1 md:hidden"
+            aria-label="Search products"
+            onClick={() => {
+              setOpen(true);
+              setFocusSearch(true);
+            }}
+          >
+            <Search size={21} />
           </button>
 
           <form onSubmit={submitSearch} className="hidden items-center md:flex">
@@ -206,6 +231,7 @@ export function Navbar() {
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-paper-dim"
               />
               <input
+                ref={mobileSearchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search kurtis, sarees, shirts"
