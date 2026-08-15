@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, shortProductName } from "@/lib/format";
 
 const KEY = "revog:recently-viewed";
 const MAX = 8;
@@ -76,7 +76,9 @@ export function RecentlyViewed({ current }: { current: ViewedItem }) {
                 />
               )}
             </div>
-            <p className="mt-1.5 truncate text-xs font-medium">{item.name}</p>
+            <p className="mt-1.5 truncate text-xs font-medium" title={item.name}>
+              {shortProductName(item.name)}
+            </p>
             <p className="text-xs">
               <span className="font-semibold">{formatPrice(item.price)}</span>{" "}
               {item.mrp > item.price && (

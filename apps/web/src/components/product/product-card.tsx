@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Heart, Loader2, Plus, Star } from "lucide-react";
-import { cn, formatPrice, sizeLabel } from "@/lib/format";
+import { cn, formatPrice, shortProductName, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { pixelTrack } from "@/lib/pixel";
 import { track } from "@/lib/track";
@@ -232,8 +232,11 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           {/* min-w-0 is belt-and-braces: modern engines zero out min-width:auto
               once overflow is hidden, but the Android WebViews our buyers use
               don't, and there the long saree names stretch the whole grid. */}
-          <h3 className="min-h-10 min-w-0 line-clamp-2 text-sm font-medium leading-5 text-paper transition-colors group-hover:text-volt">
-            {product.name}
+          <h3
+            title={product.name}
+            className="min-h-10 min-w-0 line-clamp-2 text-sm font-medium leading-5 text-paper transition-colors group-hover:text-volt"
+          >
+            {shortProductName(product.name)}
           </h3>
           {product.ratingCount > 0 && (
             <span className="flex shrink-0 items-center gap-1 text-xs text-paper-dim">
