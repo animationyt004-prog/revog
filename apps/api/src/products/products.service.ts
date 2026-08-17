@@ -52,6 +52,9 @@ const SORT_ORDER: Record<
   rating: { ratingAvg: 'desc' },
 };
 
+// Relations only. Scalars — fabric among them — come back with the row
+// anyway, and naming one here makes Prisma reject the whole query at runtime
+// ("Invalid invocation ... include: { fabric }"), which typecheck does not catch.
 const LIST_INCLUDE = {
   category: { select: { name: true, slug: true } },
   images: { orderBy: { sortOrder: 'asc' as const } },
@@ -385,6 +388,10 @@ export class ProductsService {
     mrp: number;
     price: number;
     fit: string;
+    // Nullable in the schema, and left that way here: most of the catalogue
+    // predates the field, so the card must be able to say nothing about
+    // fabric rather than claim an empty one.
+    fabric: string | null;
     badges: string[];
     ratingAvg: number;
     ratingCount: number;
@@ -426,6 +433,7 @@ export class ProductsService {
       discountPercent:
         p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0,
       fit: p.fit,
+      fabric: p.fabric,
       badges: p.badges,
       ratingAvg: p.ratingAvg,
       ratingCount: p.ratingCount,

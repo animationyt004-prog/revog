@@ -12,6 +12,9 @@ export interface ProductCardData {
   price: number;
   discountPercent: number;
   fit: string;
+  /** Null for products added before the field existed — every reader must
+   *  cope with its absence rather than print an empty fabric. */
+  fabric: string | null;
   badges: BadgeType[];
   ratingAvg: number;
   ratingCount: number;

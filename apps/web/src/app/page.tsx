@@ -1,9 +1,13 @@
 import { BrandStory } from "@/components/home/brand-story";
 import { CategoryTiles } from "@/components/home/category-tiles";
 import { Hero } from "@/components/home/hero";
+import { Newsletter } from "@/components/home/newsletter";
 import { ProductSection } from "@/components/home/product-section";
+import { ShopByFabric } from "@/components/home/shop-by-fabric";
+import { ShopByOccasion } from "@/components/home/shop-by-occasion";
 import { Testimonials } from "@/components/home/testimonials";
 import { TrustStrip } from "@/components/home/trust-strip";
+import { WhyHyraluxe } from "@/components/home/why-hyraluxe";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
@@ -118,10 +122,30 @@ export default async function HomePage() {
           href="/collections/trending"
           products={trending}
         />
+        {/* Occasion row after the product rails: someone who has not been
+            caught by a specific saree still knows what event they are
+            shopping for, so give them that door before the brand copy. */}
+        <ShopByOccasion
+          products={[...newDrops, ...bestSellers, ...trending]}
+        />
+        {/* Fabric row after occasions: the shopper who knows the drape before
+            the event. Tiles come from the same loaded products, so a fabric
+            with nothing in stock never gets a door. */}
+        <ShopByFabric
+          products={[...newDrops, ...bestSellers, ...trending]}
+        />
+        {/* Reasons before story: the shopper who has scrolled this far is
+            weighing up the order, so answer "why here" while they are still
+            deciding, not after the brand essay. */}
+        <WhyHyraluxe />
         {/* Story before social proof: say who we are, then let customers
             back it up. The other way round the reviews arrive unearned. */}
         <BrandStory />
         <Testimonials reviews={testimonials} />
+        {/* The one quiet ask, placed after the story and reviews have earned
+            it. Shares the popup's subscribe endpoint, so signups land in one
+            place. */}
+        <Newsletter />
       </main>
       <Footer />
     </>
