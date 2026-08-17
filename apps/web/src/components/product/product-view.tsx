@@ -74,6 +74,27 @@ export function ProductView({
   const addToCartRef = useRef<HTMLButtonElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
 
+  /**
+   * Open every product at the top.
+   *
+   * next/link keeps the previous scroll position whenever the incoming page is
+   * still visible in the viewport (documented under Link#scroll), and a
+   * product page always is — it is taller than the grid position you tapped
+   * from. So opening a saree from halfway down a collection dropped you
+   * halfway down its photos, with the name and price above the fold.
+   *
+   * Reload and back/forward are left alone so the browser's own restoration
+   * still works: returning to a product you were reading should not throw you
+   * back to the top.
+   */
+  useEffect(() => {
+    const [entry] = performance.getEntriesByType(
+      "navigation",
+    ) as PerformanceNavigationTiming[];
+    if (entry?.type === "reload" || entry?.type === "back_forward") return;
+    window.scrollTo(0, 0);
+  }, [product.slug]);
+
   useEffect(() => {
     const el = addToCartRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
