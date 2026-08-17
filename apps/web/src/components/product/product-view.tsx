@@ -10,6 +10,7 @@ import {
   Loader2,
   PackageCheck,
   RotateCcw,
+  ShieldCheck,
   Star,
   Truck,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { cn, formatPrice, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { imagesForColor } from "@/lib/product-images";
 import { track } from "@/lib/track";
+import { amp } from "@/components/typography";
 import { AvailableOffers } from "@/components/product/available-offers";
 import { ProductSpecs } from "@/components/product/product-specs";
 import type { ProductDetail } from "@/lib/types";
@@ -228,7 +230,7 @@ export function ProductView({
           )}
           <ChevronRight size={12} className="hidden shrink-0 sm:block" />
           <span className="hidden min-w-0 truncate text-paper sm:inline">
-            {product.name}
+            {amp(product.name)}
           </span>
         </nav>
 
@@ -327,7 +329,7 @@ export function ProductView({
           {product.brand.toUpperCase()} · {product.fit}
         </p>
         <h1 className="display mt-2 text-2xl leading-snug sm:text-5xl sm:leading-tight">
-          {product.name}
+          {amp(product.name)}
         </h1>
 
         {product.ratingCount > 0 && (
@@ -466,7 +468,10 @@ export function ProductView({
         </button>
         {cartError && <p className="mt-2 text-sm text-blood">{cartError}</p>}
 
-        {/* Delivery strip */}
+        {/* Buy-with-confidence strip. Shipping, COD and returns were already
+            here; payment security and pre-dispatch checking are the two
+            worries they left unanswered, so those are added rather than a
+            second row repeating the first. */}
         <div className="mt-5 grid grid-cols-1 gap-2 text-xs text-paper-dim sm:mt-6 sm:grid-cols-2 sm:gap-3">
           <div className="flex items-center gap-2 border border-paper/10 p-3">
             <Truck size={16} className="shrink-0 text-volt" />
@@ -483,6 +488,16 @@ export function ProductView({
                 Policy
               </Link>
             </span>
+          </div>
+          <div className="flex items-center gap-2 border border-paper/10 p-3">
+            <ShieldCheck size={16} className="shrink-0 text-volt" />
+            {/* Razorpay holds the card rails, so this is a fact about where
+                the data goes, not a reassurance we invented. */}
+            Secure payment · Card details never stored by us
+          </div>
+          <div className="flex items-center gap-2 border border-paper/10 p-3">
+            <PackageCheck size={16} className="shrink-0 text-volt" />
+            {amp("Quality checked & packed before dispatch")}
           </div>
         </div>
 
@@ -517,7 +532,7 @@ export function ProductView({
           {product.fabric && isSaree && (
             <div>
               <h2 className="display mb-1.5 text-lg text-paper">
-                Fabric & Drape
+                {amp("Fabric & Drape")}
               </h2>
               <p>
                 {product.fabric} · Free Size · Saree {sareeLength} ·{" "}
@@ -528,7 +543,7 @@ export function ProductView({
           {product.fabric && !isSaree && (
             <div>
               <h2 className="display mb-1.5 text-lg text-paper">
-                Fabric & Fit
+                {amp("Fabric & Fit")}
               </h2>
               <p>
                 {product.fabric} ·{" "}
@@ -553,7 +568,9 @@ export function ProductView({
           )}
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs text-paper-dim">{product.name}</p>
+              <p className="truncate text-xs text-paper-dim">
+                {amp(product.name)}
+              </p>
               <p className="text-sm font-bold text-paper">
                 {formatPrice(price)}
                 {discount > 0 && (
