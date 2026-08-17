@@ -21,7 +21,7 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   "oversized-tees": {
     metaTitle: "Oversized T-Shirts Online – Heavyweight Cotton Tees",
     metaDescription:
-      "Shop oversized t-shirts at HyraLuxe — heavyweight cotton, drop-shoulder fits that hold shape after washes. COD and easy 7-day returns.",
+      "Shop oversized t-shirts at HyraLuxe — heavyweight cotton, drop-shoulder fits that hold shape after washes. COD & easy 7-day returns.",
     heading: "Oversized T-Shirts Online",
     paragraphs: [
       "An oversized tee only works if the fabric can carry the shape. Ours are cut from heavyweight cotton with a drop shoulder and a boxy body, so the tee falls cleanly instead of clinging — and stays that way after repeated washes rather than stretching at the neck within a month.",
@@ -47,7 +47,7 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   sarees: {
     metaTitle: "Buy Sarees Online – Silk, Organza & Georgette",
     metaDescription:
-      "Shop printed silk, organza and georgette sarees online at HyraLuxe. Lightweight festive & party-wear sarees with blouse piece, COD and easy 7-day returns.",
+      "Shop printed silk, organza & georgette sarees online at HyraLuxe. Lightweight festive & party-wear sarees with blouse piece, COD & easy 7-day returns.",
     heading: "Buy Sarees Online in India",
     paragraphs: [
       "Discover HyraLuxe's edit of printed sarees made for real life — soft to drape, easy to carry, and ready for everything from a weekday puja to a wedding reception. Every saree in this collection is chosen for its fall, finish and colour, and each one arrives with a matching unstitched blouse piece so you can style it your way.",
@@ -73,8 +73,8 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   kurtis: {
     metaTitle: "Kurtis Online – Cotton, Rayon & Festive Kurtis for Women",
     metaDescription:
-      "Buy kurtis online at HyraLuxe — everyday cotton kurtis, office wear and festive styles in easy fits. Cash on Delivery and easy 7-day returns.",
-    heading: "Kurtis Online for Every Day and Every Occasion",
+      "Buy kurtis online at HyraLuxe — everyday cotton kurtis, office wear & festive styles in easy fits. Cash on Delivery & easy 7-day returns.",
+    heading: "Kurtis Online for Every Day & Every Occasion",
     paragraphs: [
       "A good kurti earns its place by working everywhere — over jeans on a workday, with a palazzo at a family lunch, dressed up with jhumkas for a festival evening. HyraLuxe's kurti edit is picked with exactly that range in mind: breathable fabrics, prints that stay classic, and cuts that flatter without needing constant adjusting.",
       "Expect straight-cut and A-line silhouettes in cotton and rayon for daily wear, alongside embroidered and printed styles for occasions. Lengths and sleeves are chosen for Indian weather and real routines — pieces you can wear through a full day and still feel put together.",
@@ -99,7 +99,7 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   "suit-sets": {
     metaTitle: "Suit Sets for Women Online – Ready-to-Wear Co-ord Sets",
     metaDescription:
-      "Shop women's suit sets online at HyraLuxe — ready-to-wear kurta, bottom and dupatta sets for work and festive days. COD and easy 7-day returns.",
+      "Shop women's suit sets online at HyraLuxe — ready-to-wear kurta, bottom & dupatta sets for work & festive days. COD & easy 7-day returns.",
     heading: "Ready-to-Wear Suit Sets for Women",
     paragraphs: [
       "A suit set solves the hardest part of ethnic dressing: making everything match. Each set in this collection arrives coordinated and ready to wear — kurta, bottom and dupatta cut from matching or deliberately paired fabrics, so the whole outfit works the moment you put it on.",
@@ -125,8 +125,8 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   kurtas: {
     metaTitle: "Men's Kurtas Online – Cotton & Festive Kurtas",
     metaDescription:
-      "Buy men's kurtas online at HyraLuxe — classic cotton kurtas for daily wear and festive styles for occasions. Cash on Delivery and easy 7-day returns.",
-    heading: "Men's Kurtas for Daily Wear and Festive Days",
+      "Buy men's kurtas online at HyraLuxe — classic cotton kurtas for daily wear & festive styles for occasions. Cash on Delivery & easy 7-day returns.",
+    heading: "Men's Kurtas for Daily Wear & Festive Days",
     paragraphs: [
       "A well-cut kurta is the easiest thing a man can wear well. HyraLuxe's kurta edit keeps it classic: clean collars, honest fabrics and lengths that sit right — pieces that look intentional at a puja, a wedding function or a Sunday at home.",
       "Cotton kurtas anchor the range for daily and summer wear — breathable, soft and easy to maintain. For occasions, richer fabrics and deeper tones step in; pair them with churidar, pyjama or even jeans for a relaxed festive look.",
@@ -151,8 +151,8 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   "kurta-sets": {
     metaTitle: "Men's Kurta Sets Online – Wedding & Festive Sets",
     metaDescription:
-      "Shop men's kurta sets online at HyraLuxe — coordinated kurta and bottom sets for weddings, festivals and pujas. COD and easy 7-day returns.",
-    heading: "Men's Kurta Sets for Weddings and Festivals",
+      "Shop men's kurta sets online at HyraLuxe — coordinated kurta & bottom sets for weddings, festivals & pujas. COD & easy 7-day returns.",
+    heading: "Men's Kurta Sets for Weddings & Festivals",
     paragraphs: [
       "For the days that matter — weddings, festivals, pujas — a kurta set takes the guesswork out of dressing up. Each set pairs a kurta with its matching bottom, cut to work together, so the outfit is done the moment it arrives.",
       "The collection leans festive: refined fabrics, wedding-friendly tones and details that photograph well without shouting. Throw on a Nehru jacket and the same set moves from a family function to a reception.",
@@ -177,7 +177,7 @@ export const CATEGORY_SEO: Record<string, CategorySeo> = {
   women: {
     metaTitle: "Women's Ethnic Wear Online – Sarees & More",
     metaDescription:
-      "Shop women's ethnic fashion at HyraLuxe — printed silk, organza and georgette sarees with blouse piece. Lightweight, festive-ready, COD and 7-day returns.",
+      "Shop women's ethnic fashion at HyraLuxe — printed silk, organza & georgette sarees with blouse piece. Lightweight, festive-ready, COD & 7-day returns.",
     heading: "Women's Ethnic Fashion at HyraLuxe",
     paragraphs: [
       "HyraLuxe's women's edit is built around pieces that feel special without being complicated to wear. Right now the collection leads with sarees — printed silk, organza, georgette and satin — each picked for an easy drape and a finish that looks far more premium than it feels to carry.",

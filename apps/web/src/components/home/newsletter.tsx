@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { FadeUp } from "@/components/motion";
+import { amp } from "@/components/typography";
 import { track } from "@/lib/track";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
@@ -60,8 +61,9 @@ export function Newsletter() {
             First to see every new drop.
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink/60">
-            New collections, restocks and occasional offers — a few emails a
-            month, nothing more.
+            {amp(
+              "New collections, restocks & occasional offers — a few emails a month, nothing more.",
+            )}
           </p>
 
           {done ? (

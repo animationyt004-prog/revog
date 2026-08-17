@@ -20,6 +20,7 @@ import { AccountTabs } from "@/components/account/account-tabs";
 import { AccountLoadingScreen } from "@/components/account/account-session";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
+import { amp } from "@/components/typography";
 import { authedFetch, useAuth } from "@/lib/auth-store";
 import { cn, formatPrice } from "@/lib/format";
 import { orderHref } from "@/lib/order-link";
@@ -43,13 +44,13 @@ const LINKS = [
   {
     icon: Package,
     label: "All orders",
-    detail: "History and delivery tracking",
+    detail: "History & delivery tracking",
     href: "/account/orders",
   },
   {
     icon: RotateCcw,
     label: "Returns",
-    detail: "Requests and refund progress",
+    detail: "Requests & refund progress",
     href: "/account/returns",
   },
   {
@@ -417,7 +418,7 @@ export default function AccountPage() {
                         {item.label}
                       </span>
                       <span className="block truncate text-xs text-paper-dim">
-                        {item.detail}
+                        {amp(item.detail)}
                       </span>
                     </span>
                     <ArrowRight

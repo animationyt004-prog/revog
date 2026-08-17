@@ -4,7 +4,7 @@ import { PageShell, PolicySection } from "@/components/layout/page-shell";
 export const metadata: Metadata = {
   title: "Size Guide",
   description:
-    "HyraLuxe size guide — saree and blouse-piece measurements, plus garment-flat charts in inches for tops and bottoms.",
+    "HyraLuxe size guide — saree & blouse-piece measurements, plus garment-flat charts in inches for tops & bottoms.",
   alternates: { canonical: "/size-guide" },
 };
 

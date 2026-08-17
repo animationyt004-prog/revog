@@ -26,14 +26,14 @@ const FABRIC_ORDER = [
 
 /** One line of "what this fabric is like", shown under the name. */
 const FABRIC_NOTES: Record<string, string> = {
-  Georgette: "Soft, light and easy to pleat",
-  Organza: "Sheer and crisp with a formal fall",
+  Georgette: "Soft, light & easy to pleat",
+  Organza: "Sheer & crisp with a formal fall",
   Shimmer: "Light-catching, made for evenings",
   Silk: "Classic drape with a quiet sheen",
   "Cotton Silk": "Breathable cotton with silk lustre",
   "Cotton Tissue": "Everyday cotton, a touch of shine",
-  "Dola Silk": "Smooth, structured and festive",
-  Chiffon: "Feather-light and flowing",
+  "Dola Silk": "Smooth, structured & festive",
+  Chiffon: "Feather-light & flowing",
   Crepe: "Textured surface, holds its shape",
 };
 

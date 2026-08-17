@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "The terms that apply when you shop with HyraLuxe — orders, pricing, payments, delivery, returns and acceptable use.",
+    "The terms that apply when you shop with HyraLuxe — orders, pricing, payments, delivery, returns & acceptable use.",
   alternates: { canonical: "/policies/terms" },
 };
 

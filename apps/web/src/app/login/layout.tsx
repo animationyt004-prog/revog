@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in securely to track HyraLuxe orders, returns and account details.",
+  description: "Sign in securely to track HyraLuxe orders, returns & account details.",
   alternates: { canonical: "/login" },
   robots: { index: false, follow: false },
 };

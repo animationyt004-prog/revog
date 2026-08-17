@@ -6,7 +6,7 @@ import { BUSINESS } from "@/lib/business";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How HyraLuxe collects, uses and protects your personal information — what we store, who we share it with, and the choices you have.",
+    "How HyraLuxe collects, uses & protects your personal information — what we store, who we share it with, & the choices you have.",
   alternates: { canonical: "/policies/privacy" },
 };
 
@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
     <PageShell
       title="Privacy Policy"
       accent="."
-      intro="What we collect, why we collect it, and what you can ask us to do with it."
+      intro="What we collect, why we collect it, & what you can ask us to do with it."
     >
       <PolicySection heading="Information we collect">
         <p>We only collect what we need to run the store and deliver your orders:</p>

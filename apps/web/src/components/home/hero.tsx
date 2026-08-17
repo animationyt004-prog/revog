@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { amp } from "@/components/typography";
 import { cn } from "@/lib/format";
 import { HERO_SLIDES, type HeroSlide } from "@/lib/hero-slides";
 import type { ProductCardData } from "@/lib/types";
@@ -172,7 +173,7 @@ export function Hero({ products = [] }: { products?: ProductCardData[] }) {
               Drape-ready styles for every occasion.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-white/68">
-              Sarees with blouse piece, honest pricing, and pan-India delivery.
+              {amp("Sarees with blouse piece, honest pricing, & pan-India delivery.")}
             </p>
           </div>
         </div>

@@ -24,7 +24,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "Fresh off the press. The latest HyraLuxe releases.",
     seoTitle: "New Arrivals Online - Latest Sarees, Kurtis & Fashion",
     seoDescription:
-      "Shop new arrivals at HyraLuxe: latest sarees, kurtis, t-shirts and shirts online in India with COD, UPI, free shipping over Rs.999 and 7-day returns.",
+      "Shop new arrivals at HyraLuxe: latest sarees, kurtis, t-shirts & shirts online in India with COD, UPI, free shipping over Rs.999 & 7-day returns.",
   },
   trending: {
     api: "trending",
@@ -33,7 +33,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "What the streets are wearing right now.",
     seoTitle: "Trending Sarees & Indian Fashion Online",
     seoDescription:
-      "Explore trending sarees and Indian fashion at HyraLuxe. Shop georgette sarees, festive styles and daily wear online with COD and 7-day returns.",
+      "Explore trending sarees & Indian fashion at HyraLuxe. Shop georgette sarees, festive styles & daily wear online with COD & 7-day returns.",
   },
   limited: {
     api: "limited",
@@ -48,7 +48,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     blurb: "Proven favourites, restocked while we can.",
     seoTitle: "Best Selling Sarees & Indian Fashion Online",
     seoDescription:
-      "Shop best selling sarees, kurtis and Indian fashion online at HyraLuxe. Popular styles with honest pricing, COD, UPI and 7-day returns.",
+      "Shop best selling sarees, kurtis & Indian fashion online at HyraLuxe. Popular styles with honest pricing, COD, UPI & 7-day returns.",
   },
   "georgette-sarees": {
     filters: { category: "sarees", fabrics: ["Georgette"] },
@@ -56,10 +56,10 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     accent: "Sarees",
     seoTitle: "Georgette Sarees Online - Party & Festive Styles",
     seoDescription:
-      "Buy georgette sarees online at HyraLuxe. Shop lightweight embroidered, sequin and party wear sarees with COD and easy 7-day returns.",
+      "Buy georgette sarees online at HyraLuxe. Shop lightweight embroidered, sequin & party wear sarees with COD & easy 7-day returns.",
     blurb:
-      "Light, flowing georgette sarees that drape easily and carry all day — " +
-      "embroidered, sequinned and zari-bordered.",
+      "Light, flowing georgette sarees that drape easily & carry all day — " +
+      "embroidered, sequinned & zari-bordered.",
   },
   "cotton-sarees": {
     filters: { category: "sarees", fabrics: ["Cotton Silk", "Cotton Tissue"] },
@@ -67,10 +67,10 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     accent: "Sarees",
     seoTitle: "Cotton Sarees Online - Comfortable Everyday Styles",
     seoDescription:
-      "Shop cotton and cotton-blend sarees online at HyraLuxe for office, daily and festive wear. COD, UPI and easy 7-day returns.",
+      "Shop cotton & cotton-blend sarees online at HyraLuxe for office, daily & festive wear. COD, UPI & easy 7-day returns.",
     blurb:
-      "Breathable cotton and cotton-blend sarees for long wear — soft, " +
-      "comfortable and easy to manage.",
+      "Breathable cotton & cotton-blend sarees for long wear — soft, " +
+      "comfortable & easy to manage.",
   },
   "festive-sarees": {
     filters: { category: "sarees", occasions: ["Festive"] },
@@ -78,15 +78,15 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     accent: "Sarees",
     seoTitle: "Festive Sarees Online - Wedding & Puja Sarees",
     seoDescription:
-      "Shop festive sarees online at HyraLuxe. Explore zari, embroidered and occasion-ready sarees for weddings, pujas and celebrations.",
-    blurb: "Sarees picked for weddings, poojas and festive evenings.",
+      "Shop festive sarees online at HyraLuxe. Explore zari, embroidered & occasion-ready sarees for weddings, pujas & celebrations.",
+    blurb: "Sarees picked for weddings, poojas & festive evenings.",
   },
   "sarees-under-999": {
     filters: { category: "sarees", maxPrice: 99900 },
     title: "Sarees Under",
     seoTitle: "Sarees Under Rs.999 Online - Affordable Sarees",
     seoDescription:
-      "Shop sarees under Rs.999 online at HyraLuxe. Explore affordable daily, festive and party styles with COD and 7-day returns.",
+      "Shop sarees under Rs.999 online at HyraLuxe. Explore affordable daily, festive & party styles with COD & 7-day returns.",
     accent: "₹999",
     blurb: "Everything in the saree edit priced under ₹999.",
   },
@@ -94,28 +94,28 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     filters: { category: "sarees", occasions: ["Party"] },
     title: "Party Wear",
     accent: "Sarees",
-    blurb: "Statement sarees for birthdays, receptions, dinners and evening occasions.",
+    blurb: "Statement sarees for birthdays, receptions, dinners & evening occasions.",
     seoTitle: "Party Wear Sarees Online - Georgette & Sequin Sarees",
     seoDescription:
-      "Shop party wear sarees online at HyraLuxe. Georgette, sequin and evening sarees with blouse piece, COD, UPI and easy 7-day returns.",
+      "Shop party wear sarees online at HyraLuxe. Georgette, sequin & evening sarees with blouse piece, COD, UPI & easy 7-day returns.",
   },
   "daily-wear-sarees": {
     filters: { category: "sarees", occasions: ["Daily"] },
     title: "Daily Wear",
     accent: "Sarees",
-    blurb: "Lightweight sarees that are easy to drape, repeat and wear through the day.",
+    blurb: "Lightweight sarees that are easy to drape, repeat & wear through the day.",
     seoTitle: "Daily Wear Sarees Online - Lightweight Sarees for Women",
     seoDescription:
-      "Shop daily wear sarees online at HyraLuxe. Lightweight, easy-drape sarees for women with honest pricing, COD and 7-day returns.",
+      "Shop daily wear sarees online at HyraLuxe. Lightweight, easy-drape sarees for women with honest pricing, COD & 7-day returns.",
   },
   "office-wear-sarees": {
     filters: { category: "sarees", occasions: ["Office"] },
     title: "Office Wear",
     accent: "Sarees",
-    blurb: "Refined sarees for office days, work events and understated celebrations.",
+    blurb: "Refined sarees for office days, work events & understated celebrations.",
     seoTitle: "Office Wear Sarees Online - Elegant Sarees for Work",
     seoDescription:
-      "Buy office wear sarees online at HyraLuxe. Elegant, lightweight sarees for work and formal days with COD, UPI and 7-day returns.",
+      "Buy office wear sarees online at HyraLuxe. Elegant, lightweight sarees for work & formal days with COD, UPI & 7-day returns.",
   },
 };
 

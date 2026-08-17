@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { Wordmark } from "@/components/layout/wordmark";
+import { amp } from "@/components/typography";
 import { cn } from "@/lib/format";
 import { fetchLoginChannels, useAuth, type OtpChannel } from "@/lib/auth-store";
 import { pixelTrack } from "@/lib/pixel";
@@ -142,7 +143,7 @@ function LoginContent() {
             The HyraLuxe account
           </p>
           <h1 className="display mt-2 max-w-xl text-3xl sm:text-5xl">
-            Your orders, returns and favourites. Together.
+            {amp("Your orders, returns & favourites. Together.")}
           </h1>
           <div className="mt-5 hidden flex-wrap gap-x-6 gap-y-2 text-xs text-white/85 sm:flex">
             <span className="flex items-center gap-1.5">
@@ -184,7 +185,7 @@ function LoginContent() {
                 transition={{ duration: 0.22 }}
               >
                 <p className="text-xs font-semibold uppercase text-volt">
-                  Private and password-free
+                  {amp("Private & password-free")}
                 </p>
                 <h2 className="display mt-2 text-4xl sm:text-5xl">
                   Welcome back.
@@ -346,7 +347,7 @@ function LoginContent() {
                       </>
                     ) : (
                       <>
-                        <ShieldCheck size={18} /> Verify and sign in
+                        <ShieldCheck size={18} /> {amp("Verify & sign in")}
                       </>
                     )}
                   </button>

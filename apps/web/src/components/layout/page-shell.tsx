@@ -25,7 +25,11 @@ export function PageShell({
           {amp(title)}
           <span className="text-volt">{accent}</span>
         </h1>
-        {intro && <p className="mt-3 text-sm leading-relaxed text-paper-dim">{intro}</p>}
+        {intro && (
+          <p className="mt-3 text-sm leading-relaxed text-paper-dim">
+            {amp(intro)}
+          </p>
+        )}
         <div className="mt-8 space-y-7 text-sm leading-relaxed text-paper-dim">{children}</div>
       </main>
       <Footer />

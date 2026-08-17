@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = {
   title: "About HyraLuxe",
   description:
-    "HyraLuxe is an India-based online store for kurtis, kurtas, sarees, t-shirts and shirts — honest pricing, Cash on Delivery and easy 7-day returns.",
+    "HyraLuxe is an India-based online store for kurtis, kurtas, sarees, t-shirts & shirts — honest pricing, Cash on Delivery & easy 7-day returns.",
   alternates: { canonical: "/about" },
 };
 
@@ -20,7 +20,7 @@ export default function AboutPage() {
     <PageShell
       title="About HyraLuxe"
       accent="."
-      intro="Indian fashion — ethnic and casual — curated and delivered across the country."
+      intro="Indian fashion — ethnic & casual — curated & delivered across the country."
     >
       <PolicySection heading="Who we are">
         <p>

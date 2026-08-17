@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { FadeUp } from "@/components/motion";
+import { amp } from "@/components/typography";
 import type { CategoryData, ProductCardData } from "@/lib/types";
 
 type Edit = {
@@ -53,7 +54,7 @@ export function CategoryTiles({
     },
     {
       label: "Festive edit",
-      note: "Zari, embroidery and occasion colour",
+      note: "Zari, embroidery & occasion colour",
       href: "/collections/festive-sarees",
       image: pickImage((product) => /zari|embroider|festive|traditional/i.test(product.name), 3),
     },
@@ -90,7 +91,9 @@ export function CategoryTiles({
               </h2>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-paper-dim">
-              Sarees selected for their drape, detail and the occasions you will remember.
+              {amp(
+                "Sarees selected for their drape, detail & the occasions you will remember.",
+              )}
             </p>
           </div>
         </FadeUp>
@@ -120,8 +123,8 @@ export function CategoryTiles({
                   <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-transparent" />
                   <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-white sm:p-6">
                     <span>
-                      <span className="display block text-xl sm:text-3xl">{edit.label}</span>
-                      <span className="mt-1 hidden text-xs text-white/70 sm:block">{edit.note}</span>
+                      <span className="display block text-xl sm:text-3xl">{amp(edit.label)}</span>
+                      <span className="mt-1 hidden text-xs text-white/70 sm:block">{amp(edit.note)}</span>
                     </span>
                     <span className="grid h-9 w-9 shrink-0 place-items-center border border-white/40 transition-colors group-hover:border-gold group-hover:bg-gold group-hover:text-night">
                       <ArrowUpRight size={17} aria-hidden />

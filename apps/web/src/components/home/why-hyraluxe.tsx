@@ -9,6 +9,7 @@ import {
   Truck,
 } from "lucide-react";
 import { FadeUp } from "@/components/motion";
+import { amp } from "@/components/typography";
 
 /**
  * The long-form answer to "why buy here", sat deep in the page where a
@@ -30,7 +31,7 @@ const REASONS = [
   {
     icon: Sparkles,
     title: "Premium quality",
-    detail: "Carefully selected fabrics and finishes.",
+    detail: "Carefully selected fabrics & finishes.",
   },
   {
     icon: Gem,
@@ -47,7 +48,7 @@ const REASONS = [
     // Razorpay handles the card rails, so no card data ever reaches our
     // servers - that is what makes this line safe to print.
     title: "Secure payments",
-    detail: "UPI, cards, net banking and wallets via Razorpay.",
+    detail: "UPI, cards, net banking & wallets via Razorpay.",
   },
   {
     icon: BadgeIndianRupee,
@@ -71,7 +72,7 @@ const REASONS = [
   {
     icon: MessageCircle,
     title: "Customer first",
-    detail: "WhatsApp support before and after your order.",
+    detail: "WhatsApp support before & after your order.",
   },
 ];
 
@@ -109,7 +110,7 @@ export function WhyHyraluxe() {
                   {title}
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-paper-dim sm:text-sm">
-                  {detail}
+                  {amp(detail)}
                 </p>
               </li>
             ))}

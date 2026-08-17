@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FadeUp } from "@/components/motion";
+import { amp } from "@/components/typography";
 import { COLLECTIONS, stockedCollectionSlugs } from "@/lib/collections";
 import type { ProductCardData } from "@/lib/types";
 
@@ -26,7 +27,7 @@ const OCCASIONS: {
   {
     slug: "festive-sarees",
     label: "Festive",
-    note: "Zari, embroidery and occasion colour",
+    note: "Zari, embroidery & occasion colour",
     match: /zari|embroider|festive|traditional|banarasi|silk/i,
   },
   {
@@ -44,7 +45,7 @@ const OCCASIONS: {
   {
     slug: "daily-wear-sarees",
     label: "Daily wear",
-    note: "Light, easy and comfortable",
+    note: "Light, easy & comfortable",
     match: /georgette|chiffon|daily|light/i,
   },
 ];
@@ -127,7 +128,7 @@ export async function ShopByOccasion({
                   {/* Hidden on phones: four captions under four circles at
                       375px wraps to three lines each and buries the row. */}
                   <span className="mt-1 hidden text-xs leading-snug text-paper-dim sm:block">
-                    {tile.note}
+                    {amp(tile.note)}
                   </span>
                 </Link>
               </li>

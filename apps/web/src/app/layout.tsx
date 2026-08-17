@@ -52,7 +52,7 @@ const jost = Jost({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.hyrafashions.com";
 
 const DESCRIPTION =
-  "Buy sarees online at HyraLuxe — georgette, silk and organza sarees with blouse piece. Free shipping over ₹999, Cash on Delivery and easy 7-day returns.";
+  "Buy sarees online at HyraLuxe — georgette, silk & organza sarees with blouse piece. Free shipping over ₹999, Cash on Delivery & easy 7-day returns.";
 
 const GOOGLE_SITE_VERIFICATION = "BjBV-BzfG2mo-lE4Mh7R9bpj4XiNFcKfADXdt5zyIgc";
 

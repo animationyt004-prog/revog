@@ -28,7 +28,7 @@ export default function CancellationPolicyPage() {
     <PageShell
       title="Cancellation"
       accent="Policy"
-      intro="Changed your mind? Here is what can be cancelled, and when."
+      intro="Changed your mind? Here is what can be cancelled, & when."
     >
       <PolicySection heading="Before your order is dispatched">
         <p>

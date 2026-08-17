@@ -33,7 +33,7 @@ export const COLLECTION_SEO: Record<string, CollectionSeo> = {
     ],
   },
   "party-wear-sarees": {
-    heading: "Party Wear Sarees for Receptions and Evening Events",
+    heading: "Party Wear Sarees for Receptions & Evening Events",
     paragraphs: [
       "A good party wear saree should make an impact without becoming difficult to carry. This HyraLuxe collection brings together flowing georgette, sequin work, mirror details, embroidered borders and richer colours for receptions, birthdays, cocktail evenings and family celebrations.",
       "Choose the finish according to the event. Sequins and metallic borders work well under evening lights, while pearl details and softer colours suit engagement functions and daytime celebrations. Each listing shows the fabric, saree length, blouse details, transparency and care instructions so you can compare the complete look before buying.",
@@ -59,7 +59,7 @@ export const COLLECTION_SEO: Record<string, CollectionSeo> = {
     ],
   },
   "festive-sarees": {
-    heading: "Festive Sarees for Puja, Weddings and Celebrations",
+    heading: "Festive Sarees for Puja, Weddings & Celebrations",
     paragraphs: [
       "Festive dressing calls for colour, texture and a saree that remains comfortable through a long celebration. HyraLuxe festive sarees include zari-woven details, embroidery, embellished borders and traditional motifs suited to pujas, family functions, wedding events and festival evenings.",
       "For daytime celebrations, consider lighter colours and woven texture. Deeper jewel tones, metallic work and defined borders suit evening functions. Product pages include practical details such as fabric, blouse piece, saree length and wash care, helping you choose by more than the photograph alone.",
@@ -111,7 +111,7 @@ export const COLLECTION_SEO: Record<string, CollectionSeo> = {
     ],
   },
   "cotton-sarees": {
-    heading: "Cotton and Cotton-Blend Sarees for Comfortable Wear",
+    heading: "Cotton & Cotton-Blend Sarees for Comfortable Wear",
     paragraphs: [
       "Cotton and cotton-blend sarees are made for days when comfort matters as much as appearance. Their breathable feel and structured drape suit office days, daytime functions, pujas and repeat wear. Cotton tissue adds a festive sheen, while softer cotton blends are easier for long hours.",
       "Review the exact fabric composition on each HyraLuxe product page because cotton silk, cotton tissue and pure cotton behave differently. A light starch can create sharper pleats in softer cotton, while woven or tissue styles are best cared for according to their individual wash instructions.",

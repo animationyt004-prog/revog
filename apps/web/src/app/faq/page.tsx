@@ -6,7 +6,7 @@ import { BUSINESS, formattedPhone } from "@/lib/business";
 export const metadata: Metadata = {
   title: "FAQs",
   description:
-    "Answers to common questions about HyraLuxe orders: Cash on Delivery, shipping charges, delivery time, 7-day returns, refunds, blouse pieces and support.",
+    "Answers to common questions about HyraLuxe orders: Cash on Delivery, shipping charges, delivery time, 7-day returns, refunds, blouse pieces & support.",
   alternates: { canonical: "/faq" },
 };
 
@@ -85,7 +85,7 @@ export default function FaqPage() {
       <PageShell
         title="Frequently Asked"
         accent="Questions"
-        intro="Orders, shipping, returns and everything else customers ask us most."
+        intro="Orders, shipping, returns & everything else customers ask us most."
       >
         {FAQS.map(({ q, a }) => (
           <PolicySection key={q} heading={q}>
