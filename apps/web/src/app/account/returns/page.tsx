@@ -11,6 +11,7 @@ import {
 } from "@/components/account/account-session";
 import { Navbar } from "@/components/layout/navbar";
 import { PromoTicker } from "@/components/layout/promo-ticker";
+import { amp } from "@/components/typography";
 import { authedFetch } from "@/lib/auth-store";
 import { cn, formatPrice } from "@/lib/format";
 import { orderHref } from "@/lib/order-link";
@@ -65,7 +66,8 @@ export default function AccountReturnsPage() {
             </p>
             <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
               <h1 className="display text-4xl sm:text-5xl">
-                Returns &amp; refunds<span className="text-volt">.</span>
+                {amp("Returns & refunds")}
+                <span className="text-volt">.</span>
               </h1>
               <p className="max-w-md text-sm leading-6 text-white/55">
                 Follow each request from review through approval and refund.

@@ -5,6 +5,7 @@ import {
   RotateCcw,
   Truck,
 } from "lucide-react";
+import { amp } from "@/components/typography";
 
 /**
  * The five things a first-time buyer checks before trusting a small store:
@@ -69,10 +70,10 @@ export function TrustStrip() {
             />
             <div>
               <p className="text-sm font-semibold leading-snug text-paper">
-                {title}
+                {amp(title)}
               </p>
               <p className="mt-0.5 text-xs leading-snug text-paper-dim">
-                {detail}
+                {amp(detail)}
               </p>
             </div>
           </li>

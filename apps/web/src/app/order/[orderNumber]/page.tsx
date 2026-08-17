@@ -9,6 +9,7 @@ import { PromoTicker } from "@/components/layout/promo-ticker";
 import { OrderTracking } from "@/components/order/order-tracking";
 import { PixelPurchase } from "@/components/order/pixel-purchase";
 import { ReturnRequest } from "@/components/order/return-request";
+import { amp } from "@/components/typography";
 import { formatPrice } from "@/lib/format";
 import type { OrderData } from "@/lib/types";
 
@@ -103,7 +104,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
           <p className="text-sm">
             <strong>Cash on Delivery</strong> — keep{" "}
             <strong>{formatPrice(order.total)}</strong> ready. Our courier
-            accepts cash & UPI at the door.
+            accepts {amp("cash & UPI")} at the door.
           </p>
         </div>
 

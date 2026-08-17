@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell, PolicySection } from "@/components/layout/page-shell";
+import { amp } from "@/components/typography";
 import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = {
@@ -62,7 +63,7 @@ export default function PrivacyPolicyPage() {
             <strong>Email service</strong> — to send login codes and order updates.
           </li>
           <li>
-            <strong>Analytics &amp; advertising tools</strong> (such as Google and Meta) — to measure
+            <strong>{amp("Analytics & advertising tools")}</strong> (such as Google and Meta) — to measure
             site traffic and ad performance.
           </li>
         </ul>

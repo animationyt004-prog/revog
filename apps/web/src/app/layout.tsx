@@ -25,6 +25,14 @@ const playfair = Playfair_Display({
   // No `weight`: Playfair Display is variable, so the whole 400-900 axis
   // comes in one file. A range string ("500 800") is rejected by this
   // loader — it takes discrete weights, an array, or nothing.
+  //
+  // Italic is loaded on purpose, for one glyph: the ampersand. Playfair's
+  // italic "&" is the ornate one, and headings like "Returns & Refunds" are
+  // where it earns its keep (see .amp in globals.css). Without this the
+  // browser would synthesise a slanted roman "&", which looks worse than
+  // leaving it upright. It is a second file, but it loads in parallel under
+  // `swap` and the LCP headline itself is roman, so it does not gate paint.
+  style: ["normal", "italic"],
   // The hero headline is the LCP element. "swap" paints it in the fallback
   // serif immediately rather than holding the page for the download.
   display: "swap",

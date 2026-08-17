@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Check, Copy, X } from "lucide-react";
 import { cn } from "@/lib/format";
 import { track } from "@/lib/track";
+import { amp } from "@/components/typography";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 const SEEN_KEY = "revog_welcome_v1";
@@ -215,7 +216,7 @@ export function WelcomePopup() {
                     onChange={(e) => setNotify(e.target.checked)}
                     className="accent-volt"
                   />
-                  Notify me about offers &amp; new arrivals
+                  {amp("Notify me about offers & new arrivals")}
                 </label>
                 <button
                   type="submit"

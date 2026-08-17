@@ -72,6 +72,28 @@ body {
   line-height: 1.05;
 }
 
+/* The ampersand, set as a piece of ornament rather than a bold letter.
+   Playfair's italic "&" is a genuine flourish, but at the heading's 700 it
+   reads as a blot; dropping to 400 lets the stroke contrast show. The margins
+   are optical - the italic glyph leans, so it needs a little more air on the
+   right than the left to sit evenly between two words. */
+.amp {
+  /* Pinned to the serif on purpose. Body copy is set in Jost, which is loaded
+     without an italic face, so inheriting the family here would hand the
+     browser a synthetic slant in every sans context. Naming the serif keeps
+     the same real glyph everywhere the mark appears. */
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  /* Slightly larger because the serif's lowercase-height runs smaller than
+     Jost's at the same size; without this the mark looks shrunken in body
+     text. Harmless in headings, which are already serif. */
+  font-size: 1.06em;
+  /* Optical only — the word spaces come from the text itself. The italic
+     leans right, so it needs a touch more air after it than before. */
+  margin-inline: 0 0.03em;
+}
+
 /* Outlined "ghost" text for oversized background type. */
 .text-outline {
   color: transparent;

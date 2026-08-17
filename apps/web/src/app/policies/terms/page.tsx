@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell, PolicySection } from "@/components/layout/page-shell";
+import { amp } from "@/components/typography";
 import {
   BUSINESS,
   HAS_ADDRESS,
@@ -103,7 +104,7 @@ export default function TermsPage() {
             href="/policies/returns"
             className="text-volt underline underline-offset-2"
           >
-            Returns &amp; Refunds Policy
+            {amp("Returns & Refunds Policy")}
           </a>
           . Both form part of these terms.
         </p>

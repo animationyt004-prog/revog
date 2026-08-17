@@ -14,6 +14,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { PromoTicker } from "@/components/layout/promo-ticker";
+import { amp } from "@/components/typography";
 import { authedFetch, useAuth } from "@/lib/auth-store";
 import { useCart } from "@/lib/cart-store";
 import { cn, formatPrice } from "@/lib/format";
@@ -744,8 +745,7 @@ export default function CheckoutPage() {
               </p>
             )}
             <p className="mt-3 text-center text-[11px] text-paper-dim">
-              By placing this order you agree to our terms & 7-day return
-              policy.
+              {amp("By placing this order you agree to our terms & 7-day return policy.")}
             </p>
           </motion.aside>
         </div>
