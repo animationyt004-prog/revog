@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Heart, Loader2, Plus, Star } from "lucide-react";
+import { Eye, Heart, Loader2, Plus, Star } from "lucide-react";
 import { cn, formatPrice, shortProductName, sizeLabel } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { pixelTrack } from "@/lib/pixel";
 import { track } from "@/lib/track";
 import { useWishlist } from "@/lib/wishlist-store";
+import { QuickView } from "@/components/product/quick-view";
+import { amp } from "@/components/typography";
 import type { BadgeType, ProductCardData } from "@/lib/types";
 
 const SIZE_ORDER = ["FREE_SIZE", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
@@ -30,6 +32,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
     .slice(0, 2);
 
   const [quickOpen, setQuickOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   const addItem = useCart((s) => s.addItem);
   const wished = useWishlist(
@@ -68,6 +71,15 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   }
 
   return (
+    <>
+    {/* QuickView is a sibling of the Link, never a child: a dialog inside an
+        <a> is invalid, and a backdrop click inside it would bubble up and
+        navigate to the product page instead of closing. */}
+    <QuickView
+      product={product}
+      open={viewOpen}
+      onClose={() => setViewOpen(false)}
+    />
     <Link
       href={`/products/${product.slug}`}
       className="group block select-none"
@@ -172,6 +184,20 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           />
         </button>
 
+        {/* Quick view. Sits under the heart and only on pointer devices: on a
+            phone the product page is one tap away and already full-screen, so
+            a modal buys nothing and the tap target competes with the heart. */}
+        <button
+          aria-label={`Quick view: ${product.name}`}
+          onClick={(e) => {
+            e.preventDefault();
+            setViewOpen(true);
+          }}
+          className="absolute right-2 top-11 hidden h-8 w-8 place-items-center rounded-full bg-ink/80 opacity-0 shadow-sm backdrop-blur-sm transition-all hover:bg-ink focus-visible:opacity-100 group-hover:opacity-100 md:grid"
+        >
+          <Eye size={15} />
+        </button>
+
         {/* Sold-out overlay */}
         {soldOut && (
           <div className="absolute inset-0 grid place-items-center">
@@ -236,7 +262,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             title={product.name}
             className="min-h-10 min-w-0 line-clamp-2 text-sm font-medium leading-5 text-paper transition-colors group-hover:text-volt"
           >
-            {shortProductName(product.name)}
+            {amp(shortProductName(product.name))}
           </h3>
           {product.ratingCount > 0 && (
             <span className="flex shrink-0 items-center gap-1 text-xs text-paper-dim">
@@ -281,5 +307,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </div>
       </div>
     </Link>
+    </>
   );
 }
