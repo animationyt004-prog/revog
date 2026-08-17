@@ -42,9 +42,15 @@
   }
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* No `scroll-behavior: smooth` here on purpose.
+ *
+ * It bought nothing — the app has no in-page anchors and calls
+ * scrollIntoView nowhere — and it actively broke navigation: every scroll
+ * correction after a route change became an animation, which images and
+ * streamed content then interrupted with layout shifts, parking the reader
+ * halfway down the page they had just opened. If smooth scrolling is wanted
+ * later, ask for it per call (scrollIntoView({ behavior: "smooth" })) rather
+ * than globally, so route changes stay instant. */
 
 body {
   background: var(--color-ink);
