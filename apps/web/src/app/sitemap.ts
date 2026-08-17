@@ -28,9 +28,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...[
       "about",
       "contact",
+      "faq",
       "size-guide",
       "policies/shipping",
       "policies/returns",
+      "policies/cancellation",
       "policies/privacy",
       "policies/terms",
     ].map((p) => ({
