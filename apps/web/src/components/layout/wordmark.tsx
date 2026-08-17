@@ -30,12 +30,25 @@ function Quatrefoil({ className }: { className?: string }) {
 export function Wordmark({
   size = "md",
   tone = "light",
+  parent = false,
   className,
 }: {
   size?: "sm" | "md" | "lg" | "xl";
   /** Surface the lockup sits on. On dark the hairline and flourish drop to a
    *  muted white; the rose dot is the mark itself and never shifts. */
   tone?: "light" | "dark";
+  /**
+   * Show the parent-brand line under the name. Off by default, and pointedly
+   * off in the navbar: the note above records that the single line already
+   * uses the bar's full width, and a subtitle rebuilds the two-line stack
+   * that was removed for exactly that reason. The footer has the room, so
+   * that is where the brand architecture gets stated.
+   *
+   * Branding only. This is not the registered entity - `legalName` in
+   * business.ts stays unset until the GST or incorporation paperwork
+   * confirms it, and this line must never be used to fill that in.
+   */
+  parent?: boolean;
   className?: string;
 }) {
   const name = {
@@ -53,6 +66,16 @@ export function Wordmark({
       <span className={cn("display whitespace-nowrap leading-none", name)}>
         HYRALUXE<span className="text-volt">.</span>
       </span>
+      {parent && (
+        <span
+          className={cn(
+            "mt-2 text-[10px] font-semibold uppercase tracking-[0.22em]",
+            tone === "dark" ? "text-white/50" : "text-ink/45",
+          )}
+        >
+          by Hyra Fashion
+        </span>
+      )}
       {withRule && (
         <span
           aria-hidden

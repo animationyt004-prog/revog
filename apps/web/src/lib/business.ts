@@ -29,6 +29,20 @@ export const BUSINESS = {
   /** Human-readable support hours. */
   hours: "Monday to Saturday, 10:00 AM - 7:00 PM IST",
 
+  /**
+   * Public social profiles. Unset until the real handles are confirmed - the
+   * same rule as legalName above. A footer icon pointing at a guessed or dead
+   * profile costs more trust than a missing icon, and these URLs also go into
+   * the Organization sameAs graph, where a wrong one misidentifies the brand
+   * to Google. WhatsApp is not listed here: it is built from the support
+   * phone, which is already real.
+   */
+  social: {
+    instagram: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM?.trim() || null,
+    facebook: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK?.trim() || null,
+    youtube: process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE?.trim() || null,
+  },
+
   // Set these to the real registered business address before requesting
   // Merchant Center review. Google checks that public website contact details
   // match the verified business information in Merchant Center.
@@ -61,8 +75,31 @@ export const HAS_ADDRESS = Boolean(
   BUSINESS.address.pincode,
 );
 
+/** Numbers that look configured but reach nobody. A wa.me link built on one
+ *  of these opens an empty chat, so every WhatsApp entry point gates on this. */
+const PLACEHOLDER_PHONES = new Set([
+  "919999999999",
+  "9999999999",
+  "911234567890",
+  "1234567890",
+]);
+
+export const HAS_WHATSAPP =
+  HAS_PHONE && !PLACEHOLDER_PHONES.has(BUSINESS.phone);
+
 export const whatsappLink = (message = "Hi HyraLuxe! I have a question.") =>
   `https://wa.me/${BUSINESS.phone}?text=${encodeURIComponent(message)}`;
+
+/** Configured social profiles only, in display order. Empty until the handles
+ *  are set, which is why every caller must handle a zero-length list. */
+export const socialProfiles = () =>
+  (
+    [
+      { key: "instagram", label: "Instagram", href: BUSINESS.social.instagram },
+      { key: "facebook", label: "Facebook", href: BUSINESS.social.facebook },
+      { key: "youtube", label: "YouTube", href: BUSINESS.social.youtube },
+    ] as const
+  ).filter((s): s is typeof s & { href: string } => Boolean(s.href));
 
 export const formattedPhone = () => {
   const p = BUSINESS.phone;
@@ -91,22 +128,29 @@ export const merchantReturnPolicyLd = {
   itemDefectReturnFees: "https://schema.org/FreeReturn",
 } as const;
 
-export const organizationLd = () => ({
-  "@type": "Organization",
-  name: BUSINESS.name,
-  ...(BUSINESS.legalName ? { legalName: BUSINESS.legalName } : {}),
-  email: BUSINESS.email,
-  ...(HAS_PHONE ? { telephone: formattedPhone() } : {}),
-  ...(HAS_ADDRESS
-    ? {
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: BUSINESS.address.line1,
-          addressLocality: BUSINESS.address.city,
-          addressRegion: BUSINESS.address.state,
-          postalCode: BUSINESS.address.pincode,
-          addressCountry: "IN",
-        },
-      }
-    : {}),
-});
+export const organizationLd = () => {
+  const sameAs = socialProfiles().map((s) => s.href);
+
+  return {
+    "@type": "Organization",
+    name: BUSINESS.name,
+    ...(BUSINESS.legalName ? { legalName: BUSINESS.legalName } : {}),
+    // sameAs is how Google ties the storefront to the brand's social profiles;
+    // omitted entirely rather than sent empty when no handles are configured.
+    ...(sameAs.length ? { sameAs } : {}),
+    email: BUSINESS.email,
+    ...(HAS_PHONE ? { telephone: formattedPhone() } : {}),
+    ...(HAS_ADDRESS
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: BUSINESS.address.line1,
+            addressLocality: BUSINESS.address.city,
+            addressRegion: BUSINESS.address.state,
+            postalCode: BUSINESS.address.pincode,
+            addressCountry: "IN",
+          },
+        }
+      : {}),
+  };
+};

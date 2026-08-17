@@ -1,12 +1,10 @@
 "use client";
 
-import { BUSINESS, HAS_PHONE, whatsappLink } from "@/lib/business";
+import { HAS_WHATSAPP, whatsappLink } from "@/lib/business";
 import { pixelTrack } from "@/lib/pixel";
 
-const PLACEHOLDERS = new Set(["919999999999", "9999999999", "911234567890", "1234567890"]);
-
 export function WhatsAppButton() {
-  if (!HAS_PHONE || PLACEHOLDERS.has(BUSINESS.phone)) return null;
+  if (!HAS_WHATSAPP) return null;
   const href = whatsappLink("Hi HyraLuxe! I have a question about my order.");
 
   return (
