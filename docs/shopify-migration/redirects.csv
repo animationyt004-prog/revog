@@ -1,0 +1,16 @@
+Redirect from,Redirect to
+/category/sarees,/collections/sarees
+/about,/pages/about
+/contact,/pages/contact
+/faq,/pages/faq
+/size-guide,/pages/size-guide
+/policies/returns,/policies/refund-policy
+/policies/privacy,/policies/privacy-policy
+/policies/terms,/policies/terms-of-service
+/policies/shipping,/policies/shipping-policy
+/policies/cancellation,/pages/cancellation-policy
+/login,/account/login
+/account/orders,/account
+/account/returns,/pages/cancellation-policy
+/checkout,/cart
+/wishlist,/pages/wishlist
